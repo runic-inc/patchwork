@@ -1,0 +1,20 @@
+[
+    {
+        "id": 1,
+        "key": "artifactType",
+        "type": "uint8",
+        "description": "The artifact type (enum)"
+    },
+    {
+        "id": 2,
+        "key": "rarity",
+        "type": "uint8",
+        "description": "Rarity 1-4"
+    },
+    {
+        "id": 3,
+        "key": "name",
+        "type": "char16",
+        "description": "Name"
+    }
+]

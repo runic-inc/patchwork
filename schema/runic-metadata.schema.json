@@ -1,0 +1,91 @@
+{
+    "$id": "https://runic.inc/patchwork-metadata.schema.json",
+    "$schema": "https://json-schema.org/draft/2019-09/schema",
+    "title": "NFT Metadata",
+    "type": "object",
+    "required": [
+        "name",
+        "symbol"
+    ],
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "Model name"
+        },
+        "symbol": {
+            "type": "string",
+            "description": "NFT Symbol"
+        },
+        "schemaURI": {
+            "type": "string",
+            "description": "URI of schema"
+        },
+        "imageURI": {
+            "type": "string",
+            "description": "URI of image (use {tokenID} to substitute)"
+        },
+        "fields": {
+            "type" : "array",
+            "items" : {
+                "type": "object",
+                "required": [
+                    "key",
+                    "type"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "number",
+                        "description": "Field slot (unique) 1 index"
+                    },
+                    "permissionId": {
+                        "type": "number",
+                        "description": "Field permissions ID (unique) 1 index (0 means none)"
+                    },
+                    "key": {
+                        "type": "string",
+                        "description": "Human-readable field key"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Human-readable field description"
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "Field type",
+                        "enum": [
+                            "boolean",
+                            "int8",
+                            "int16",
+                            "int32",
+                            "int64",
+                            "int128",
+                            "int256",
+                            "uint8",
+                            "uint16",
+                            "uint32",
+                            "uint64",
+                            "uint128",
+                            "uint256",
+                            "char8",
+                            "char16",
+                            "char32",
+                            "char64"
+                        ]
+                    },
+                    "arrayLength": {
+                        "type": "number",
+                        "description": "Array length"
+                    },
+                    "visibility": {
+                        "type": "string",
+                        "description": "Field visibility",
+                        "enum": [
+                            "public",
+                            "private"
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}

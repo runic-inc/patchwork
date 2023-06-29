@@ -1,0 +1,9 @@
+[profile.default]
+libs = ['lib']
+src = 'src'
+out = 'out'
+test = 'test'
+cache_path = 'cache'
+script = 'script'
+
+# See more config options https://github.com/foundry-rs/foundry/tree/master/config
