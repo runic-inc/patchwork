@@ -324,7 +324,6 @@ contract PatchworkProtocolTest is Test {
         prot.unassignNFT(address(testFragmentLiteRefNFT), fragment1);
 
         // test transfers with lock nonce mismatch
-        vm.stopPrank();
         vm.startPrank(userAddress);
         testFragmentLiteRefNFT.setLocked(fragment2, true);
         testFragmentLiteRefNFT.setLocked(fragment2, false); // nonce 1
