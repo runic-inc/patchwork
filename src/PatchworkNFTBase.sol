@@ -11,7 +11,8 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT {
     address _manager;
     mapping(address => uint256) _permissionsAllow;
     mapping(uint256 => uint256[]) _metadataStorage;
-    mapping(uint256 => uint256) _lockNonces;
+    mapping(uint256 => uint256) _freezeNonces;
+    mapping(uint256 => bool) _freezes;
     mapping(uint256 => bool) _locks;
 
     constructor(string memory scopeName_, string memory name_, string memory symbol_, address owner_, address manager_) ERC721(name_, symbol_) {
@@ -25,13 +26,13 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT {
     }
 
     // Store 1 slot
-    function storePackedMetadataSlot(uint256 tokenId, uint256 slot, uint256 data) public {
+    function storePackedMetadataSlot(uint256 tokenId, uint256 slot, uint256 data) public virtual {
         require(_checkTokenWriteAuth(tokenId), "not authorized");
         _metadataStorage[tokenId][slot] = data;
     }
 
     // Load 1 slot
-    function loadPackedMetadataSlot(uint256 tokenId, uint256 slot) public view returns (uint256) {
+    function loadPackedMetadataSlot(uint256 tokenId, uint256 slot) public virtual view returns (uint256) {
         return _metadataStorage[tokenId][slot];
     }
 
@@ -52,7 +53,8 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT {
 
     function supportsInterface(bytes4 interfaceID) public view virtual override returns (bool) {
         return interfaceID == IPATCHWORKNFT_INTERFACE ||  //PatchworkNFTInterface id
-            ERC721.supportsInterface(interfaceID);             
+            ERC721.supportsInterface(interfaceID) ||
+            interfaceID == type(IERC5192).interfaceId;        
     }
 
     function transferFrom(address from, address to, uint256 tokenId) public virtual override {
@@ -68,6 +70,24 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT {
     function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public virtual override {
         PatchworkProtocol(_manager).applyTransfer(from, to, tokenId);
         super.safeTransferFrom(from, to, tokenId, data);
+    }
+
+    function transferFromWithFreezeNonce(address from, address to, uint256 tokenId, uint256 nonce) public {
+        require(frozen(tokenId), "not frozen");
+        require(getFreezeNonce(tokenId) == nonce, "incorrect nonce");
+        transferFrom(from, to, tokenId);
+    }
+
+    function safeTransferFromWithFreezeNonce(address from, address to, uint256 tokenId, uint256 nonce) public {
+        require(frozen(tokenId), "not frozen");
+        require(getFreezeNonce(tokenId) == nonce, "incorrect nonce");
+        safeTransferFrom(from, to, tokenId);
+    }
+
+    function safeTransferFromWithFreezeNonce(address from, address to, uint256 tokenId, bytes memory data, uint256 nonce) public {
+        require(frozen(tokenId), "not frozen");
+        require(getFreezeNonce(tokenId) == nonce, "incorrect nonce");
+        safeTransferFrom(from, to, tokenId, data);
     }
 
     function _toString8(uint64 raw) internal pure returns (string memory out) {
@@ -113,43 +133,46 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT {
         out = string(trimmedByteArray);
     }
 
-    function getLockNonce(uint256 tokenId) public view virtual returns (uint256 nonce) {
-        return _lockNonces[tokenId];
+    function getFreezeNonce(uint256 tokenId) public view virtual returns (uint256 nonce) {
+        return _freezeNonces[tokenId];
     }
 
-    function isLocked(uint256 tokenId) public view virtual returns (bool) {
+    function setFrozen(uint256 tokenId, bool frozen_) public virtual {
+        require(msg.sender == ownerOf(tokenId), "not authorized");
+        bool _frozen = _locks[tokenId];
+        if (!(_frozen && frozen_)) {
+            if (frozen_) {
+                _freezes[tokenId] = true;
+                emit Frozen(tokenId);
+            } else {
+                _freezeNonces[tokenId]++;
+                _freezes[tokenId] = false;
+                emit Thawed(tokenId);
+            }
+        }
+    }
+
+    function frozen(uint256 tokenId) public view virtual returns (bool) {
+        return _freezes[tokenId];
+    }
+
+    /// @notice Returns the locking status
+    /// @param tokenId The identifier for a token.
+    function locked(uint256 tokenId) public view virtual returns (bool) {
         return _locks[tokenId];
     }
 
     function setLocked(uint256 tokenId, bool locked_) public virtual {
         require(msg.sender == ownerOf(tokenId), "not authorized");
-        bool locked = _locks[tokenId];
-        if (!(locked && locked_)) {
+        bool _locked = _locks[tokenId];
+        if (!(_locked && locked_)) {
+            _locks[tokenId] = locked_;
             if (locked_) {
-                _locks[tokenId] = true;
+                emit Locked(tokenId);
             } else {
-                _lockNonces[tokenId]++;
-                _locks[tokenId] = false;
+                emit Unlocked(tokenId);
             }
         }
-    }
-
-    function transferFromWithLockNonce(address from, address to, uint256 tokenId, uint256 nonce) public {
-        require(isLocked(tokenId), "not locked");
-        require(getLockNonce(tokenId) == nonce, "incorrect nonce");
-        transferFrom(from, to, tokenId);
-    }
-
-    function safeTransferFromWithLockNonce(address from, address to, uint256 tokenId, uint256 nonce) public {
-        require(isLocked(tokenId), "not locked");
-        require(getLockNonce(tokenId) == nonce, "incorrect nonce");
-        safeTransferFrom(from, to, tokenId);
-    }
-
-    function safeTransferFromWithLockNonce(address from, address to, uint256 tokenId, bytes memory data, uint256 nonce) public {
-        require(isLocked(tokenId), "not locked");
-        require(getLockNonce(tokenId) == nonce, "incorrect nonce");
-        safeTransferFrom(from, to, tokenId, data);
     }
 }
 
@@ -188,7 +211,15 @@ abstract contract PatchworkPatch is PatchworkNFT, IPatchworkPatch {
         return super.ownerOf(tokenId);
     }
 
-    function patchworkCompatible_() external returns (bytes1) {}
+    function locked(uint256 /* tokenId */) public pure virtual override returns (bool) {
+        return false;
+    }
+
+    function setLocked(uint256 /* tokenId */, bool /* locked_ */) public pure virtual override {
+        revert("cannot lock a soul-bound patch");
+    }
+
+    function patchworkCompatible_() external pure returns (bytes1) {}
 }
 
 abstract contract PatchworkFragment is PatchworkNFT, IPatchworkAssignableNFT {
@@ -214,15 +245,17 @@ abstract contract PatchworkFragment is PatchworkNFT, IPatchworkAssignableNFT {
         // One time use policy
         require(_checkTokenWriteAuth(ourTokenId), "not authorized");
         Assignment storage a = _assignments[ourTokenId];
-        require(a.tokenAddr == address(0), "Already assigned");
+        require(a.tokenAddr == address(0), "already assigned");
         a.tokenAddr = to;
         a.tokenId = tokenId;
+        emit Locked(ourTokenId);
     }
 
     function unassign(uint256 tokenId) public virtual {
         require(_checkTokenWriteAuth(tokenId), "not authorized");
         updateOwnership(tokenId);
         delete _assignments[tokenId];
+        emit Unlocked(tokenId);
     }
 
     function updateOwnership(uint256 tokenId) public virtual {
@@ -260,7 +293,18 @@ abstract contract PatchworkFragment is PatchworkNFT, IPatchworkAssignableNFT {
         emit Transfer(from, to, tokenId);
     }
 
-    function patchworkCompatible_() external returns (bytes2) {}
+    function locked(uint256 tokenId) public view virtual override returns (bool) {
+        // Locked when assigned (implicit) or if explicitly locked
+        return _assignments[tokenId].tokenAddr != address(0) || super.locked(tokenId);
+    }
+
+    function setLocked(uint256 tokenId, bool locked_) public virtual override {
+        require(msg.sender == ownerOf(tokenId), "not authorized");
+        require(_assignments[tokenId].tokenAddr == address(0), "cannot setLocked assigned fragment");
+        super.setLocked(tokenId, locked_);
+    }
+
+    function patchworkCompatible_() external pure returns (bytes2) {}
 }
 
 abstract contract PatchworkLiteRef is IPatchworkLiteRef {
@@ -281,20 +325,25 @@ abstract contract PatchworkLiteRef is IPatchworkLiteRef {
     }
 
     // Register the artifact and other NFTs that we want assignable to this for composition or consumption
-    function registerReferenceAddress(address ref) public virtual returns (uint8 id) {
+    function registerReferenceAddress(address addr) public virtual returns (uint8 id) {
         require(_checkWriteAuth(), "not authorized");
         uint8 refId = _nextReferenceId;
+        require(_nextReferenceId != 255, "out of IDs");
         _nextReferenceId++;
-        require(_nextReferenceId != 0, "Overflow, out of IDs");
-        require(_referenceAddressIds[ref] == 0, "Already registered");
-        _referenceAddresses[refId] = ref;
-        _referenceAddressIds[ref] = refId;
+        require(_referenceAddressIds[addr] == 0, "Already registered");
+        _referenceAddresses[refId] = addr;
+        _referenceAddressIds[addr] = refId;
         return refId;
     }
 
     function redactReferenceAddress(uint8 id) public virtual {
         require(_checkWriteAuth(), "not authorized");
         _redactedReferenceIds[id] = true;
+    }
+
+    function unredactReferenceAddress(uint8 id) public virtual {
+        require(_checkWriteAuth(), "not authorized");
+        _redactedReferenceIds[id] = false;
     }
 
     function getLiteReference(address addr, uint256 tokenId) public virtual view returns (uint64 referenceAddress) {

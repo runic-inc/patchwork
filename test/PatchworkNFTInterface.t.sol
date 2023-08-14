@@ -9,9 +9,9 @@ import "../src/sampleNFTs/TestPatchLiteRefNFT.sol";
 import "../src/sampleNFTs/TestFragmentLiteRefNFT.sol";
 
 contract PatchworkNFTInterfaceTest is Test {
-    Selector public selector;
-    TestPatchLiteRefNFT public testPatchLiteRefNFT;
-    TestFragmentLiteRefNFT public testFragmentLiteRefNFT;
+    Selector selector;
+    TestPatchLiteRefNFT testPatchLiteRefNFT;
+    TestFragmentLiteRefNFT testFragmentLiteRefNFT;
     bytes4 ERC165ID;
 
     function setUp() public {
