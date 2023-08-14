@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import "forge-std/console.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-
+import "./IERC5192.sol";
 
 /** 
 @title Patchwork Protocol NFT Interface Metadata
@@ -55,17 +55,25 @@ interface PatchworkNFTInterfaceMeta {
   }
 }
 
-bytes4 constant IPATCHWORKNFT_INTERFACE = 0x4be719c2;
+bytes4 constant IPATCHWORKNFT_INTERFACE = 0x017609f2;
 bytes4 constant IPATCHWORKPATCH_INTERFACE = 0x4d721caf;
 bytes4 constant IPATCHWORKASSIGNABLENFT_INTERFACE = 0x2c2b633b;
-bytes4 constant IPATCHWORKLITEREF_INTERFACE = 0x502dbf0b;
+bytes4 constant IPATCHWORKLITEREF_INTERFACE = 0x0c790993;
 
 /**
 @title Patchwork Protocol NFT Interface
 @author Runic Labs, Inc
 @notice Interface for contracts supporting Patchwork metadata standard
 */
-interface IPatchworkNFT is PatchworkNFTInterfaceMeta {
+interface IPatchworkNFT is PatchworkNFTInterfaceMeta, IERC5192 {
+    /// @notice Emitted when the freeze status is changed to frozen.
+    /// @param tokenId The identifier for a token.
+    event Frozen(uint256 tokenId);
+
+    /// @notice Emitted when the locking status is changed to not frozen.
+    /// @param tokenId The identifier for a token.
+    event Thawed(uint256 tokenId);
+
     /**
     @notice Returns the name of the scope
     */
@@ -110,16 +118,24 @@ interface IPatchworkNFT is PatchworkNFTInterfaceMeta {
     function loadPackedMetadataSlot(uint256 _tokenId, uint256 slot) external returns (uint256);
 
     /**
-    @notice Returns the lock nonce for a given token ID
+    @notice Returns the freeze nonce for a given token ID
     @param tokenId ID of the token
     */
-    function getLockNonce(uint256 tokenId) external returns (uint256 nonce);
+    function getFreezeNonce(uint256 tokenId) external returns (uint256 nonce);
+
+     /**
+    @notice Sets the freeze status of a token
+    @param tokenId ID of the token
+    @param frozen Freeze status to set
+    */
+    function setFrozen(uint256 tokenId, bool frozen) external;
 
     /**
-    @notice Checks if a token is locked
+    @notice Gets the freeze status of a token (ERC-5192)
     @param tokenId ID of the token
-    */
-    function isLocked(uint256 tokenId) external returns (bool);
+    @return bool true if locked, false if not
+     */
+    function frozen(uint256 tokenId) external view returns (bool);
 
     /**
     @notice Sets the lock status of a token
@@ -127,6 +143,13 @@ interface IPatchworkNFT is PatchworkNFTInterfaceMeta {
     @param locked Lock status to set
     */
     function setLocked(uint256 tokenId, bool locked) external;
+
+    /**
+    @notice Gets the lock status of a token (ERC-5192)
+    @param tokenId ID of the token
+    @return bool true if locked, false if not
+     */
+    function locked(uint256 tokenId) external view returns (bool);
 }
 
 /**
@@ -158,7 +181,7 @@ interface IPatchworkPatch {
     /**
     @notice Returns the underlying stored owner of a token ignoring real patched NFT ownership
     @param tokenId ID of the token
-    @return Address of the owner
+    @return address Address of the owner
     */
     function unpatchedOwnerOf(uint256 tokenId) external returns (address);
 
@@ -166,7 +189,7 @@ interface IPatchworkPatch {
     @notice A deliberately incompatible function to block implementing both assignable and patch
     @return bytes1 Always returns 0x00
     */
-    function patchworkCompatible_() external returns (bytes1);
+    function patchworkCompatible_() external pure returns (bytes1);
 }
 
 /**
@@ -178,7 +201,7 @@ interface IPatchworkAssignableNFT {
     /**
     @notice Returns the name of the scope
     */
-    function getScopeName() external returns (string memory);
+    function getScopeName() external view returns (string memory);
 
     /**
     @notice Assigns a token to another
@@ -199,14 +222,14 @@ interface IPatchworkAssignableNFT {
     @param ourTokenId ID of our token
     @return Address and token ID our token is assigned to
     */
-    function getAssignedTo(uint256 ourTokenId) external returns (address, uint256);
+    function getAssignedTo(uint256 ourTokenId) external view returns (address, uint256);
 
     /**
     @notice Returns the underlying stored owner of a token ignoring current assignment
     @param ourTokenId ID of our token
     @return Address of the owner
     */
-    function unassignedOwnerOf(uint256 ourTokenId) external returns (address);
+    function unassignedOwnerOf(uint256 ourTokenId) external view returns (address);
 
     /**
     @notice Sends events for a token when the assigned-to token has been transferred
@@ -226,7 +249,7 @@ interface IPatchworkAssignableNFT {
     @notice A deliberately incompatible function to block implementing both assignable and patch
     @return bytes2 Always returns 0x0000
     */
-    function patchworkCompatible_() external returns (bytes2);
+    function patchworkCompatible_() external pure returns (bytes2);
 }
 
 /**
@@ -237,10 +260,10 @@ interface IPatchworkAssignableNFT {
 interface IPatchworkLiteRef {
     /**
     @notice Registers a reference address
-    @param ref Address to register
+    @param addr Address to register
     @return id ID assigned to the address
     */
-    function registerReferenceAddress(address ref) external returns (uint8 id);
+    function registerReferenceAddress(address addr) external returns (uint8 id);
 
     /**
     @notice Redacts a reference address
@@ -249,12 +272,18 @@ interface IPatchworkLiteRef {
     function redactReferenceAddress(uint8 id) external;
 
     /**
+    @notice Unredacts a reference address
+    @param id ID of the address to unredact
+    */
+    function unredactReferenceAddress(uint8 id) external;
+
+    /**
     @notice Returns a lite reference for a given address and token ID
     @param addr Address to get reference for
     @param tokenId ID of the token
     @return liteRef Lite reference
     */
-    function getLiteReference(address addr, uint256 tokenId) external returns (uint64 liteRef);
+    function getLiteReference(address addr, uint256 tokenId) external view returns (uint64 liteRef);
 
     /**
     @notice Returns an address and token ID for a given lite reference
@@ -262,7 +291,7 @@ interface IPatchworkLiteRef {
     @return addr Address
     @return tokenId Token ID
     */
-    function getReferenceAddressAndTokenId(uint64 liteRef) external returns (address addr, uint256 tokenId);
+    function getReferenceAddressAndTokenId(uint64 liteRef) external view returns (address addr, uint256 tokenId);
 
     /**
     @notice Adds a reference to a token
@@ -291,7 +320,7 @@ interface IPatchworkLiteRef {
     @return addr Address
     @return tokenId Token ID
     */
-    function loadReferenceAddressAndTokenId(uint256 idx) external returns (address addr, uint256 tokenId);
+    function loadReferenceAddressAndTokenId(uint256 idx) external view returns (address addr, uint256 tokenId);
 
     /**
     @notice Loads all references for a given token ID
@@ -299,7 +328,7 @@ interface IPatchworkLiteRef {
     @return addresses Array of addresses
     @return tokenIds Array of token IDs
     */
-    function loadAllReferences(uint256 tokenId) external returns (address[] memory addresses, uint256[] memory tokenIds);
+    function loadAllReferences(uint256 tokenId) external view returns (address[] memory addresses, uint256[] memory tokenIds);
 }
 
 
@@ -307,7 +336,8 @@ contract Selector {
     function calculatePatchworkNFTSelector() external pure returns (bytes4) {
         IPatchworkNFT i;
         return i.getScopeName.selector ^ i.schemaURI.selector ^ i.schema.selector ^ i.imageURI.selector ^ i.setPermissions.selector ^ 
-            i.storePackedMetadataSlot.selector ^ i.loadPackedMetadataSlot.selector ^ i.getLockNonce.selector ^ i.isLocked.selector ^ i.setLocked.selector;
+            i.storePackedMetadataSlot.selector ^ i.loadPackedMetadataSlot.selector ^ i.getFreezeNonce.selector ^
+            i.frozen.selector ^ i.setFrozen.selector ^ i.setLocked.selector;
     }
     function calculateERC165Selector() external pure returns (bytes4) {
         ERC165 i;
@@ -326,7 +356,7 @@ contract Selector {
     }
     function calculatePatchworkLightRefSelector() external pure returns (bytes4) {
         IPatchworkLiteRef i;
-        return i.registerReferenceAddress.selector ^ i.redactReferenceAddress.selector ^ i.getLiteReference.selector ^ i.getReferenceAddressAndTokenId.selector ^ 
+        return i.registerReferenceAddress.selector ^ i.redactReferenceAddress.selector ^ i.unredactReferenceAddress.selector ^ i.getLiteReference.selector ^ i.getReferenceAddressAndTokenId.selector ^ 
             i.addReference.selector ^ i.removeReference.selector ^ i.batchAddReferences.selector ^ i.loadReferenceAddressAndTokenId.selector ^ 
             i.loadAllReferences.selector;
     }

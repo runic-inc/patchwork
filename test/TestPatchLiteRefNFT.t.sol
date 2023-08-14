@@ -7,7 +7,7 @@ import "forge-std/console.sol";
 import "../src/sampleNFTs/TestPatchLiteRefNFT.sol";
 
 contract TestPatchLiteRefNFTTest is Test {
-    TestPatchLiteRefNFT public testNFT;
+    TestPatchLiteRefNFT testNFT;
 
     function setUp() public {
         // TODO use real manager

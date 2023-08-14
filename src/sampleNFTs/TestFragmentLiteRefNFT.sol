@@ -32,6 +32,11 @@ struct TestFragmentLiteRefNFTMetadata {
 contract TestFragmentLiteRefNFT is PatchworkFragment, PatchworkLiteRef {
 
     uint256 _nextTokenId;
+    bool _testLockOverride;
+    bool _getLiteRefOverrideSet;
+    uint64 _getLiteRefOverride;
+    bool _getAssignedToOverrideSet;
+    address _getAssignedToOverride;
 
     constructor (address _manager) PatchworkNFT("testscope", "TestFragmentLiteRef", "TFLR", msg.sender, _manager) {
     }
@@ -195,4 +200,43 @@ contract TestFragmentLiteRefNFT is PatchworkFragment, PatchworkLiteRef {
         return PatchworkNFT._checkWriteAuth();
     }
 
+    // Function for mocking test behaviors - set to true for it to return unlocked always
+    function setTestLockOverride(bool override_) public {
+        _testLockOverride = override_;
+    }
+
+    // Override to check bad behavior cases
+    function locked(uint256 tokenId) public view virtual override returns (bool) {
+        if (_testLockOverride) {
+            return false;
+        }
+        return super.locked(tokenId);
+    }
+
+    // Testing overrides
+    function setGetLiteRefOverride(bool set_, uint64 value_) public {
+        _getLiteRefOverrideSet = set_;
+        _getLiteRefOverride = value_;
+    }
+
+    // Testing overrides
+    function getLiteReference(address addr, uint256 tokenId) public virtual override view returns (uint64 referenceAddress) {
+        if (_getLiteRefOverrideSet) {
+            return _getLiteRefOverride;
+        }
+        return super.getLiteReference(addr, tokenId);
+    }
+
+    // Testing overrides
+    function setGetAssignedToOverride(bool set_, address value_) public {
+        _getAssignedToOverrideSet = set_;
+        _getAssignedToOverride = value_;
+    }
+
+    function getAssignedTo(uint256 ourTokenId) public virtual override view returns (address, uint256) {
+        if (_getAssignedToOverrideSet) {
+            return (_getAssignedToOverride, 1);
+        }
+        return super.getAssignedTo(ourTokenId);
+    }
 }
