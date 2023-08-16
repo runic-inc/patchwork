@@ -91,6 +91,30 @@ contract PatchworkNFTBaseTest is Test {
         assertEq(user2Address, testPatchworkNFT.ownerOf(1));
     }
 
+    function testLockFreezeSeparation() public {
+        testPatchworkNFT.mint(userAddress, 1);
+        vm.startPrank(userAddress);
+        assertFalse(testPatchworkNFT.locked(1));
+        testPatchworkNFT.setLocked(1, true);
+        assertTrue(testPatchworkNFT.locked(1));
+        assertFalse(testPatchworkNFT.frozen(1));
+        testPatchworkNFT.setFrozen(1, true);
+        assertTrue(testPatchworkNFT.frozen(1));
+        assertTrue(testPatchworkNFT.locked(1));
+        testPatchworkNFT.setLocked(1, false);
+        assertTrue(testPatchworkNFT.frozen(1));
+        assertFalse(testPatchworkNFT.locked(1));
+        testPatchworkNFT.setFrozen(1, false);
+        assertFalse(testPatchworkNFT.frozen(1));
+        assertFalse(testPatchworkNFT.locked(1));
+        testPatchworkNFT.setFrozen(1, true);
+        assertTrue(testPatchworkNFT.frozen(1));
+        assertFalse(testPatchworkNFT.locked(1));
+        testPatchworkNFT.setLocked(1, true);
+        assertTrue(testPatchworkNFT.frozen(1));
+        assertTrue(testPatchworkNFT.locked(1));
+    }
+
     function testTransferFromWithFreezeNonce() public {
         // TODO make sure these are calling checkTransfer on proto
         testPatchworkNFT.mint(userAddress, 1);

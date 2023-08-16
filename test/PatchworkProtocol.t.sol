@@ -255,7 +255,6 @@ contract PatchworkProtocolTest is Test {
         vm.expectRevert("not authorized");
         prot.assignNFT(address(testFragmentLiteRefNFT), user2FragmentTokenId, address(testPatchLiteRefNFT), patchTokenId);
 
-        vm.startPrank(userAddress);
         prot.assignNFT(address(testFragmentLiteRefNFT), fragmentTokenId, address(testPatchLiteRefNFT), patchTokenId);
         (address addr, uint256 tokenId) = testFragmentLiteRefNFT.getAssignedTo(fragmentTokenId);
         assertEq(addr, address(testPatchLiteRefNFT));
