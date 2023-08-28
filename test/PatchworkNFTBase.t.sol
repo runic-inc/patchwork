@@ -353,4 +353,13 @@ contract PatchworkNFTBaseTest is Test {
         assertEq(0, r2);
     }
 
+    function testLiteref56bitlimit() public {
+        vm.prank(scopeOwner);
+        uint8 r1 = testFragmentLiteRefNFT.registerReferenceAddress(address(1));
+        assertEq((uint256(r1) << 56) + 1, testFragmentLiteRefNFT.getLiteReference(address(1), 1));
+        assertEq((uint256(r1) << 56) + 0xFFFFFFFFFFFFFF, testFragmentLiteRefNFT.getLiteReference(address(1), 0xFFFFFFFFFFFFFF));
+        vm.expectRevert("unsupported tokenId");
+        testFragmentLiteRefNFT.getLiteReference(address(1), 1 << 56);
+    }
+
 }
