@@ -351,6 +351,7 @@ abstract contract PatchworkLiteRef is IPatchworkLiteRef {
         if (refId == 0) {
             return 0;
         }
+        require(tokenId <= 0xFFFFFFFFFFFFFF, "unsupported tokenId");
         return uint64(uint256(refId) << 56 | tokenId);
     }
 
