@@ -220,6 +220,16 @@ contract PatchworkProtocolTest is Test {
         prot.batchAssignNFT(fragmentAddresses, fragments, address(testPatchLiteRefNFT), fragmentTokenId2);
     }
 
+    function testScopeTransferCannotBeFrontrun() public {
+        address maliciousActor = address(120938);
+        // A malicious actor attempts to preconfigure and transfer a scope to 0 so an unsuspecting actor claims it but it already has operators preconfigured
+        vm.startPrank(maliciousActor);
+        prot.claimScope("foo");
+        prot.addOperator("foo", address(4));
+        vm.expectRevert("not allowed");
+        prot.transferScopeOwnership("foo", address(0));
+    }
+
     function testUserAssignNFT() public {
         uint256 testBaseNFTTokenId = testBaseNFT.mint(userAddress);
 

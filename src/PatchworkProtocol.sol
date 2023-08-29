@@ -46,6 +46,7 @@ contract PatchworkProtocol {
     function transferScopeOwnership(string calldata scopeName, address newOwner) public {
         Scope storage s = _scopes[scopeName];
         require(msg.sender == s.owner, "not authorized");
+        require(newOwner != address(0), "not allowed");
         s.owner = newOwner;
     }
 
