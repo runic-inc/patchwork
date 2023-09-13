@@ -705,7 +705,7 @@ contract PatchworkProtocolTest is Test {
         assertEq(user2Address, testFragmentLiteRefNFT.ownerOf(fragment2));
     }
 
-    function testSpoofedTransfers() public {
+    function testSpoofedTransfer1() public {
         vm.startPrank(scopeOwner);
         // create a patchworkliteref but manually put in an entry that isn't assigned to it (spoof ownership)
         uint256 fragment1 = testFragmentLiteRefNFT.mint(userAddress);
@@ -717,6 +717,21 @@ contract PatchworkProtocolTest is Test {
         vm.stopPrank();
         vm.prank(userAddress);
         vm.expectRevert("data integrity error");
+        testFragmentLiteRefNFT.transferFrom(userAddress, user2Address, fragment1);
+    }
+
+    function testSpoofedTransfer2() public {
+        vm.startPrank(scopeOwner);
+        // create a patchworkliteref but manually put in an entry that isn't assigned to it (spoof ownership)
+        uint256 fragment1 = testFragmentLiteRefNFT.mint(userAddress);
+        uint256 testBaseNFTTokenId = testBaseNFT.mint(userAddress);
+        testFragmentLiteRefNFT.registerReferenceAddress(address(testBaseNFT));
+        uint64 ref = testFragmentLiteRefNFT.getLiteReference(address(testBaseNFT), testBaseNFTTokenId);
+        testFragmentLiteRefNFT.addReference(fragment1, ref);
+        // Should revert with data integrity error
+        vm.stopPrank();
+        vm.prank(userAddress);
+        vm.expectRevert("assigned 721 not patchwork assignable");
         testFragmentLiteRefNFT.transferFrom(userAddress, user2Address, fragment1);
     }
 }
