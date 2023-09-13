@@ -301,20 +301,25 @@ contract PatchworkProtocol {
             (address[] memory addresses, uint256[] memory tokenIds) = liteRefNFT.loadAllReferences(tokenId);
             for (uint i = 0; i < addresses.length; i++) {
                 if (addresses[i] != address(0)) {
-                    _applyAssignedTransfer(addresses[i], from, to, tokenIds[i]);
+                    _applyAssignedTransfer(addresses[i], from, to, tokenIds[i], nft, tokenId);
                 }
             }
         }
     }
 
-    function _applyAssignedTransfer(address nft, address from, address to, uint256 tokenId) internal {
+    function _applyAssignedTransfer(address nft, address from, address to, uint256 tokenId, address assignedToNFT_, uint256 assignedToTokenId_) internal {
+        require(IERC165(nft).supportsInterface(IPATCHWORKASSIGNABLENFT_INTERFACE), "assigned 721 not patchwork assignable");
+        (address assignedToNFT, uint256 assignedToTokenId) = IPatchworkAssignableNFT(nft).getAssignedTo(tokenId);
+        // 2-way Check the assignment to prevent spoofing
+        require(assignedToNFT_ == assignedToNFT && assignedToTokenId_ == assignedToTokenId, "data integrity error");
         IPatchworkAssignableNFT(nft).onAssignedTransfer(from, to, tokenId);
         if (IERC165(nft).supportsInterface(IPATCHWORKLITEREF_INTERFACE)) {
+            address nft_ = nft; // local variable prevents optimizer stack issue in v0.8.18
             IPatchworkLiteRef liteRefNFT = IPatchworkLiteRef(nft);
             (address[] memory addresses, uint256[] memory tokenIds) = liteRefNFT.loadAllReferences(tokenId);
             for (uint i = 0; i < addresses.length; i++) {
                 if (addresses[i] != address(0)) {
-                    _applyAssignedTransfer(addresses[i], from, to, tokenIds[i]);
+                    _applyAssignedTransfer(addresses[i], from, to, tokenIds[i], nft_, tokenId);
                 }
             }
         }
