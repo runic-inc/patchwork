@@ -24,9 +24,92 @@ contract PatchworkProtocol {
 
     mapping(string => Scope) _scopes;
 
+    /**
+    @notice Emitted when a fragment is assigned
+    @param owner The owner of the target and fragment
+    @param fragmentAddress The address of the fragment's contract
+    @param fragmentTokenId The tokenId of the fragment
+    @param targetAddress The address of the target's contract
+    @param targetTokenId The tokenId of the target
+    */
     event Assign(address indexed owner, address fragmentAddress, uint256 fragmentTokenId, address indexed targetAddress, uint256 indexed targetTokenId);
+
+    /**
+    @notice Emitted when a fragment is unassigned
+    @param owner The owner of the fragment
+    @param fragmentAddress The address of the fragment's contract
+    @param fragmentTokenId The tokenId of the fragment
+    @param targetAddress The address of the target's contract
+    @param targetTokenId The tokenId of the target
+    */
     event Unassign(address indexed owner, address fragmentAddress, uint256 fragmentTokenId, address indexed targetAddress, uint256 indexed targetTokenId);
+
+    /**
+    @notice Emitted when a patch is minted
+    @param owner The owner of the patch
+    @param originalAddress The address of the original NFT's contract
+    @param originalTokenId The tokenId of the original NFT
+    @param patchAddress The address of the patch's contract
+    @param patchTokenId The tokenId of the patch
+    */
     event Patch(address indexed owner, address originalAddress, uint256 originalTokenId, address indexed patchAddress, uint256 indexed patchTokenId);
+
+    /**
+    @notice Emitted when a new scope is claimed
+    @param scopeName The name of the claimed scope
+    @param owner The owner of the scope
+    */
+    event ScopeClaim(string indexed scopeName, address indexed owner);
+
+    /**
+    @notice Emitted when a scope is transferred
+    @param scopeName The name of the transferred scope
+    @param from The address transferring the scope
+    @param to The recipient of the scope
+    */
+    event ScopeTransfer(string indexed scopeName, address indexed from, address indexed to);
+
+    /**
+    @notice Emitted when a scope has an operator added
+    @param scopeName The name of the scope
+    @param actor The address responsible for the action
+    @param operator The new operator's address
+    */
+    event ScopeAddOperator(string indexed scopeName, address indexed actor, address indexed operator);
+
+    /**
+    @notice Emitted when a scope has an operator removed
+    @param scopeName The name of the scope
+    @param actor The address responsible for the action
+    @param operator The operator's address being removed
+    */
+    event ScopeRemoveOperator(string indexed scopeName, address indexed actor, address indexed operator);
+
+    /**
+    @notice Emitted when a scope's rules are changed
+    @param scopeName The name of the scope
+    @param actor The address responsible for the action
+    @param allowUserPatch Indicates whether user patches are allowed
+    @param allowUserAssign Indicates whether user assignments are allowed
+    @param requireWhitelist Indicates whether a whitelist is required
+    */
+    event ScopeRuleChange(string indexed scopeName, address indexed actor, bool allowUserPatch, bool allowUserAssign, bool requireWhitelist);
+
+    /**
+    @notice Emitted when a scope has an address added to the whitelist
+    @param scopeName The name of the scope
+    @param actor The address responsible for the action
+    @param addr The address being added to the whitelist
+    */
+    event ScopeWhitelistAdd(string indexed scopeName, address indexed actor, address indexed addr);
+
+    /**
+    @notice Emitted when a scope has an address removed from the whitelist
+    @param scopeName The name of the scope
+    @param actor The address responsible for the action
+    @param addr The address being removed from the whitelist
+    */
+    event ScopeWhitelistRemove(string indexed scopeName, address indexed actor, address indexed addr);
 
     /**
     @notice Claim a scope
@@ -36,6 +119,8 @@ contract PatchworkProtocol {
         Scope storage s = _scopes[scopeName];
         require(s.owner == address(0), "scope already exists");
         s.owner = msg.sender;
+        // s.requireWhitelist = true; // better security by default - enable in future PR
+        emit ScopeClaim(scopeName, msg.sender);
     }
 
     /**
@@ -48,6 +133,7 @@ contract PatchworkProtocol {
         require(msg.sender == s.owner, "not authorized");
         require(newOwner != address(0), "not allowed");
         s.owner = newOwner;
+        emit ScopeTransfer(scopeName, msg.sender, newOwner);
     }
 
     /**
@@ -68,6 +154,7 @@ contract PatchworkProtocol {
         Scope storage s = _scopes[scopeName];
         require(msg.sender == s.owner, "not authorized");
         s.operators[op] = true;
+        emit ScopeAddOperator(scopeName, msg.sender, op);
     }
 
     /**
@@ -79,6 +166,7 @@ contract PatchworkProtocol {
         Scope storage s = _scopes[scopeName];
         require(msg.sender == s.owner, "not authorized");
         s.operators[op] = false;
+        emit ScopeRemoveOperator(scopeName, msg.sender, op);
     }
 
     /**
@@ -94,6 +182,7 @@ contract PatchworkProtocol {
         s.allowUserPatch = allowUserPatch;
         s.allowUserAssign = allowUserAssign;
         s.requireWhitelist = requireWhitelist;
+        emit ScopeRuleChange(scopeName, msg.sender, allowUserPatch, allowUserAssign, requireWhitelist);
     }
 
     /**
@@ -105,6 +194,7 @@ contract PatchworkProtocol {
         Scope storage s = _scopes[scopeName];
         require(msg.sender == s.owner || s.operators[msg.sender], "not authorized");
         s.whitelist[addr] = true;
+        emit ScopeWhitelistAdd(scopeName, msg.sender, addr);
     }
 
     /**
@@ -116,6 +206,7 @@ contract PatchworkProtocol {
         Scope storage s = _scopes[scopeName];
         require(msg.sender == s.owner || s.operators[msg.sender], "not authorized");
         s.whitelist[addr] = false;
+        emit ScopeWhitelistRemove(scopeName, msg.sender, addr);
     }
 
     /**
@@ -184,8 +275,9 @@ contract PatchworkProtocol {
             revert("not authorized");
         }
         IPatchworkLiteRef targetLiteRefInterface = IPatchworkLiteRef(target);
-        uint64 ref = targetLiteRefInterface.getLiteReference(fragment, fragmentTokenId);
+        (uint64 ref, bool redacted) = targetLiteRefInterface.getLiteReference(fragment, fragmentTokenId);
         require(ref != 0, "unregistered fragment");
+        require(!redacted, "redacted fragment");
         require(!scope.liteRefs[ref], "already assigned in this scope");
         // call assign on the fragment
         assignableNFT.assign(fragmentTokenId, target, targetTokenId);
@@ -219,7 +311,7 @@ contract PatchworkProtocol {
         (address target, uint256 targetTokenId) = IPatchworkAssignableNFT(fragment).getAssignedTo(fragmentTokenId);
         require(target != address(0), "not assigned");
         assignableNFT.unassign(fragmentTokenId);
-        uint64 ref = IPatchworkLiteRef(target).getLiteReference(fragment, fragmentTokenId);
+        (uint64 ref, ) = IPatchworkLiteRef(target).getLiteReference(fragment, fragmentTokenId);
         require(ref != 0, "unregistered fragment");
         require(scope.liteRefs[ref], "ref not found in scope");
         scope.liteRefs[ref] = false;
@@ -264,8 +356,9 @@ contract PatchworkProtocol {
             } else {
                 revert("not authorized");
             }
-            uint64 ref = targetLiteRefInterface.getLiteReference(fragment, fragmentTokenId);
+            (uint64 ref, bool redacted) = targetLiteRefInterface.getLiteReference(fragment, fragmentTokenId);
             require(ref != 0, "unregistered fragment");
+            require(!redacted, "redacted fragment");
             require(!scope.liteRefs[ref], "already assigned in this scope");
             refs[i] = ref;
             // call assign on the fragment

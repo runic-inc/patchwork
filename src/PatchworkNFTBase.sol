@@ -5,8 +5,9 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "./PatchworkNFTInterface.sol";
 import "./PatchworkProtocol.sol";
+import "./IERC4906.sol";
 
-abstract contract PatchworkNFT is ERC721, IPatchworkNFT {
+abstract contract PatchworkNFT is ERC721, IPatchworkNFT, IERC4906 {
     string _scopeName;
     address _owner;
     address _manager;
@@ -50,25 +51,27 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT {
     function setPermissions(address to, uint256 permissions) public virtual {
         require(_checkWriteAuth(), "not authorized");
         _permissionsAllow[to] = permissions;
+        emit PermissionChange(to, permissions);
     }
 
-    function supportsInterface(bytes4 interfaceID) public view virtual override returns (bool) {
+    function supportsInterface(bytes4 interfaceID) public view virtual override(ERC721, IERC165) returns (bool) {
         return interfaceID == IPATCHWORKNFT_INTERFACE ||  //PatchworkNFTInterface id
             ERC721.supportsInterface(interfaceID) ||
-            interfaceID == type(IERC5192).interfaceId;
+            interfaceID == type(IERC5192).interfaceId ||
+            interfaceID == type(IERC4906).interfaceId;        
     }
 
-    function transferFrom(address from, address to, uint256 tokenId) public virtual override {
+    function transferFrom(address from, address to, uint256 tokenId) public virtual override(ERC721, IERC721) {
         PatchworkProtocol(_manager).applyTransfer(from, to, tokenId);
         super.transferFrom(from, to, tokenId);
     }
 
-    function safeTransferFrom(address from, address to, uint256 tokenId) public virtual override {
+    function safeTransferFrom(address from, address to, uint256 tokenId) public virtual override(ERC721, IERC721) {
         PatchworkProtocol(_manager).applyTransfer(from, to, tokenId);
         super.safeTransferFrom(from, to, tokenId);
     }
 
-    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public virtual override {
+    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public virtual override(ERC721, IERC721) {
         PatchworkProtocol(_manager).applyTransfer(from, to, tokenId);
         super.safeTransferFrom(from, to, tokenId, data);
     }
@@ -141,7 +144,7 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT {
     function setFrozen(uint256 tokenId, bool frozen_) public virtual {
         require(msg.sender == ownerOf(tokenId), "not authorized");
         bool _frozen = _freezes[tokenId];
-        if (!(_frozen && frozen_)) {
+        if (_frozen != frozen_) {
             if (frozen_) {
                 _freezes[tokenId] = true;
                 emit Frozen(tokenId);
@@ -166,7 +169,7 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT {
     function setLocked(uint256 tokenId, bool locked_) public virtual {
         require(msg.sender == ownerOf(tokenId), "not authorized");
         bool _locked = _locks[tokenId];
-        if (!(_locked && locked_)) {
+        if (_locked != locked_) {
             _locks[tokenId] = locked_;
             if (locked_) {
                 emit Locked(tokenId);
@@ -187,7 +190,7 @@ abstract contract PatchworkPatch is PatchworkNFT, IPatchworkPatch {
         return _scopeName;
     }
 
-    function ownerOf(uint256 tokenId) public view virtual override returns (address) {
+    function ownerOf(uint256 tokenId) public view virtual override(ERC721, IERC721) returns (address) {
         return IERC721(_patchedAddresses[tokenId]).ownerOf(_patchedTokenIds[tokenId]);
     }
 
@@ -271,7 +274,7 @@ abstract contract PatchworkFragment is PatchworkNFT, IPatchworkAssignableNFT {
         }
     }
 
-    function ownerOf(uint256 tokenId) public view virtual override returns (address) {
+    function ownerOf(uint256 tokenId) public view virtual override(ERC721, IERC721) returns (address) {
         // If assigned, it's owned by the assignment, otherwise normal owner
         Assignment storage assignment = _assignments[tokenId];
         if (assignment.tokenAddr != address(0)) {
@@ -348,13 +351,13 @@ abstract contract PatchworkLiteRef is IPatchworkLiteRef, ERC165 {
         _redactedReferenceIds[id] = false;
     }
 
-    function getLiteReference(address addr, uint256 tokenId) public virtual view returns (uint64 referenceAddress) {
+    function getLiteReference(address addr, uint256 tokenId) public virtual view returns (uint64 referenceAddress, bool redacted) {
         uint8 refId = _referenceAddressIds[addr];
         if (refId == 0) {
-            return 0;
+            return (0, false);
         }
         require(tokenId <= 0xFFFFFFFFFFFFFF, "unsupported tokenId");
-        return uint64(uint256(refId) << 56 | tokenId);
+        return (uint64(uint256(refId) << 56 | tokenId), _redactedReferenceIds[refId]);
     }
 
     function getReferenceAddressAndTokenId(uint64 referenceAddress) public virtual view returns (address addr, uint256 tokenId) {

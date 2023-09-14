@@ -378,7 +378,7 @@ contract PatchworkProtocolTest is Test {
 
         vm.expectRevert("unregistered fragment");
         prot.batchAssignNFT(fragmentAddresses, fragments, address(testPatchLiteRefNFT), patchTokenId);
-        testPatchLiteRefNFT.registerReferenceAddress(address(testFragmentLiteRefNFT));
+        uint8 refId = testPatchLiteRefNFT.registerReferenceAddress(address(testFragmentLiteRefNFT));
 
         vm.stopPrank();
         vm.prank(userAddress);
@@ -412,6 +412,14 @@ contract PatchworkProtocolTest is Test {
         prot.batchAssignNFT(fragmentAddresses, fragments, address(testPatchLiteRefNFT), patchTokenId);
         vm.prank(userAddress);
         testFragmentLiteRefNFT.setFrozen(fragments[0], false);
+
+        vm.prank(scopeOwner);
+        testPatchLiteRefNFT.redactReferenceAddress(refId);
+        vm.expectRevert("redacted fragment");
+        vm.prank(scopeOwner);
+        prot.batchAssignNFT(fragmentAddresses, fragments, address(testPatchLiteRefNFT), patchTokenId);
+        vm.prank(scopeOwner);
+        testPatchLiteRefNFT.unredactReferenceAddress(refId);
 
         address[] memory selfAddr = new address[](1);
         uint256[] memory selfFrag = new uint256[](1);
@@ -711,7 +719,7 @@ contract PatchworkProtocolTest is Test {
         uint256 fragment1 = testFragmentLiteRefNFT.mint(userAddress);
         uint256 fragment2 = testFragmentLiteRefNFT.mint(userAddress);
         testFragmentLiteRefNFT.registerReferenceAddress(address(testFragmentLiteRefNFT));
-        uint64 ref = testFragmentLiteRefNFT.getLiteReference(address(testFragmentLiteRefNFT), fragment2);
+        (uint64 ref, ) = testFragmentLiteRefNFT.getLiteReference(address(testFragmentLiteRefNFT), fragment2);
         testFragmentLiteRefNFT.addReference(fragment1, ref);
         // Should revert with data integrity error
         vm.stopPrank();
@@ -726,7 +734,7 @@ contract PatchworkProtocolTest is Test {
         uint256 fragment1 = testFragmentLiteRefNFT.mint(userAddress);
         uint256 testBaseNFTTokenId = testBaseNFT.mint(userAddress);
         testFragmentLiteRefNFT.registerReferenceAddress(address(testBaseNFT));
-        uint64 ref = testFragmentLiteRefNFT.getLiteReference(address(testBaseNFT), testBaseNFTTokenId);
+        (uint64 ref, ) = testFragmentLiteRefNFT.getLiteReference(address(testBaseNFT), testBaseNFTTokenId);
         testFragmentLiteRefNFT.addReference(fragment1, ref);
         // Should revert with data integrity error
         vm.stopPrank();
