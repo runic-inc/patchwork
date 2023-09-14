@@ -49,6 +49,7 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT {
     function setPermissions(address to, uint256 permissions) public virtual {
         require(_checkWriteAuth(), "not authorized");
         _permissionsAllow[to] = permissions;
+        emit PermissionChange(to, permissions);
     }
 
     function supportsInterface(bytes4 interfaceID) public view virtual override returns (bool) {

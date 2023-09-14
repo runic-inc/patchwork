@@ -66,13 +66,24 @@ bytes4 constant IPATCHWORKLITEREF_INTERFACE = 0x0c790993;
 @notice Interface for contracts supporting Patchwork metadata standard
 */
 interface IPatchworkNFT is PatchworkNFTInterfaceMeta, IERC5192 {
-    /// @notice Emitted when the freeze status is changed to frozen.
-    /// @param tokenId The identifier for a token.
+    /**
+    @notice Emitted when the freeze status is changed to frozen.
+    @param tokenId The identifier for a token.
+    */
     event Frozen(uint256 tokenId);
 
-    /// @notice Emitted when the locking status is changed to not frozen.
-    /// @param tokenId The identifier for a token.
+    /**
+    @notice Emitted when the locking status is changed to not frozen.
+    @param tokenId The identifier for a token.
+    */
     event Thawed(uint256 tokenId);
+
+    /**
+    @notice Emitted when the permissions are changed for an NFT
+    @param to The address the permissions are assigned to
+    @param permissions The permissions
+    */
+    event PermissionChange(address indexed to, uint256 permissions);
 
     /**
     @notice Returns the name of the scope
@@ -123,7 +134,7 @@ interface IPatchworkNFT is PatchworkNFTInterfaceMeta, IERC5192 {
     */
     function getFreezeNonce(uint256 tokenId) external returns (uint256 nonce);
 
-     /**
+    /**
     @notice Sets the freeze status of a token
     @param tokenId ID of the token
     @param frozen Freeze status to set
