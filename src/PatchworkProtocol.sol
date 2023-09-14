@@ -184,8 +184,9 @@ contract PatchworkProtocol {
             revert("not authorized");
         }
         IPatchworkLiteRef targetLiteRefInterface = IPatchworkLiteRef(target);
-        uint64 ref = targetLiteRefInterface.getLiteReference(fragment, fragmentTokenId);
+        (uint64 ref, bool redacted) = targetLiteRefInterface.getLiteReference(fragment, fragmentTokenId);
         require(ref != 0, "unregistered fragment");
+        require(!redacted, "redacted fragment");
         require(!scope.liteRefs[ref], "already assigned in this scope");
         // call assign on the fragment
         assignableNFT.assign(fragmentTokenId, target, targetTokenId);
@@ -219,7 +220,7 @@ contract PatchworkProtocol {
         (address target, uint256 targetTokenId) = IPatchworkAssignableNFT(fragment).getAssignedTo(fragmentTokenId);
         require(target != address(0), "not assigned");
         assignableNFT.unassign(fragmentTokenId);
-        uint64 ref = IPatchworkLiteRef(target).getLiteReference(fragment, fragmentTokenId);
+        (uint64 ref, ) = IPatchworkLiteRef(target).getLiteReference(fragment, fragmentTokenId);
         require(ref != 0, "unregistered fragment");
         require(scope.liteRefs[ref], "ref not found in scope");
         scope.liteRefs[ref] = false;
@@ -264,8 +265,9 @@ contract PatchworkProtocol {
             } else {
                 revert("not authorized");
             }
-            uint64 ref = targetLiteRefInterface.getLiteReference(fragment, fragmentTokenId);
+            (uint64 ref, bool redacted) = targetLiteRefInterface.getLiteReference(fragment, fragmentTokenId);
             require(ref != 0, "unregistered fragment");
+            require(!redacted, "redacted fragment");
             require(!scope.liteRefs[ref], "already assigned in this scope");
             refs[i] = ref;
             // call assign on the fragment

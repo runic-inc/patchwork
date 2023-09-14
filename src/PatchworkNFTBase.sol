@@ -346,13 +346,13 @@ abstract contract PatchworkLiteRef is IPatchworkLiteRef {
         _redactedReferenceIds[id] = false;
     }
 
-    function getLiteReference(address addr, uint256 tokenId) public virtual view returns (uint64 referenceAddress) {
+    function getLiteReference(address addr, uint256 tokenId) public virtual view returns (uint64 referenceAddress, bool redacted) {
         uint8 refId = _referenceAddressIds[addr];
         if (refId == 0) {
-            return 0;
+            return (0, false);
         }
         require(tokenId <= 0xFFFFFFFFFFFFFF, "unsupported tokenId");
-        return uint64(uint256(refId) << 56 | tokenId);
+        return (uint64(uint256(refId) << 56 | tokenId), _redactedReferenceIds[refId]);
     }
 
     function getReferenceAddressAndTokenId(uint64 referenceAddress) public virtual view returns (address addr, uint256 tokenId) {
