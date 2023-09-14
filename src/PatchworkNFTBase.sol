@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "./PatchworkNFTInterface.sol";
 import "./PatchworkProtocol.sol";
 import "./IERC4906.sol";
@@ -310,7 +311,7 @@ abstract contract PatchworkFragment is PatchworkNFT, IPatchworkAssignableNFT {
     function patchworkCompatible_() external pure returns (bytes2) {}
 }
 
-abstract contract PatchworkLiteRef is IPatchworkLiteRef {
+abstract contract PatchworkLiteRef is IPatchworkLiteRef, ERC165 {
     mapping(uint8 => address) _referenceAddresses;
     mapping(address => uint8) _referenceAddressIds;
     mapping(uint8 => bool) _redactedReferenceIds;
@@ -323,8 +324,9 @@ abstract contract PatchworkLiteRef is IPatchworkLiteRef {
     function _checkWriteAuth() internal virtual returns (bool allow);
 
     // ERC-165
-    function supportsInterface(bytes4 interfaceID) public view virtual returns (bool) {
-        return interfaceID == IPATCHWORKLITEREF_INTERFACE;  //PatchworkLiteReferenceInterface interface id            
+    function supportsInterface(bytes4 interfaceID) public view virtual override returns (bool) {
+        return interfaceID == IPATCHWORKLITEREF_INTERFACE ||
+            ERC165.supportsInterface(interfaceID);
     }
 
     // Register the artifact and other NFTs that we want assignable to this for composition or consumption
