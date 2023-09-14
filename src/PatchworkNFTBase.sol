@@ -4,8 +4,9 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./PatchworkNFTInterface.sol";
 import "./PatchworkProtocol.sol";
+import "./IERC4906.sol";
 
-abstract contract PatchworkNFT is ERC721, IPatchworkNFT {
+abstract contract PatchworkNFT is ERC721, IPatchworkNFT, IERC4906 {
     string _scopeName;
     address _owner;
     address _manager;
@@ -51,23 +52,24 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT {
         _permissionsAllow[to] = permissions;
     }
 
-    function supportsInterface(bytes4 interfaceID) public view virtual override returns (bool) {
+    function supportsInterface(bytes4 interfaceID) public view virtual override(ERC721, IERC165) returns (bool) {
         return interfaceID == IPATCHWORKNFT_INTERFACE ||  //PatchworkNFTInterface id
             ERC721.supportsInterface(interfaceID) ||
-            interfaceID == type(IERC5192).interfaceId;        
+            interfaceID == type(IERC5192).interfaceId ||
+            interfaceID == type(IERC4906).interfaceId;        
     }
 
-    function transferFrom(address from, address to, uint256 tokenId) public virtual override {
+    function transferFrom(address from, address to, uint256 tokenId) public virtual override(ERC721, IERC721) {
         PatchworkProtocol(_manager).applyTransfer(from, to, tokenId);
         super.transferFrom(from, to, tokenId);
     }
 
-    function safeTransferFrom(address from, address to, uint256 tokenId) public virtual override {
+    function safeTransferFrom(address from, address to, uint256 tokenId) public virtual override(ERC721, IERC721) {
         PatchworkProtocol(_manager).applyTransfer(from, to, tokenId);
         super.safeTransferFrom(from, to, tokenId);
     }
 
-    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public virtual override {
+    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public virtual override(ERC721, IERC721) {
         PatchworkProtocol(_manager).applyTransfer(from, to, tokenId);
         super.safeTransferFrom(from, to, tokenId, data);
     }
@@ -186,7 +188,7 @@ abstract contract PatchworkPatch is PatchworkNFT, IPatchworkPatch {
         return _scopeName;
     }
 
-    function ownerOf(uint256 tokenId) public view virtual override returns (address) {
+    function ownerOf(uint256 tokenId) public view virtual override(ERC721, IERC721) returns (address) {
         return IERC721(_patchedAddresses[tokenId]).ownerOf(_patchedTokenIds[tokenId]);
     }
 
@@ -270,7 +272,7 @@ abstract contract PatchworkFragment is PatchworkNFT, IPatchworkAssignableNFT {
         }
     }
 
-    function ownerOf(uint256 tokenId) public view virtual override returns (address) {
+    function ownerOf(uint256 tokenId) public view virtual override(ERC721, IERC721) returns (address) {
         // If assigned, it's owned by the assignment, otherwise normal owner
         Assignment storage assignment = _assignments[tokenId];
         if (assignment.tokenAddr != address(0)) {
