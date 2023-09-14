@@ -143,7 +143,7 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT, IERC4906 {
     function setFrozen(uint256 tokenId, bool frozen_) public virtual {
         require(msg.sender == ownerOf(tokenId), "not authorized");
         bool _frozen = _freezes[tokenId];
-        if (!(_frozen && frozen_)) {
+        if (_frozen != frozen_) {
             if (frozen_) {
                 _freezes[tokenId] = true;
                 emit Frozen(tokenId);
@@ -168,7 +168,7 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT, IERC4906 {
     function setLocked(uint256 tokenId, bool locked_) public virtual {
         require(msg.sender == ownerOf(tokenId), "not authorized");
         bool _locked = _locks[tokenId];
-        if (!(_locked && locked_)) {
+        if (_locked != locked_) {
             _locks[tokenId] = locked_;
             if (locked_) {
                 emit Locked(tokenId);
