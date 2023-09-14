@@ -293,8 +293,9 @@ interface IPatchworkLiteRef {
     @param addr Address to get reference for
     @param tokenId ID of the token
     @return liteRef Lite reference
+    @return redacted Redacted status
     */
-    function getLiteReference(address addr, uint256 tokenId) external view returns (uint64 liteRef);
+    function getLiteReference(address addr, uint256 tokenId) external view returns (uint64 liteRef, bool redacted);
 
     /**
     @notice Returns an address and token ID for a given lite reference

@@ -279,11 +279,11 @@ contract PatchworkNFTBaseTest is Test {
     function testReferenceAddresses() public {
         vm.expectRevert("not authorized");
         uint8 refIdx = testPatchLiteRefNFT.registerReferenceAddress(address(testFragmentLiteRefNFT));
-        uint64 ref = testPatchLiteRefNFT.getLiteReference(address(testFragmentLiteRefNFT), 1);
+        (uint64 ref, bool redacted) = testPatchLiteRefNFT.getLiteReference(address(testFragmentLiteRefNFT), 1);
         assertEq(0, ref);
         vm.prank(scopeOwner);
         refIdx = testPatchLiteRefNFT.registerReferenceAddress(address(testFragmentLiteRefNFT));
-        ref = testPatchLiteRefNFT.getLiteReference(address(testFragmentLiteRefNFT), 1);
+        (ref, redacted) = testPatchLiteRefNFT.getLiteReference(address(testFragmentLiteRefNFT), 1);
         (address refAddr, uint256 tokenId) = testPatchLiteRefNFT.getReferenceAddressAndTokenId(ref);
         assertEq(address(testFragmentLiteRefNFT), refAddr);
         assertEq(1, tokenId);
@@ -317,14 +317,21 @@ contract PatchworkNFTBaseTest is Test {
         vm.expectRevert("not authorized");
         testFragmentLiteRefNFT.unassign(fragmentTokenId);
 
+        uint256 newFrag = testFragmentLiteRefNFT.mint(userAddress);
         vm.expectRevert("not authorized");
         testPatchLiteRefNFT.redactReferenceAddress(refIdx);
         vm.prank(scopeOwner);
         testPatchLiteRefNFT.redactReferenceAddress(refIdx);
+        vm.expectRevert("redacted fragment");
+        vm.prank(scopeOwner);
+        prot.assignNFT(address(testFragmentLiteRefNFT), newFrag, address(testPatchLiteRefNFT), patchTokenId);
+        
         vm.expectRevert("not authorized");
         testPatchLiteRefNFT.unredactReferenceAddress(refIdx);
         vm.prank(scopeOwner);
         testPatchLiteRefNFT.unredactReferenceAddress(refIdx);
+        vm.prank(scopeOwner);
+        prot.assignNFT(address(testFragmentLiteRefNFT), newFrag, address(testPatchLiteRefNFT), patchTokenId);
     }
 
     function testReferenceAddressErrors() public {
@@ -356,8 +363,10 @@ contract PatchworkNFTBaseTest is Test {
     function testLiteref56bitlimit() public {
         vm.prank(scopeOwner);
         uint8 r1 = testFragmentLiteRefNFT.registerReferenceAddress(address(1));
-        assertEq((uint256(r1) << 56) + 1, testFragmentLiteRefNFT.getLiteReference(address(1), 1));
-        assertEq((uint256(r1) << 56) + 0xFFFFFFFFFFFFFF, testFragmentLiteRefNFT.getLiteReference(address(1), 0xFFFFFFFFFFFFFF));
+        (uint64 ref, bool redacted) = testFragmentLiteRefNFT.getLiteReference(address(1), 1);
+        assertEq((uint256(r1) << 56) + 1, ref);
+        (ref, redacted) = testFragmentLiteRefNFT.getLiteReference(address(1), 0xFFFFFFFFFFFFFF);
+        assertEq((uint256(r1) << 56) + 0xFFFFFFFFFFFFFF, ref);
         vm.expectRevert("unsupported tokenId");
         testFragmentLiteRefNFT.getLiteReference(address(1), 1 << 56);
     }

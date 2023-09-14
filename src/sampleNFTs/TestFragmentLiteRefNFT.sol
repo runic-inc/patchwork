@@ -220,9 +220,9 @@ contract TestFragmentLiteRefNFT is PatchworkFragment, PatchworkLiteRef {
     }
 
     // Testing overrides
-    function getLiteReference(address addr, uint256 tokenId) public virtual override view returns (uint64 referenceAddress) {
+    function getLiteReference(address addr, uint256 tokenId) public virtual override view returns (uint64 referenceAddress, bool redacted) {
         if (_getLiteRefOverrideSet) {
-            return _getLiteRefOverride;
+            return (_getLiteRefOverride, false);
         }
         return super.getLiteReference(addr, tokenId);
     }
