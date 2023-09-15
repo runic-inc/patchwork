@@ -22,7 +22,7 @@ contract PatchworkProtocol {
         mapping(bytes32 => bool) uniquePatches;
     }
 
-    mapping(string => Scope) _scopes;
+    mapping(string => Scope) private _scopes;
 
     /**
     @notice Emitted when a fragment is assigned

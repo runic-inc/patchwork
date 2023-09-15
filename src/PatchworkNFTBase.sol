@@ -8,14 +8,14 @@ import "./PatchworkProtocol.sol";
 import "./IERC4906.sol";
 
 abstract contract PatchworkNFT is ERC721, IPatchworkNFT, IERC4906 {
-    string _scopeName;
-    address _owner;
-    address _manager;
-    mapping(address => uint256) _permissionsAllow;
-    mapping(uint256 => uint256[]) _metadataStorage;
-    mapping(uint256 => uint256) _freezeNonces;
-    mapping(uint256 => bool) _freezes;
-    mapping(uint256 => bool) _locks;
+    string internal _scopeName;
+    address internal _owner;
+    address internal _manager;
+    mapping(address => uint256) internal _permissionsAllow;
+    mapping(uint256 => uint256[]) internal _metadataStorage;
+    mapping(uint256 => uint256) internal _freezeNonces;
+    mapping(uint256 => bool) internal _freezes;
+    mapping(uint256 => bool) internal _locks;
 
     constructor(string memory scopeName_, string memory name_, string memory symbol_, address owner_, address manager_) ERC721(name_, symbol_) {
         _scopeName = scopeName_;
@@ -183,8 +183,8 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT, IERC4906 {
 // A Patch is a soul-bound contract which patches an existing NFT. 
 // It may not be transferred and may not be assignable.
 abstract contract PatchworkPatch is PatchworkNFT, IPatchworkPatch {
-    mapping(uint256 => address) _patchedAddresses;
-    mapping(uint256 => uint256) _patchedTokenIds;
+    mapping(uint256 => address) internal _patchedAddresses;
+    mapping(uint256 => uint256) internal _patchedTokenIds;
 
     function getScopeName() public view virtual override(PatchworkNFT, IPatchworkPatch) returns (string memory) {
         return _scopeName;
@@ -234,7 +234,7 @@ abstract contract PatchworkFragment is PatchworkNFT, IPatchworkAssignableNFT {
     }
 
     // token IDs to assignments
-    mapping(uint256 => Assignment) _assignments;
+    mapping(uint256 => Assignment) internal _assignments;
 
     function getScopeName() public view virtual override (IPatchworkAssignableNFT, PatchworkNFT) returns (string memory) {
         return _scopeName;
@@ -312,10 +312,10 @@ abstract contract PatchworkFragment is PatchworkNFT, IPatchworkAssignableNFT {
 }
 
 abstract contract PatchworkLiteRef is IPatchworkLiteRef, ERC165 {
-    mapping(uint8 => address) _referenceAddresses;
-    mapping(address => uint8) _referenceAddressIds;
-    mapping(uint8 => bool) _redactedReferenceIds;
-    uint8 _nextReferenceId;
+    mapping(uint8 => address) internal _referenceAddresses;
+    mapping(address => uint8) internal _referenceAddressIds;
+    mapping(uint8 => bool) internal _redactedReferenceIds;
+    uint8 internal _nextReferenceId;
 
     constructor() {
         _nextReferenceId = 1; // Start at 1 so we can identify if we already have one registered
