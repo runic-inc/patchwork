@@ -70,13 +70,13 @@ interface IPatchworkNFT is PatchworkNFTInterfaceMeta, IERC5192 {
     @notice Emitted when the freeze status is changed to frozen.
     @param tokenId The identifier for a token.
     */
-    event Frozen(uint256 tokenId);
+    event Frozen(uint256 indexed tokenId);
 
     /**
     @notice Emitted when the locking status is changed to not frozen.
     @param tokenId The identifier for a token.
     */
-    event Thawed(uint256 tokenId);
+    event Thawed(uint256 indexed tokenId);
 
     /**
     @notice Emitted when the permissions are changed for an NFT
