@@ -20,12 +20,14 @@ contract PatchworkProtocolTest is Test {
     TestFragmentLiteRefNFT testFragmentLiteRefNFT;
 
     string scopeName;
+    address defaultUser;
     address patchworkOwner; 
     address userAddress;
     address user2Address;
     address scopeOwner;
 
     function setUp() public {
+        defaultUser = 0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496;
         patchworkOwner = 0xF09CFF10D85E70D5AA94c85ebBEbD288756EFEd5;
         userAddress = 0x10E4017cEd8648A9D5dAc21C82589C03C4835CCc;
         user2Address = address(550001);
@@ -50,32 +52,32 @@ contract PatchworkProtocolTest is Test {
         vm.startPrank(scopeOwner);
         prot.claimScope(scopeName);
         assertEq(prot.getScopeOwner(scopeName), scopeOwner);
-        vm.expectRevert("scope already exists");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.ScopeExists.selector, scopeName));
         prot.claimScope(scopeName);
         vm.stopPrank();
-        vm.expectRevert("not authorized");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotAuthorized.selector, defaultUser));
         prot.transferScopeOwnership(scopeName, address(2));
         vm.prank(scopeOwner);
         prot.transferScopeOwnership(scopeName, address(2));
         assertEq(prot.getScopeOwner(scopeName), address(2));
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotAuthorized.selector, scopeOwner));
         vm.prank(scopeOwner);
-        vm.expectRevert("not authorized");
         prot.transferScopeOwnership(scopeName, address(2));
         vm.prank(address(2));
         prot.transferScopeOwnership(scopeName, scopeOwner);
         assertEq(prot.getScopeOwner(scopeName), scopeOwner);
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotAuthorized.selector, address(2)));
         vm.prank(address(2));
-        vm.expectRevert("not authorized");
         prot.addOperator(scopeName, address(2));
         vm.prank(scopeOwner);
         prot.addOperator(scopeName, address(2));
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotAuthorized.selector, address(2)));
         vm.prank(address(2));
-        vm.expectRevert("not authorized");
         prot.removeOperator(scopeName, address(2));
         vm.prank(scopeOwner);
         prot.removeOperator(scopeName, address(2));
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotAuthorized.selector, address(2)));
         vm.prank(address(2));
-        vm.expectRevert("not authorized");
         prot.setScopeRules(scopeName, true, true, true);
     }
 
@@ -101,8 +103,8 @@ contract PatchworkProtocolTest is Test {
         prot.claimScope(scopeName);
         prot.setScopeRules(scopeName, false, false, true);
         vm.stopPrank();
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotAuthorized.selector, userAddress));
         vm.prank(userAddress);
-        vm.expectRevert("not authorized");
         prot.addWhitelist(scopeName, address(testPatchLiteRefNFT));
         vm.startPrank(scopeOwner);
         prot.addWhitelist(scopeName, address(testPatchLiteRefNFT));
@@ -110,8 +112,8 @@ contract PatchworkProtocolTest is Test {
         uint256 tokenId = prot.createPatch(address(testBaseNFT), testBaseNFTTokenId, address(testPatchLiteRefNFT));
         assertEq(tokenId, 0);
         vm.stopPrank();
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotAuthorized.selector, userAddress));
         vm.prank(userAddress);
-        vm.expectRevert("not authorized");
         prot.removeWhitelist(scopeName, address(testPatchLiteRefNFT));
         vm.startPrank(scopeOwner);
         prot.removeWhitelist(scopeName, address(testPatchLiteRefNFT));
@@ -226,7 +228,7 @@ contract PatchworkProtocolTest is Test {
         vm.startPrank(maliciousActor);
         prot.claimScope("foo");
         prot.addOperator("foo", address(4));
-        vm.expectRevert("not allowed");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.ScopeTransferNotAllowed.selector, address(0)));
         prot.transferScopeOwnership("foo", address(0));
     }
 

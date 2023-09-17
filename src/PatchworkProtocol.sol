@@ -11,6 +11,13 @@ import "./PatchworkNFTInterface.sol";
 */
 contract PatchworkProtocol {
 
+    error NotAuthorized(address addr);
+    error ScopeExists(string scopeName);
+    error ScopeDoesNotExist(string scopeName);
+    error ScopeTransferNotAllowed(address to);
+    error Frozen(address addr, uint256 tokenId);
+    error Locked(address addr, uint256 tokenId);
+
     struct Scope {
         address owner;
         bool allowUserPatch;
@@ -117,7 +124,9 @@ contract PatchworkProtocol {
     */
     function claimScope(string calldata scopeName) public {
         Scope storage s = _scopes[scopeName];
-        require(s.owner == address(0), "scope already exists");
+        if (s.owner != address(0)) {
+            revert ScopeExists(scopeName);
+        }
         s.owner = msg.sender;
         // s.requireWhitelist = true; // better security by default - enable in future PR
         emit ScopeClaim(scopeName, msg.sender);
@@ -130,8 +139,12 @@ contract PatchworkProtocol {
     */
     function transferScopeOwnership(string calldata scopeName, address newOwner) public {
         Scope storage s = _scopes[scopeName];
-        require(msg.sender == s.owner, "not authorized");
-        require(newOwner != address(0), "not allowed");
+        if (msg.sender != s.owner) {
+            revert NotAuthorized(msg.sender);
+        }
+        if (newOwner == address(0)) {
+            revert ScopeTransferNotAllowed(address(0));
+        }
         s.owner = newOwner;
         emit ScopeTransfer(scopeName, msg.sender, newOwner);
     }
@@ -152,7 +165,9 @@ contract PatchworkProtocol {
     */
     function addOperator(string calldata scopeName, address op) public {
         Scope storage s = _scopes[scopeName];
-        require(msg.sender == s.owner, "not authorized");
+        if (msg.sender != s.owner) {
+            revert NotAuthorized(msg.sender);
+        }
         s.operators[op] = true;
         emit ScopeAddOperator(scopeName, msg.sender, op);
     }
@@ -164,7 +179,9 @@ contract PatchworkProtocol {
     */
     function removeOperator(string calldata scopeName, address op) public {
         Scope storage s = _scopes[scopeName];
-        require(msg.sender == s.owner, "not authorized");
+        if (msg.sender != s.owner) {
+            revert NotAuthorized(msg.sender);
+        }
         s.operators[op] = false;
         emit ScopeRemoveOperator(scopeName, msg.sender, op);
     }
@@ -178,7 +195,9 @@ contract PatchworkProtocol {
     */
     function setScopeRules(string calldata scopeName, bool allowUserPatch, bool allowUserAssign, bool requireWhitelist) public {
         Scope storage s = _scopes[scopeName];
-        require(msg.sender == s.owner, "not authorized");
+        if (msg.sender != s.owner) {
+            revert NotAuthorized(msg.sender);
+        }
         s.allowUserPatch = allowUserPatch;
         s.allowUserAssign = allowUserAssign;
         s.requireWhitelist = requireWhitelist;
@@ -192,7 +211,9 @@ contract PatchworkProtocol {
     */
     function addWhitelist(string calldata scopeName, address addr) public {
         Scope storage s = _scopes[scopeName];
-        require(msg.sender == s.owner || s.operators[msg.sender], "not authorized");
+        if (msg.sender != s.owner && !s.operators[msg.sender]) {
+            revert NotAuthorized(msg.sender);
+        }
         s.whitelist[addr] = true;
         emit ScopeWhitelistAdd(scopeName, msg.sender, addr);
     }
@@ -204,7 +225,9 @@ contract PatchworkProtocol {
     */
     function removeWhitelist(string calldata scopeName, address addr) public {
         Scope storage s = _scopes[scopeName];
-        require(msg.sender == s.owner || s.operators[msg.sender], "not authorized");
+        if (msg.sender != s.owner && !s.operators[msg.sender]) {
+            revert NotAuthorized(msg.sender);
+        }
         s.whitelist[addr] = false;
         emit ScopeWhitelistRemove(scopeName, msg.sender, addr);
     }
