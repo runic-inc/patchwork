@@ -19,6 +19,7 @@ contract PatchworkProtocol {
     error Locked(address addr, uint256 tokenId);
     error NotWhitelisted(string scopeName, address addr);
     error AlreadyPatched(address addr, uint256 tokenId, address patchAddress);
+    error BadInputLengths();
 
     struct Scope {
         address owner;
@@ -250,6 +251,7 @@ contract PatchworkProtocol {
         if (scope.owner == address(0)) {
             revert ScopeDoesNotExist(scopeName);
         }
+        // TODO refactor to _checkWhitelist()
         if (scope.requireWhitelist && !scope.whitelist[patchAddress]) {
             revert NotWhitelisted(scopeName, patchAddress);
         }
@@ -300,8 +302,10 @@ contract PatchworkProtocol {
         if (_checkFrozen(target, targetTokenId)) {
             revert Frozen(target, targetTokenId);
         }
+        if (fragments.length != tokenIds.length) {
+            revert BadInputLengths();
+        }
         address targetOwner = IERC721(target).ownerOf(targetTokenId);
-        require(fragments.length == tokenIds.length, "attribute addresses and token Ids must be the same length");
         uint64[] memory refs = new uint64[](fragments.length);
         for (uint i = 0; i < fragments.length; i++) {
             address fragment = fragments[i];
@@ -327,8 +331,9 @@ contract PatchworkProtocol {
         if (scope.owner == address(0)) {
             revert ScopeDoesNotExist(scopeName);
         }
-        if (scope.requireWhitelist) {
-            require(scope.whitelist[fragment] == true, "not whitelisted in scope");
+        // _checkWhitelist
+        if (scope.requireWhitelist && !scope.whitelist[fragment]) {
+            revert NotWhitelisted(scopeName, fragment);
         }
         if (scope.owner == msg.sender || scope.operators[msg.sender]) {
             // Fragment and target must be same owner

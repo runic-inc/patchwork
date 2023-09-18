@@ -250,7 +250,7 @@ contract PatchworkProtocolTest is Test {
         uint256 user2FragmentTokenId = testFragmentLiteRefNFT.mint(user2Address);
         assertEq(testFragmentLiteRefNFT.ownerOf(fragmentTokenId), userAddress);
  
-        vm.expectRevert("not whitelisted in scope");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotWhitelisted.selector, scopeName, address(testFragmentLiteRefNFT)));
         prot.assignNFT(address(testFragmentLiteRefNFT), fragmentTokenId, address(testPatchLiteRefNFT), patchTokenId);
         vm.stopPrank();
         vm.prank(scopeOwner);
@@ -391,12 +391,12 @@ contract PatchworkProtocolTest is Test {
         vm.prank(scopeOwner);
         prot.setScopeRules(scopeName, false, false, true);
         vm.startPrank(scopeOwner);
-        vm.expectRevert("not whitelisted in scope");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotWhitelisted.selector, scopeName, address(testFragmentLiteRefNFT)));
         prot.batchAssignNFT(fragmentAddresses, fragments, address(testPatchLiteRefNFT), patchTokenId);
         
         prot.addWhitelist(scopeName, address(testFragmentLiteRefNFT));
 
-        vm.expectRevert("attribute addresses and token Ids must be the same length");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.BadInputLengths.selector));
         prot.batchAssignNFT(new address[](1), fragments, address(testPatchLiteRefNFT), patchTokenId);
 
         vm.stopPrank();
