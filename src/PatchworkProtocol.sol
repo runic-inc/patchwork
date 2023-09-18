@@ -20,6 +20,12 @@ contract PatchworkProtocol {
     error NotWhitelisted(string scopeName, address addr);
     error AlreadyPatched(address addr, uint256 tokenId, address patchAddress);
     error BadInputLengths();
+    error FragmentUnregistered(address addr);
+    error FragmentRedacted(address addr);
+    error FragmentAlreadyAssigned(address addr, uint256 tokenId);
+    // TODO this could be an issue as we settled on single assignment b/c of ownership hierarchy
+    error FragmentAlreadyAssignedInScope(string scopeName, address addr, uint256 tokenId);
+    error FragmentNotAssigned(address addr, uint256 tokenId);
 
     struct Scope {
         address owner;
@@ -353,9 +359,15 @@ contract PatchworkProtocol {
             revert NotAuthorized(msg.sender);
         }
         (uint64 ref, bool redacted) = IPatchworkLiteRef(target).getLiteReference(fragment, fragmentTokenId);
-        require(ref != 0, "unregistered fragment");
-        require(!redacted, "redacted fragment");
-        require(!scope.liteRefs[ref], "already assigned in this scope");
+        if (ref == 0) {
+            revert FragmentUnregistered(address(fragment));
+        }
+        if (redacted) {
+            revert FragmentRedacted(address(fragment));
+        }
+        if (scope.liteRefs[ref]) {
+            revert FragmentAlreadyAssignedInScope(scopeName, address(fragment), fragmentTokenId);
+        }
         // call assign on the fragment
         assignableNFT.assign(fragmentTokenId, target, targetTokenId);
         // add to our storage of scope->target assignments
@@ -395,7 +407,9 @@ contract PatchworkProtocol {
         require(target != address(0), "not assigned");
         assignableNFT.unassign(fragmentTokenId);
         (uint64 ref, ) = IPatchworkLiteRef(target).getLiteReference(fragment, fragmentTokenId);
-        require(ref != 0, "unregistered fragment");
+        if (ref == 0) {
+            revert FragmentUnregistered(address(fragment));
+        }
         require(scope.liteRefs[ref], "ref not found in scope");
         scope.liteRefs[ref] = false;
         IPatchworkLiteRef(target).removeReference(targetTokenId, ref);

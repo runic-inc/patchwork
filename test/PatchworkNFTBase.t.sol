@@ -312,8 +312,8 @@ contract PatchworkNFTBaseTest is Test {
         vm.prank(scopeOwner);
         prot.assignNFT(address(testFragmentLiteRefNFT), fragmentTokenId, address(testPatchLiteRefNFT), patchTokenId);
         assertEq(userAddress, testFragmentLiteRefNFT.ownerOf(fragmentTokenId)); // TODO why doesn't this cover the branch != address(0)
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.FragmentAlreadyAssigned.selector, address(testFragmentLiteRefNFT), fragmentTokenId));
         vm.prank(scopeOwner); // not normal to call directly but need to test the correct error
-        vm.expectRevert("already assigned");
         testFragmentLiteRefNFT.assign(fragmentTokenId, address(testPatchLiteRefNFT), patchTokenId);
         vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotAuthorized.selector, userAddress));
         vm.prank(userAddress); // can't call directly
@@ -324,7 +324,7 @@ contract PatchworkNFTBaseTest is Test {
         testPatchLiteRefNFT.redactReferenceAddress(refIdx);
         vm.prank(scopeOwner);
         testPatchLiteRefNFT.redactReferenceAddress(refIdx);
-        vm.expectRevert("redacted fragment");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.FragmentRedacted.selector, address(testFragmentLiteRefNFT)));
         vm.prank(scopeOwner);
         prot.assignNFT(address(testFragmentLiteRefNFT), newFrag, address(testPatchLiteRefNFT), patchTokenId);
         

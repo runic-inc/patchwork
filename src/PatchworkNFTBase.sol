@@ -259,7 +259,9 @@ abstract contract PatchworkFragment is PatchworkNFT, IPatchworkAssignableNFT {
             revert PatchworkProtocol.NotAuthorized(msg.sender);
         }
         Assignment storage a = _assignments[ourTokenId];
-        require(a.tokenAddr == address(0), "already assigned");
+        if (a.tokenAddr != address(0)) {
+            revert PatchworkProtocol.FragmentAlreadyAssigned(address(this), ourTokenId);
+        }
         a.tokenAddr = to;
         a.tokenId = tokenId;
         emit Locked(ourTokenId);
