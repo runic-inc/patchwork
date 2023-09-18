@@ -211,7 +211,7 @@ contract PatchworkProtocolTest is Test {
         //Register testPatchLiteRefNFT to testPatchLiteRefNFT
         testFragmentLiteRefNFT.registerReferenceAddress(address(testFragmentLiteRefNFT));
         vm.expectRevert("scope does not exist");
-        prot.assignNFT(address(testFragmentLiteRefNFT), fragmentTokenId1, address(testPatchLiteRefNFT), fragmentTokenId2);
+        prot.assignNFT(address(testFragmentLiteRefNFT), fragmentTokenId1, address(testFragmentLiteRefNFT), fragmentTokenId2);
         vm.expectRevert("scope does not exist");
         prot.unassignNFT(address(testFragmentLiteRefNFT), fragmentTokenId1);
         address[] memory fragmentAddresses = new address[](1);
@@ -219,7 +219,7 @@ contract PatchworkProtocolTest is Test {
         fragmentAddresses[0] = address(testFragmentLiteRefNFT);
         fragments[0] = fragmentTokenId1;
         vm.expectRevert("scope does not exist");
-        prot.batchAssignNFT(fragmentAddresses, fragments, address(testPatchLiteRefNFT), fragmentTokenId2);
+        prot.batchAssignNFT(fragmentAddresses, fragments, address(testFragmentLiteRefNFT), fragmentTokenId2);
     }
 
     function testScopeTransferCannotBeFrontrun() public {
@@ -438,7 +438,17 @@ contract PatchworkProtocolTest is Test {
         prot.batchAssignNFT(fragmentAddresses, fragments, address(testPatchLiteRefNFT), patchTokenId);
         vm.prank(userAddress);
         testFragmentLiteRefNFT.setLocked(fragments[0], false);
+
+        // test assigning fragments for another user
+        address[] memory otherUserAddr = new address[](1);
+        uint256[] memory otherUserFrag = new uint256[](1);
+        otherUserAddr[0] = address(testFragmentLiteRefNFT);
+        otherUserFrag[0] = testFragmentLiteRefNFT.mint(user2Address);
+        vm.expectRevert("not authorized");
+        vm.prank(scopeOwner);     
+        prot.batchAssignNFT(otherUserAddr, otherUserFrag, address(testPatchLiteRefNFT), patchTokenId);
     
+        // finally a positive test case
         vm.prank(scopeOwner);
         prot.batchAssignNFT(fragmentAddresses, fragments, address(testPatchLiteRefNFT), patchTokenId);
 
@@ -489,6 +499,16 @@ contract PatchworkProtocolTest is Test {
         vm.expectRevert("not authorized");
         prot.batchAssignNFT(fragmentAddresses, user2Fragments, address(testPatchLiteRefNFT), patchTokenId);
 
+        // test assigning fragments for another user
+        address[] memory otherUserAddr = new address[](1);
+        uint256[] memory otherUserFrag = new uint256[](1);
+        otherUserAddr[0] = address(testFragmentLiteRefNFT);
+        otherUserFrag[0] = testFragmentLiteRefNFT.mint(user2Address);
+        vm.expectRevert("not authorized");
+        vm.prank(userAddress);
+        prot.batchAssignNFT(otherUserAddr, otherUserFrag, address(testPatchLiteRefNFT), patchTokenId);
+
+        // finally a positive test case
         vm.startPrank(userAddress);
         prot.batchAssignNFT(fragmentAddresses, fragments, address(testPatchLiteRefNFT), patchTokenId);
 
