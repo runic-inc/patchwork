@@ -211,15 +211,15 @@ contract PatchworkProtocolTest is Test {
         uint256 fragmentTokenId2 = testFragmentLiteRefNFT.mint(userAddress);
         //Register testPatchLiteRefNFT to testPatchLiteRefNFT
         testFragmentLiteRefNFT.registerReferenceAddress(address(testFragmentLiteRefNFT));
-        vm.expectRevert("scope does not exist");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.ScopeDoesNotExist.selector, scopeName));
         prot.assignNFT(address(testFragmentLiteRefNFT), fragmentTokenId1, address(testFragmentLiteRefNFT), fragmentTokenId2);
-        vm.expectRevert("scope does not exist");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.ScopeDoesNotExist.selector, scopeName));
         prot.unassignNFT(address(testFragmentLiteRefNFT), fragmentTokenId1);
         address[] memory fragmentAddresses = new address[](1);
         uint256[] memory fragments = new uint256[](1);
         fragmentAddresses[0] = address(testFragmentLiteRefNFT);
         fragments[0] = fragmentTokenId1;
-        vm.expectRevert("scope does not exist");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.ScopeDoesNotExist.selector, scopeName));
         prot.batchAssignNFT(fragmentAddresses, fragments, address(testFragmentLiteRefNFT), fragmentTokenId2);
     }
 

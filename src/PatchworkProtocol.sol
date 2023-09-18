@@ -322,8 +322,11 @@ contract PatchworkProtocol {
         }
         // Use the fragment's scope for permissions, target already has to have fragment registered to be assignable
         string memory scopeName = assignableNFT.getScopeName();
+        // TODO refactor to _requireScope
         Scope storage scope = _scopes[scopeName];
-        require(scope.owner != address(0), "scope does not exist");
+        if (scope.owner == address(0)) {
+            revert ScopeDoesNotExist(scopeName);
+        }
         if (scope.requireWhitelist) {
             require(scope.whitelist[fragment] == true, "not whitelisted in scope");
         }
@@ -368,7 +371,10 @@ contract PatchworkProtocol {
         IPatchworkAssignableNFT assignableNFT = IPatchworkAssignableNFT(fragment);
         string memory scopeName = assignableNFT.getScopeName();
         Scope storage scope = _scopes[scopeName];
-        require(scope.owner != address(0), "scope does not exist");
+        // TODO _requireScope
+        if (scope.owner == address(0)) {
+            revert ScopeDoesNotExist(scopeName);
+        }
         if (scope.owner == msg.sender || scope.operators[msg.sender]) {
             // continue
         } else if (scope.allowUserAssign) {
