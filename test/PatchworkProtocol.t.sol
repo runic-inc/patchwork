@@ -165,7 +165,7 @@ contract PatchworkProtocolTest is Test {
         vm.startPrank(scopeOwner);
         prot.claimScope(scopeName);
         uint256 patchTokenId = prot.createPatch(address(testBaseNFT), testBaseNFTTokenId, address(testPatchLiteRefNFT));
-        vm.expectRevert("already patched");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.AlreadyPatched.selector, address(testBaseNFT), testBaseNFTTokenId, address(testPatchLiteRefNFT)));
         patchTokenId = prot.createPatch(address(testBaseNFT), testBaseNFTTokenId, address(testPatchLiteRefNFT));
         
         uint256 fragmentTokenId = testFragmentLiteRefNFT.mint(userAddress);
@@ -402,16 +402,16 @@ contract PatchworkProtocolTest is Test {
         vm.stopPrank();
         vm.prank(userAddress);
         testPatchLiteRefNFT.setFrozen(patchTokenId, true);
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.Frozen.selector, address(testPatchLiteRefNFT), patchTokenId));
         vm.prank(scopeOwner);
-        vm.expectRevert("frozen");
         prot.batchAssignNFT(fragmentAddresses, fragments, address(testPatchLiteRefNFT), patchTokenId);
         vm.prank(userAddress);
         testPatchLiteRefNFT.setFrozen(patchTokenId, false);
 
         vm.prank(userAddress);
         testFragmentLiteRefNFT.setFrozen(fragments[0], true);
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.Frozen.selector, address(testFragmentLiteRefNFT), fragments[0]));
         vm.prank(scopeOwner);
-        vm.expectRevert("frozen");
         prot.batchAssignNFT(fragmentAddresses, fragments, address(testPatchLiteRefNFT), patchTokenId);
         vm.prank(userAddress);
         testFragmentLiteRefNFT.setFrozen(fragments[0], false);
@@ -672,8 +672,8 @@ contract PatchworkProtocolTest is Test {
         vm.prank(userAddress);
         testPatchLiteRefNFT.setFrozen(patchTokenId, true);
         assertEq(0, testPatchLiteRefNFT.getFreezeNonce(patchTokenId));
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.Frozen.selector, address(testPatchLiteRefNFT), patchTokenId));
         vm.prank(scopeOwner);
-        vm.expectRevert("frozen");
         // Assign Id1 -> Id
         prot.assignNFT(address(testFragmentLiteRefNFT), fragment1, address(testPatchLiteRefNFT), patchTokenId);
         vm.prank(userAddress);
@@ -689,8 +689,9 @@ contract PatchworkProtocolTest is Test {
         vm.stopPrank();
         vm.prank(userAddress);
         testPatchLiteRefNFT.setFrozen(patchTokenId, true);
+        // It will return that the fragment is frozen even though the patch is the root cause, because all assigned to the patch inherit the freeze
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.Frozen.selector, address(testFragmentLiteRefNFT), fragment2));
         vm.prank(scopeOwner);
-        vm.expectRevert("frozen");
         // Now Id2 -> Id1 -> Id, unassign Id2 from Id1
         prot.unassignNFT(address(testFragmentLiteRefNFT), fragment2);
         vm.prank(userAddress);
@@ -708,12 +709,12 @@ contract PatchworkProtocolTest is Test {
         // Lock the fragment, shouldn't allow assignment to anything
         vm.prank(userAddress);
         testFragmentLiteRefNFT.setFrozen(fragment1, true);
-        vm.expectRevert("frozen");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.Frozen.selector, address(testFragmentLiteRefNFT), fragment1));
         vm.prank(scopeOwner);
         prot.assignNFT(address(testFragmentLiteRefNFT), fragment2, address(testFragmentLiteRefNFT), fragment1);
         vm.prank(userAddress);
         testFragmentLiteRefNFT.setFrozen(fragment2, true);
-        vm.expectRevert("frozen");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.Frozen.selector, address(testFragmentLiteRefNFT), fragment1));
         vm.prank(scopeOwner);
         prot.assignNFT(address(testFragmentLiteRefNFT), fragment2, address(testFragmentLiteRefNFT), fragment1);
         vm.startPrank(userAddress);
