@@ -434,8 +434,8 @@ contract PatchworkProtocolTest is Test {
 
         vm.prank(userAddress);
         testFragmentLiteRefNFT.setLocked(fragments[0], true);
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.Locked.selector, address(testFragmentLiteRefNFT), fragments[0]));
         vm.prank(scopeOwner);
-        vm.expectRevert("locked");
         prot.batchAssignNFT(fragmentAddresses, fragments, address(testPatchLiteRefNFT), patchTokenId);
         vm.prank(userAddress);
         testFragmentLiteRefNFT.setLocked(fragments[0], false);

@@ -317,7 +317,9 @@ contract PatchworkProtocol {
         }
         require(!(fragment == target && fragmentTokenId == targetTokenId), "self-assignment not allowed");
         IPatchworkAssignableNFT assignableNFT = IPatchworkAssignableNFT(fragment);
-        require(!_checkLocked(fragment, fragmentTokenId), "locked");
+        if (_checkLocked(fragment, fragmentTokenId)) {
+            revert Locked(fragment, fragmentTokenId);
+        }
         // Use the fragment's scope for permissions, target already has to have fragment registered to be assignable
         string memory scopeName = assignableNFT.getScopeName();
         Scope storage scope = _scopes[scopeName];
@@ -406,7 +408,9 @@ contract PatchworkProtocol {
             revert("soulbound transfer not allowed");
         }
         if (IERC165(nft).supportsInterface(IPATCHWORKNFT_INTERFACE)) {
-            require(!IPatchworkNFT(nft).locked(tokenId), "locked");
+            if (IPatchworkNFT(nft).locked(tokenId)) {
+                revert Locked(nft, tokenId);
+            }
         }
         if (IERC165(nft).supportsInterface(IPATCHWORKLITEREF_INTERFACE)) {
             IPatchworkLiteRef liteRefNFT = IPatchworkLiteRef(nft);
