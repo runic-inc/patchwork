@@ -121,7 +121,7 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
     function storeXP(uint256 _tokenId, uint16 xp) public {
         require(_checkTokenWriteAuth(_tokenId) || _permissionsAllow[msg.sender] & 0x1 == 1, "not authorized");
         // Slot 2 offset 0: 16 bit value
-        uint256 cleared = uint256(_metadataStorage[_tokenId][2]) & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00;
+        uint256 cleared = uint256(_metadataStorage[_tokenId][2]) & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000;
         _metadataStorage[_tokenId][2] = cleared | uint256(xp);
     }
 
@@ -132,9 +132,9 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
 
     // Store Only level
     function storeLevel(uint256 _tokenId, uint8 level) public {
-        require(_checkTokenWriteAuth(_tokenId) || _permissionsAllow[msg.sender] & 0x2 == 1, "not authorized");
+        require(_checkTokenWriteAuth(_tokenId) || _permissionsAllow[msg.sender] & 0x2 == 2, "not authorized");
         // Slot 2 offset 16: 16 bit value
-        uint256 cleared = uint256(_metadataStorage[_tokenId][2]) & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0FF;
+        uint256 cleared = uint256(_metadataStorage[_tokenId][2]) & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFF;
         _metadataStorage[_tokenId][2] = cleared | (uint256(level) << 16);
     }
 

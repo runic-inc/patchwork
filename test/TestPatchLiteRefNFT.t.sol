@@ -17,12 +17,12 @@ contract TestPatchLiteRefNFTTest is Test {
     function testPackUnpack() public {
         TestPatchLiteRefNFTMetadata memory data;
         data.artifactIDs[0] = 0;
-        data.artifactIDs[1] = 5;  
-        data.artifactIDs[2] = 10;   
-        data.artifactIDs[3] = 15;   
+        data.artifactIDs[1] = 5;
+        data.artifactIDs[2] = 10;
+        data.artifactIDs[3] = 15;
         data.artifactIDs[4] = 20;
-        data.artifactIDs[5] = 25;  
-        data.artifactIDs[6] = 30;   
+        data.artifactIDs[5] = 25;
+        data.artifactIDs[6] = 30;
         data.artifactIDs[7] = 35;
         data.xp = 1100;
         data.level = 2;
@@ -30,7 +30,7 @@ contract TestPatchLiteRefNFTTest is Test {
         data.stakedMade = 13;
         data.stakedCorrect = 7;
         data.evolution = 3;
-        data.nickname = "kevbot7811111111"; 
+        data.nickname = "kevbot7811111111";
         uint256[] memory slots = testNFT.packMetadata(data);
         console.logBytes32(bytes32(slots[0]));
         console.logBytes32(bytes32(slots[1]));
@@ -56,12 +56,12 @@ contract TestPatchLiteRefNFTTest is Test {
     function testStoreLoad() public {
         TestPatchLiteRefNFTMetadata memory data;
         data.artifactIDs[0] = 0;
-        data.artifactIDs[1] = 5;  
-        data.artifactIDs[2] = 10;   
-        data.artifactIDs[3] = 15;   
+        data.artifactIDs[1] = 5;
+        data.artifactIDs[2] = 10;
+        data.artifactIDs[3] = 15;
         data.artifactIDs[4] = 20;
-        data.artifactIDs[5] = 25;  
-        data.artifactIDs[6] = 30;   
+        data.artifactIDs[5] = 25;
+        data.artifactIDs[6] = 30;
         data.artifactIDs[7] = 35;
         data.xp = 1100;
         data.level = 2;
@@ -69,7 +69,7 @@ contract TestPatchLiteRefNFTTest is Test {
         data.stakedMade = 13;
         data.stakedCorrect = 7;
         data.evolution = 3;
-        data.nickname = "kevbot7811111111"; 
+        data.nickname = "kevbot7811111111";
         testNFT.storeMetadata(1, data);
         TestPatchLiteRefNFTMetadata memory data2 = testNFT.loadMetadata(1);
         assertEq(data2.artifactIDs[0], data.artifactIDs[0]);
@@ -104,4 +104,27 @@ contract TestPatchLiteRefNFTTest is Test {
         testNFT.storeXP(1, 100);
     }
 
+    function testPermissionsOnMultipleFields() public {
+        testNFT.storeMetadata(1, TestPatchLiteRefNFTMetadata([uint64(0), 0, 0, 0, 0, 0, 0, 0], 0, 0, 0, 0, 0, 0, ""));
+
+        testNFT.setPermissions(address(1337), 0x3);
+
+        vm.startPrank(address(1337));
+
+        testNFT.storeXP(1, 1000);
+        assertEq(testNFT.loadXP(1), 1000);
+        assertEq(testNFT.loadLevel(1), 0);
+
+        testNFT.storeLevel(1, 13);
+        assertEq(testNFT.loadXP(1), 1000);
+        assertEq(testNFT.loadLevel(1), 13);
+
+        testNFT.storeXP(1, 65535);
+        assertEq(testNFT.loadXP(1), 65535);
+        assertEq(testNFT.loadLevel(1), 13);
+
+        testNFT.storeLevel(1, 255);
+        assertEq(testNFT.loadXP(1), 65535);
+        assertEq(testNFT.loadLevel(1), 255);
+    }
 }
