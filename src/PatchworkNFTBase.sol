@@ -29,7 +29,9 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT, IERC4906 {
 
     // Store 1 slot
     function storePackedMetadataSlot(uint256 tokenId, uint256 slot, uint256 data) public virtual {
-        require(_checkTokenWriteAuth(tokenId), "not authorized");
+        if (!_checkTokenWriteAuth(tokenId)) {
+            revert PatchworkProtocol.NotAuthorized(msg.sender);
+        }
         _metadataStorage[tokenId][slot] = data;
     }
 
@@ -49,7 +51,9 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT, IERC4906 {
     }
 
     function setPermissions(address to, uint256 permissions) public virtual {
-        require(_checkWriteAuth(), "not authorized");
+        if (!_checkWriteAuth()) {
+            revert PatchworkProtocol.NotAuthorized(msg.sender);
+        }
         _permissionsAllow[to] = permissions;
         emit PermissionChange(to, permissions);
     }
@@ -77,20 +81,32 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT, IERC4906 {
     }
 
     function transferFromWithFreezeNonce(address from, address to, uint256 tokenId, uint256 nonce) public {
-        require(frozen(tokenId), "not frozen");
-        require(getFreezeNonce(tokenId) == nonce, "incorrect nonce");
+        if (!frozen(tokenId)) {
+            revert PatchworkProtocol.NotFrozen(address(this), tokenId);
+        }
+        if (getFreezeNonce(tokenId) != nonce) {
+            revert PatchworkProtocol.IncorrectNonce(address(this), tokenId, nonce);
+        }
         transferFrom(from, to, tokenId);
     }
 
     function safeTransferFromWithFreezeNonce(address from, address to, uint256 tokenId, uint256 nonce) public {
-        require(frozen(tokenId), "not frozen");
-        require(getFreezeNonce(tokenId) == nonce, "incorrect nonce");
+        if (!frozen(tokenId)) {
+            revert PatchworkProtocol.NotFrozen(address(this), tokenId);
+        }
+        if (getFreezeNonce(tokenId) != nonce) {
+            revert PatchworkProtocol.IncorrectNonce(address(this), tokenId, nonce);
+        }
         safeTransferFrom(from, to, tokenId);
     }
 
     function safeTransferFromWithFreezeNonce(address from, address to, uint256 tokenId, bytes memory data, uint256 nonce) public {
-        require(frozen(tokenId), "not frozen");
-        require(getFreezeNonce(tokenId) == nonce, "incorrect nonce");
+        if (!frozen(tokenId)) {
+            revert PatchworkProtocol.NotFrozen(address(this), tokenId);
+        }
+        if (getFreezeNonce(tokenId) != nonce) {
+            revert PatchworkProtocol.IncorrectNonce(address(this), tokenId, nonce);
+        }
         safeTransferFrom(from, to, tokenId, data);
     }
 
@@ -142,7 +158,9 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT, IERC4906 {
     }
 
     function setFrozen(uint256 tokenId, bool frozen_) public virtual {
-        require(msg.sender == ownerOf(tokenId), "not authorized");
+        if (msg.sender != ownerOf(tokenId)) {
+            revert PatchworkProtocol.NotAuthorized(msg.sender);
+        }
         bool _frozen = _freezes[tokenId];
         if (_frozen != frozen_) {
             if (frozen_) {
@@ -167,7 +185,9 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT, IERC4906 {
     }
 
     function setLocked(uint256 tokenId, bool locked_) public virtual {
-        require(msg.sender == ownerOf(tokenId), "not authorized");
+        if (msg.sender != ownerOf(tokenId)) {
+            revert PatchworkProtocol.NotAuthorized(msg.sender);
+        }
         bool _locked = _locks[tokenId];
         if (_locked != locked_) {
             _locks[tokenId] = locked_;
@@ -219,8 +239,8 @@ abstract contract PatchworkPatch is PatchworkNFT, IPatchworkPatch {
         return false;
     }
 
-    function setLocked(uint256 /* tokenId */, bool /* locked_ */) public pure virtual override {
-        revert("cannot lock a soul-bound patch");
+    function setLocked(uint256 /* tokenId */, bool /* locked_ */) public view virtual override {
+        revert PatchworkProtocol.CannotLockSoulboundPatch(address(this));
     }
 
     function patchworkCompatible_() external pure returns (bytes1) {}
@@ -247,16 +267,22 @@ abstract contract PatchworkFragment is PatchworkNFT, IPatchworkAssignableNFT {
 
     function assign(uint256 ourTokenId, address to, uint256 tokenId) public virtual {
         // One time use policy
-        require(_checkTokenWriteAuth(ourTokenId), "not authorized");
+        if (!_checkTokenWriteAuth(ourTokenId)) {
+            revert PatchworkProtocol.NotAuthorized(msg.sender);
+        }
         Assignment storage a = _assignments[ourTokenId];
-        require(a.tokenAddr == address(0), "already assigned");
+        if (a.tokenAddr != address(0)) {
+            revert PatchworkProtocol.FragmentAlreadyAssigned(address(this), ourTokenId);
+        }
         a.tokenAddr = to;
         a.tokenId = tokenId;
         emit Locked(ourTokenId);
     }
 
     function unassign(uint256 tokenId) public virtual {
-        require(_checkTokenWriteAuth(tokenId), "not authorized");
+        if (!_checkTokenWriteAuth(tokenId)) {
+            revert PatchworkProtocol.NotAuthorized(msg.sender);
+        }
         updateOwnership(tokenId);
         delete _assignments[tokenId];
         emit Unlocked(tokenId);
@@ -303,7 +329,9 @@ abstract contract PatchworkFragment is PatchworkNFT, IPatchworkAssignableNFT {
     }
 
     function setLocked(uint256 tokenId, bool locked_) public virtual override {
-        require(msg.sender == ownerOf(tokenId), "not authorized");
+        if (msg.sender != ownerOf(tokenId)) {
+            revert PatchworkProtocol.NotAuthorized(msg.sender);
+        }
         require(_assignments[tokenId].tokenAddr == address(0), "cannot setLocked assigned fragment");
         super.setLocked(tokenId, locked_);
     }
@@ -331,23 +359,33 @@ abstract contract PatchworkLiteRef is IPatchworkLiteRef, ERC165 {
 
     // Register the artifact and other NFTs that we want assignable to this for composition or consumption
     function registerReferenceAddress(address addr) public virtual returns (uint8 id) {
-        require(_checkWriteAuth(), "not authorized");
+        if (!_checkWriteAuth()) {
+            revert PatchworkProtocol.NotAuthorized(msg.sender);
+        }
         uint8 refId = _nextReferenceId;
-        require(_nextReferenceId != 255, "out of IDs");
+        if (_nextReferenceId == 255) {
+            revert PatchworkProtocol.OutOfIDs();
+        }
         _nextReferenceId++;
-        require(_referenceAddressIds[addr] == 0, "Already registered");
+        if (_referenceAddressIds[addr] != 0) {
+            revert PatchworkProtocol.FragmentAlreadyRegistered(addr);
+        }
         _referenceAddresses[refId] = addr;
         _referenceAddressIds[addr] = refId;
         return refId;
     }
 
     function redactReferenceAddress(uint8 id) public virtual {
-        require(_checkWriteAuth(), "not authorized");
+        if (!_checkWriteAuth()) {
+            revert PatchworkProtocol.NotAuthorized(msg.sender);
+        }
         _redactedReferenceIds[id] = true;
     }
 
     function unredactReferenceAddress(uint8 id) public virtual {
-        require(_checkWriteAuth(), "not authorized");
+        if (!_checkWriteAuth()) {
+            revert PatchworkProtocol.NotAuthorized(msg.sender);
+        }
         _redactedReferenceIds[id] = false;
     }
 
@@ -356,7 +394,9 @@ abstract contract PatchworkLiteRef is IPatchworkLiteRef, ERC165 {
         if (refId == 0) {
             return (0, false);
         }
-        require(tokenId <= 0xFFFFFFFFFFFFFF, "unsupported tokenId");
+        if (tokenId > 0xFFFFFFFFFFFFFF) {
+            revert PatchworkProtocol.UnsupportedTokenId(tokenId);
+        }
         return (uint64(uint256(refId) << 56 | tokenId), _redactedReferenceIds[refId]);
     }
 

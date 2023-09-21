@@ -11,13 +11,41 @@ import "./PatchworkNFTInterface.sol";
 */
 contract PatchworkProtocol {
 
+    error NotAuthorized(address addr);
+    error ScopeExists(string scopeName);
+    error ScopeDoesNotExist(string scopeName);
+    error ScopeTransferNotAllowed(address to);
+    error Frozen(address addr, uint256 tokenId);
+    error Locked(address addr, uint256 tokenId);
+    error NotWhitelisted(string scopeName, address addr);
+    error AlreadyPatched(address addr, uint256 tokenId, address patchAddress);
+    error BadInputLengths();
+    error FragmentUnregistered(address addr);
+    error FragmentRedacted(address addr);
+    error FragmentAlreadyAssigned(address addr, uint256 tokenId);
+    // TODO this could be an issue as we settled on single assignment b/c of ownership hierarchy
+    error FragmentAlreadyAssignedInScope(string scopeName, address addr, uint256 tokenId);
+    error RefNotFoundInScope(string scopeName, address target, address fragment, uint256 tokenId);
+    error FragmentNotAssigned(address addr, uint256 tokenId);
+    error FragmentAlreadyRegistered(address addr);
+    error OutOfIDs();
+    error UnsupportedTokenId(uint256 tokenId);
+    error CannotLockSoulboundPatch(address addr);
+    error NotFrozen(address addr, uint256 tokenId);
+    error IncorrectNonce(address addr, uint256 tokenId, uint256 nonce);
+    error SelfAssignmentNotAllowed(address addr, uint256 tokenId);
+    error SoulboundTransferNotAllowed(address addr, uint256 tokenId);
+    error TransferBlockedByAssignment(address addr, uint256 tokenId);
+    error NotPatchworkAssignable(address addr);
+    error DataIntegrityError(address addr, uint256 tokenId, address addr2, uint256 tokenId2);
+
     struct Scope {
         address owner;
         bool allowUserPatch;
         bool allowUserAssign;
         bool requireWhitelist;
         mapping(address => bool) operators;
-        mapping(uint64 => bool) liteRefs;
+        mapping(uint64 => bool) liteRefs; // TODO needs hash of literefaddr+ref to be unique
         mapping(address => bool) whitelist;
         mapping(bytes32 => bool) uniquePatches;
     }
@@ -117,7 +145,9 @@ contract PatchworkProtocol {
     */
     function claimScope(string calldata scopeName) public {
         Scope storage s = _scopes[scopeName];
-        require(s.owner == address(0), "scope already exists");
+        if (s.owner != address(0)) {
+            revert ScopeExists(scopeName);
+        }
         s.owner = msg.sender;
         // s.requireWhitelist = true; // better security by default - enable in future PR
         emit ScopeClaim(scopeName, msg.sender);
@@ -130,8 +160,12 @@ contract PatchworkProtocol {
     */
     function transferScopeOwnership(string calldata scopeName, address newOwner) public {
         Scope storage s = _scopes[scopeName];
-        require(msg.sender == s.owner, "not authorized");
-        require(newOwner != address(0), "not allowed");
+        if (msg.sender != s.owner) {
+            revert NotAuthorized(msg.sender);
+        }
+        if (newOwner == address(0)) {
+            revert ScopeTransferNotAllowed(address(0));
+        }
         s.owner = newOwner;
         emit ScopeTransfer(scopeName, msg.sender, newOwner);
     }
@@ -152,7 +186,9 @@ contract PatchworkProtocol {
     */
     function addOperator(string calldata scopeName, address op) public {
         Scope storage s = _scopes[scopeName];
-        require(msg.sender == s.owner, "not authorized");
+        if (msg.sender != s.owner) {
+            revert NotAuthorized(msg.sender);
+        }
         s.operators[op] = true;
         emit ScopeAddOperator(scopeName, msg.sender, op);
     }
@@ -164,7 +200,9 @@ contract PatchworkProtocol {
     */
     function removeOperator(string calldata scopeName, address op) public {
         Scope storage s = _scopes[scopeName];
-        require(msg.sender == s.owner, "not authorized");
+        if (msg.sender != s.owner) {
+            revert NotAuthorized(msg.sender);
+        }
         s.operators[op] = false;
         emit ScopeRemoveOperator(scopeName, msg.sender, op);
     }
@@ -178,7 +216,9 @@ contract PatchworkProtocol {
     */
     function setScopeRules(string calldata scopeName, bool allowUserPatch, bool allowUserAssign, bool requireWhitelist) public {
         Scope storage s = _scopes[scopeName];
-        require(msg.sender == s.owner, "not authorized");
+        if (msg.sender != s.owner) {
+            revert NotAuthorized(msg.sender);
+        }
         s.allowUserPatch = allowUserPatch;
         s.allowUserAssign = allowUserAssign;
         s.requireWhitelist = requireWhitelist;
@@ -192,7 +232,9 @@ contract PatchworkProtocol {
     */
     function addWhitelist(string calldata scopeName, address addr) public {
         Scope storage s = _scopes[scopeName];
-        require(msg.sender == s.owner || s.operators[msg.sender], "not authorized");
+        if (msg.sender != s.owner && !s.operators[msg.sender]) {
+            revert NotAuthorized(msg.sender);
+        }
         s.whitelist[addr] = true;
         emit ScopeWhitelistAdd(scopeName, msg.sender, addr);
     }
@@ -204,7 +246,9 @@ contract PatchworkProtocol {
     */
     function removeWhitelist(string calldata scopeName, address addr) public {
         Scope storage s = _scopes[scopeName];
-        require(msg.sender == s.owner || s.operators[msg.sender], "not authorized");
+        if (msg.sender != s.owner && !s.operators[msg.sender]) {
+            revert NotAuthorized(msg.sender);
+        }
         s.whitelist[addr] = false;
         emit ScopeWhitelistRemove(scopeName, msg.sender, addr);
     }
@@ -220,22 +264,28 @@ contract PatchworkProtocol {
         IPatchworkPatch patch = IPatchworkPatch(patchAddress);
         string memory scopeName = patch.getScopeName();
         // mint a Patch that is soulbound to the originalNFT using the contract address at patchAddress which must support Patchwork metadata
+        // TODO refactor to _requireScope()
         Scope storage scope = _scopes[scopeName];
-        if (scope.requireWhitelist) {
-            require(scope.whitelist[patchAddress] == true, "not whitelisted in scope");
+        if (scope.owner == address(0)) {
+            revert ScopeDoesNotExist(scopeName);
         }
-        require(scope.owner != address(0), "scope does not exist");
+        // TODO refactor to _checkWhitelist()
+        if (scope.requireWhitelist && !scope.whitelist[patchAddress]) {
+            revert NotWhitelisted(scopeName, patchAddress);
+        }
         address tokenOwner = IERC721(originalNFTAddress).ownerOf(originalNFTTokenId);
         if (scope.owner == msg.sender || scope.operators[msg.sender]) {
             // continue
         } else if (scope.allowUserPatch && msg.sender == tokenOwner) {
             // continue
         } else {
-            revert("not authorized");
+            revert NotAuthorized(msg.sender);
         }
         // limit this to one unique patch (originalNFTAddress+TokenID+patchAddress)
         bytes32 _hash = keccak256(abi.encodePacked(originalNFTAddress, originalNFTTokenId, patchAddress));
-        require(!scope.uniquePatches[_hash], "already patched");
+        if (scope.uniquePatches[_hash]) {
+            revert AlreadyPatched(originalNFTAddress, originalNFTTokenId, patchAddress);
+        }
         scope.uniquePatches[_hash] = true;
         tokenId = patch.mintPatch(tokenOwner, originalNFTAddress, originalNFTTokenId);
         emit Patch(tokenOwner, originalNFTAddress, originalNFTTokenId, patchAddress, tokenId);
@@ -250,7 +300,9 @@ contract PatchworkProtocol {
     @param targetTokenId The IPatchworkLiteRef Token ID to hold the reference to the fragment
     */
     function assignNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) public {
-        require(!_checkFrozen(target, targetTokenId), "frozen");
+        if (_checkFrozen(target, targetTokenId)) {
+            revert Frozen(target, targetTokenId);
+        }
         address targetOwner = IERC721(target).ownerOf(targetTokenId);
         uint64 ref = _doAssign(fragment, fragmentTokenId, target, targetTokenId, targetOwner);
         // call addReference on the target
@@ -265,9 +317,13 @@ contract PatchworkProtocol {
     @param targetTokenId The token ID of the target IPatchworkLiteRef NFT
     */
     function batchAssignNFT(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId) public {
-        require(!_checkFrozen(target, targetTokenId), "frozen");
+        if (_checkFrozen(target, targetTokenId)) {
+            revert Frozen(target, targetTokenId);
+        }
+        if (fragments.length != tokenIds.length) {
+            revert BadInputLengths();
+        }
         address targetOwner = IERC721(target).ownerOf(targetTokenId);
-        require(fragments.length == tokenIds.length, "attribute addresses and token Ids must be the same length");
         uint64[] memory refs = new uint64[](fragments.length);
         for (uint i = 0; i < fragments.length; i++) {
             address fragment = fragments[i];
@@ -278,32 +334,54 @@ contract PatchworkProtocol {
     }
 
     function _doAssign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, address targetOwner) private returns (uint64) {
-        require(!_checkFrozen(fragment, fragmentTokenId), "frozen");
-        require(!(fragment == target && fragmentTokenId == targetTokenId), "self-assignment not allowed");
+        if (_checkFrozen(fragment, fragmentTokenId)) {
+            revert Frozen(fragment, fragmentTokenId);
+        }
+        if (fragment == target && fragmentTokenId == targetTokenId) {
+            revert SelfAssignmentNotAllowed(fragment, fragmentTokenId);
+        }
         IPatchworkAssignableNFT assignableNFT = IPatchworkAssignableNFT(fragment);
-        require(!_checkLocked(fragment, fragmentTokenId), "locked");
+        if (_checkLocked(fragment, fragmentTokenId)) {
+            revert Locked(fragment, fragmentTokenId);
+        }
         // Use the fragment's scope for permissions, target already has to have fragment registered to be assignable
         string memory scopeName = assignableNFT.getScopeName();
+        // TODO refactor to _requireScope
         Scope storage scope = _scopes[scopeName];
-        require(scope.owner != address(0), "scope does not exist");
-        if (scope.requireWhitelist) {
-            require(scope.whitelist[fragment] == true, "not whitelisted in scope");
+        if (scope.owner == address(0)) {
+            revert ScopeDoesNotExist(scopeName);
+        }
+        // _checkWhitelist
+        if (scope.requireWhitelist && !scope.whitelist[fragment]) {
+            revert NotWhitelisted(scopeName, fragment);
         }
         if (scope.owner == msg.sender || scope.operators[msg.sender]) {
             // Fragment and target must be same owner
-            require(IERC721(fragment).ownerOf(fragmentTokenId) == targetOwner, "not authorized");   
+            if (IERC721(fragment).ownerOf(fragmentTokenId) != targetOwner) {
+                revert NotAuthorized(msg.sender);
+            }
         } else if (scope.allowUserAssign) {
             // If allowUserAssign is set for this scope, the sender must own both fragment and target
-            require(IERC721(fragment).ownerOf(fragmentTokenId) == msg.sender, "not authorized");
-            require(targetOwner == msg.sender, "not authorized");   
+            if (IERC721(fragment).ownerOf(fragmentTokenId) != msg.sender) {
+                revert NotAuthorized(msg.sender);
+            }
+            if (targetOwner != msg.sender) {
+                revert NotAuthorized(msg.sender);
+            }
             // continue
         } else {
-            revert("not authorized");
+            revert NotAuthorized(msg.sender);
         }
         (uint64 ref, bool redacted) = IPatchworkLiteRef(target).getLiteReference(fragment, fragmentTokenId);
-        require(ref != 0, "unregistered fragment");
-        require(!redacted, "redacted fragment");
-        require(!scope.liteRefs[ref], "already assigned in this scope");
+        if (ref == 0) {
+            revert FragmentUnregistered(address(fragment));
+        }
+        if (redacted) {
+            revert FragmentRedacted(address(fragment));
+        }
+        if (scope.liteRefs[ref]) {
+            revert FragmentAlreadyAssignedInScope(scopeName, address(fragment), fragmentTokenId);
+        }
         // call assign on the fragment
         assignableNFT.assign(fragmentTokenId, target, targetTokenId);
         // add to our storage of scope->target assignments
@@ -318,26 +396,39 @@ contract PatchworkProtocol {
     @param fragmentTokenId The IPatchworkAssignableNFT token ID of the fragment NFT
     */
     function unassignNFT(address fragment, uint fragmentTokenId) public {
-        require(!_checkFrozen(fragment, fragmentTokenId), "frozen");
+        if (_checkFrozen(fragment, fragmentTokenId)) {
+            revert Frozen(fragment, fragmentTokenId);
+        }
         IPatchworkAssignableNFT assignableNFT = IPatchworkAssignableNFT(fragment);
         string memory scopeName = assignableNFT.getScopeName();
         Scope storage scope = _scopes[scopeName];
-        require(scope.owner != address(0), "scope does not exist");
+        // TODO _requireScope
+        if (scope.owner == address(0)) {
+            revert ScopeDoesNotExist(scopeName);
+        }
         if (scope.owner == msg.sender || scope.operators[msg.sender]) {
             // continue
         } else if (scope.allowUserAssign) {
             // If allowUserAssign is set for this scope, the sender must own both fragment
-            require(IERC721(fragment).ownerOf(fragmentTokenId) == msg.sender, "not authorized"); 
+            if (IERC721(fragment).ownerOf(fragmentTokenId) != msg.sender) {
+                revert NotAuthorized(msg.sender);
+            }
             // continue
         } else {
-            revert("not authorized");
+            revert NotAuthorized(msg.sender);
         }
         (address target, uint256 targetTokenId) = IPatchworkAssignableNFT(fragment).getAssignedTo(fragmentTokenId);
-        require(target != address(0), "not assigned");
+        if (target == address(0)) {
+            revert FragmentNotAssigned(fragment, fragmentTokenId);
+        }
         assignableNFT.unassign(fragmentTokenId);
         (uint64 ref, ) = IPatchworkLiteRef(target).getLiteReference(fragment, fragmentTokenId);
-        require(ref != 0, "unregistered fragment");
-        require(scope.liteRefs[ref], "ref not found in scope");
+        if (ref == 0) {
+            revert FragmentUnregistered(address(fragment));
+        }
+        if (!scope.liteRefs[ref]) {
+            revert RefNotFoundInScope(scopeName, target, fragment, fragmentTokenId);
+        }
         scope.liteRefs[ref] = false;
         IPatchworkLiteRef(target).removeReference(targetTokenId, ref);
         emit Unassign(IERC721(target).ownerOf(targetTokenId), fragment, fragmentTokenId, target, targetTokenId);
@@ -353,14 +444,18 @@ contract PatchworkProtocol {
         address nft = msg.sender;
         if (IERC165(nft).supportsInterface(IPATCHWORKASSIGNABLENFT_INTERFACE)) {
             IPatchworkAssignableNFT assignableNFT = IPatchworkAssignableNFT(nft);
-            (address addr, uint256 _tokenId) = assignableNFT.getAssignedTo(tokenId);
-            require(addr == address(0) && _tokenId == 0, "transfer blocked by assignment");
+            (address addr,) = assignableNFT.getAssignedTo(tokenId);
+            if (addr != address(0)) {
+                revert TransferBlockedByAssignment(nft, tokenId);
+            }
         }
         if (IERC165(nft).supportsInterface(IPATCHWORKPATCH_INTERFACE)) {
-            revert("soulbound transfer not allowed");
+            revert SoulboundTransferNotAllowed(nft, tokenId);
         }
         if (IERC165(nft).supportsInterface(IPATCHWORKNFT_INTERFACE)) {
-            require(!IPatchworkNFT(nft).locked(tokenId), "locked");
+            if (IPatchworkNFT(nft).locked(tokenId)) {
+                revert Locked(nft, tokenId);
+            }
         }
         if (IERC165(nft).supportsInterface(IPATCHWORKLITEREF_INTERFACE)) {
             IPatchworkLiteRef liteRefNFT = IPatchworkLiteRef(nft);
@@ -374,10 +469,14 @@ contract PatchworkProtocol {
     }
 
     function _applyAssignedTransfer(address nft, address from, address to, uint256 tokenId, address assignedToNFT_, uint256 assignedToTokenId_) internal {
-        require(IERC165(nft).supportsInterface(IPATCHWORKASSIGNABLENFT_INTERFACE), "assigned 721 not patchwork assignable");
+        if (!IERC165(nft).supportsInterface(IPATCHWORKASSIGNABLENFT_INTERFACE)) {
+            revert NotPatchworkAssignable(nft);
+        }
         (address assignedToNFT, uint256 assignedToTokenId) = IPatchworkAssignableNFT(nft).getAssignedTo(tokenId);
         // 2-way Check the assignment to prevent spoofing
-        require(assignedToNFT_ == assignedToNFT && assignedToTokenId_ == assignedToTokenId, "data integrity error");
+        if (assignedToNFT_ != assignedToNFT || assignedToTokenId_ != assignedToTokenId) {
+            revert DataIntegrityError(assignedToNFT_, assignedToTokenId_, assignedToNFT, assignedToTokenId);
+        }
         IPatchworkAssignableNFT(nft).onAssignedTransfer(from, to, tokenId);
         if (IERC165(nft).supportsInterface(IPATCHWORKLITEREF_INTERFACE)) {
             address nft_ = nft; // local variable prevents optimizer stack issue in v0.8.18
