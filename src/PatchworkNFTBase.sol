@@ -81,20 +81,32 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT, IERC4906 {
     }
 
     function transferFromWithFreezeNonce(address from, address to, uint256 tokenId, uint256 nonce) public {
-        require(frozen(tokenId), "not frozen");
-        require(getFreezeNonce(tokenId) == nonce, "incorrect nonce");
+        if (!frozen(tokenId)) {
+            revert PatchworkProtocol.NotFrozen(address(this), tokenId);
+        }
+        if (getFreezeNonce(tokenId) != nonce) {
+            revert PatchworkProtocol.IncorrectNonce(address(this), tokenId, nonce);
+        }
         transferFrom(from, to, tokenId);
     }
 
     function safeTransferFromWithFreezeNonce(address from, address to, uint256 tokenId, uint256 nonce) public {
-        require(frozen(tokenId), "not frozen");
-        require(getFreezeNonce(tokenId) == nonce, "incorrect nonce");
+        if (!frozen(tokenId)) {
+            revert PatchworkProtocol.NotFrozen(address(this), tokenId);
+        }
+        if (getFreezeNonce(tokenId) != nonce) {
+            revert PatchworkProtocol.IncorrectNonce(address(this), tokenId, nonce);
+        }
         safeTransferFrom(from, to, tokenId);
     }
 
     function safeTransferFromWithFreezeNonce(address from, address to, uint256 tokenId, bytes memory data, uint256 nonce) public {
-        require(frozen(tokenId), "not frozen");
-        require(getFreezeNonce(tokenId) == nonce, "incorrect nonce");
+        if (!frozen(tokenId)) {
+            revert PatchworkProtocol.NotFrozen(address(this), tokenId);
+        }
+        if (getFreezeNonce(tokenId) != nonce) {
+            revert PatchworkProtocol.IncorrectNonce(address(this), tokenId, nonce);
+        }
         safeTransferFrom(from, to, tokenId, data);
     }
 
@@ -227,8 +239,8 @@ abstract contract PatchworkPatch is PatchworkNFT, IPatchworkPatch {
         return false;
     }
 
-    function setLocked(uint256 /* tokenId */, bool /* locked_ */) public pure virtual override {
-        revert("cannot lock a soul-bound patch");
+    function setLocked(uint256 /* tokenId */, bool /* locked_ */) public view virtual override {
+        revert PatchworkProtocol.CannotLockSoulboundPatch(address(this));
     }
 
     function patchworkCompatible_() external pure returns (bytes1) {}
@@ -351,9 +363,13 @@ abstract contract PatchworkLiteRef is IPatchworkLiteRef, ERC165 {
             revert PatchworkProtocol.NotAuthorized(msg.sender);
         }
         uint8 refId = _nextReferenceId;
-        require(_nextReferenceId != 255, "out of IDs");
+        if (_nextReferenceId == 255) {
+            revert PatchworkProtocol.OutOfIDs();
+        }
         _nextReferenceId++;
-        require(_referenceAddressIds[addr] == 0, "Already registered");
+        if (_referenceAddressIds[addr] != 0) {
+            revert PatchworkProtocol.FragmentAlreadyRegistered(addr);
+        }
         _referenceAddresses[refId] = addr;
         _referenceAddressIds[addr] = refId;
         return refId;
@@ -378,7 +394,9 @@ abstract contract PatchworkLiteRef is IPatchworkLiteRef, ERC165 {
         if (refId == 0) {
             return (0, false);
         }
-        require(tokenId <= 0xFFFFFFFFFFFFFF, "unsupported tokenId");
+        if (tokenId > 0xFFFFFFFFFFFFFF) {
+            revert PatchworkProtocol.UnsupportedTokenId(tokenId);
+        }
         return (uint64(uint256(refId) << 56 | tokenId), _redactedReferenceIds[refId]);
     }
 

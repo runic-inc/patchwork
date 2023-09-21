@@ -150,7 +150,7 @@ contract PatchworkProtocolTest is Test {
         prot.assignNFT(address(testFragmentLiteRefNFT), fragmentTokenId, address(testPatchLiteRefNFT), patchTokenId);
         // expect revert
         vm.prank(userAddress);
-        vm.expectRevert("transfer blocked by assignment");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.TransferBlockedByAssignment.selector, testFragmentLiteRefNFT, fragmentTokenId));
         testFragmentLiteRefNFT.transferFrom(userAddress, address(5), fragmentTokenId);
     }
 
@@ -177,7 +177,7 @@ contract PatchworkProtocolTest is Test {
         //Register artifactNFT to testPatchLiteRefNFT
         testPatchLiteRefNFT.registerReferenceAddress(address(testFragmentLiteRefNFT));
 
-        vm.expectRevert("self-assignment not allowed");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.SelfAssignmentNotAllowed.selector, address(testFragmentLiteRefNFT), fragmentTokenId));
         prot.assignNFT(address(testFragmentLiteRefNFT), fragmentTokenId, address(testFragmentLiteRefNFT), fragmentTokenId);
 
         vm.stopPrank();
@@ -200,7 +200,7 @@ contract PatchworkProtocolTest is Test {
         vm.stopPrank();
         
         vm.prank(userAddress);
-        vm.expectRevert("soulbound transfer not allowed");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.SoulboundTransferNotAllowed.selector, address(testPatchLiteRefNFT), patchTokenId));
         testPatchLiteRefNFT.transferFrom(userAddress, user2Address, patchTokenId);
     }
 
@@ -279,7 +279,7 @@ contract PatchworkProtocolTest is Test {
         prot.unassignNFT(address(testFragmentLiteRefNFT), fragmentTokenId);
         vm.startPrank(userAddress);
         prot.unassignNFT(address(testFragmentLiteRefNFT), fragmentTokenId);
-        vm.expectRevert("not assigned");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.FragmentNotAssigned.selector, address(testFragmentLiteRefNFT), fragmentTokenId));
         prot.unassignNFT(address(testFragmentLiteRefNFT), fragmentTokenId);
     }
 
@@ -351,7 +351,7 @@ contract PatchworkProtocolTest is Test {
         assertEq(testFragmentLiteRefNFT.ownerOf(fragment2),  address(7));
 
         testFragmentLiteRefNFT.setGetAssignedToOverride(true, address(testPatchLiteRefNFT));
-        vm.expectRevert("ref not found in scope");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.RefNotFoundInScope.selector, scopeName, address(testPatchLiteRefNFT), address(testFragmentLiteRefNFT), fragment2));
         prot.unassignNFT(address(testFragmentLiteRefNFT), fragment2);
         testFragmentLiteRefNFT.setGetAssignedToOverride(false, address(testPatchLiteRefNFT));
         vm.stopPrank();
@@ -359,10 +359,9 @@ contract PatchworkProtocolTest is Test {
         // try to transfer a patch directly - it should be blocked because it is soulbound
         assertEq(address(7), testPatchLiteRefNFT.ownerOf(patchTokenId)); // Report as soulbound
         vm.startPrank(userAddress); // Prank from underlying owner address
-        vm.expectRevert("soulbound transfer not allowed");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.SoulboundTransferNotAllowed.selector, address(testPatchLiteRefNFT), patchTokenId));
         testPatchLiteRefNFT.transferFrom(userAddress, address(7), patchTokenId);
         vm.stopPrank();
-
     }
 
     function testBatchAssignNFT() public {
@@ -428,7 +427,7 @@ contract PatchworkProtocolTest is Test {
         uint256[] memory selfFrag = new uint256[](1);
         selfAddr[0] = address(testPatchLiteRefNFT);
         selfFrag[0] = patchTokenId;
-        vm.expectRevert("self-assignment not allowed");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.SelfAssignmentNotAllowed.selector, selfAddr[0], selfFrag[0]));
         vm.prank(scopeOwner);     
         prot.batchAssignNFT(selfAddr, selfFrag, address(testPatchLiteRefNFT), patchTokenId);
 
@@ -725,12 +724,12 @@ contract PatchworkProtocolTest is Test {
         uint256 nonce = testFragmentLiteRefNFT.getFreezeNonce(fragment2);
         testFragmentLiteRefNFT.setFrozen(fragment2, true);
         testFragmentLiteRefNFT.setFrozen(fragment2, false); // nonce +1
-        vm.expectRevert("not frozen");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotFrozen.selector, address(testFragmentLiteRefNFT), fragment2));
         testFragmentLiteRefNFT.transferFromWithFreezeNonce(userAddress, user2Address, fragment2, nonce+1);
         assertEq(false, testFragmentLiteRefNFT.frozen(fragment2));
         testFragmentLiteRefNFT.setFrozen(fragment2, true);
         assertEq(true, testFragmentLiteRefNFT.frozen(fragment2));
-        vm.expectRevert("incorrect nonce");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.IncorrectNonce.selector, address(testFragmentLiteRefNFT), fragment2, nonce));
         testFragmentLiteRefNFT.transferFromWithFreezeNonce(userAddress, user2Address, fragment2, nonce);
         // now success
         testFragmentLiteRefNFT.transferFromWithFreezeNonce(userAddress, user2Address, fragment2, nonce+1);
@@ -747,8 +746,8 @@ contract PatchworkProtocolTest is Test {
         testFragmentLiteRefNFT.addReference(fragment1, ref);
         // Should revert with data integrity error
         vm.stopPrank();
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.DataIntegrityError.selector, address(testFragmentLiteRefNFT), fragment1, address(0), 0));
         vm.prank(userAddress);
-        vm.expectRevert("data integrity error");
         testFragmentLiteRefNFT.transferFrom(userAddress, user2Address, fragment1);
     }
 
@@ -762,8 +761,8 @@ contract PatchworkProtocolTest is Test {
         testFragmentLiteRefNFT.addReference(fragment1, ref);
         // Should revert with data integrity error
         vm.stopPrank();
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotPatchworkAssignable.selector, address(testBaseNFT)));
         vm.prank(userAddress);
-        vm.expectRevert("assigned 721 not patchwork assignable");
         testFragmentLiteRefNFT.transferFrom(userAddress, user2Address, fragment1);
     }
 }

@@ -25,7 +25,19 @@ contract PatchworkProtocol {
     error FragmentAlreadyAssigned(address addr, uint256 tokenId);
     // TODO this could be an issue as we settled on single assignment b/c of ownership hierarchy
     error FragmentAlreadyAssignedInScope(string scopeName, address addr, uint256 tokenId);
+    error RefNotFoundInScope(string scopeName, address target, address fragment, uint256 tokenId);
     error FragmentNotAssigned(address addr, uint256 tokenId);
+    error FragmentAlreadyRegistered(address addr);
+    error OutOfIDs();
+    error UnsupportedTokenId(uint256 tokenId);
+    error CannotLockSoulboundPatch(address addr);
+    error NotFrozen(address addr, uint256 tokenId);
+    error IncorrectNonce(address addr, uint256 tokenId, uint256 nonce);
+    error SelfAssignmentNotAllowed(address addr, uint256 tokenId);
+    error SoulboundTransferNotAllowed(address addr, uint256 tokenId);
+    error TransferBlockedByAssignment(address addr, uint256 tokenId);
+    error NotPatchworkAssignable(address addr);
+    error DataIntegrityError(address addr, uint256 tokenId, address addr2, uint256 tokenId2);
 
     struct Scope {
         address owner;
@@ -33,7 +45,7 @@ contract PatchworkProtocol {
         bool allowUserAssign;
         bool requireWhitelist;
         mapping(address => bool) operators;
-        mapping(uint64 => bool) liteRefs;
+        mapping(uint64 => bool) liteRefs; // TODO needs hash of literefaddr+ref to be unique
         mapping(address => bool) whitelist;
         mapping(bytes32 => bool) uniquePatches;
     }
@@ -325,7 +337,9 @@ contract PatchworkProtocol {
         if (_checkFrozen(fragment, fragmentTokenId)) {
             revert Frozen(fragment, fragmentTokenId);
         }
-        require(!(fragment == target && fragmentTokenId == targetTokenId), "self-assignment not allowed");
+        if (fragment == target && fragmentTokenId == targetTokenId) {
+            revert SelfAssignmentNotAllowed(fragment, fragmentTokenId);
+        }
         IPatchworkAssignableNFT assignableNFT = IPatchworkAssignableNFT(fragment);
         if (_checkLocked(fragment, fragmentTokenId)) {
             revert Locked(fragment, fragmentTokenId);
@@ -404,13 +418,17 @@ contract PatchworkProtocol {
             revert NotAuthorized(msg.sender);
         }
         (address target, uint256 targetTokenId) = IPatchworkAssignableNFT(fragment).getAssignedTo(fragmentTokenId);
-        require(target != address(0), "not assigned");
+        if (target == address(0)) {
+            revert FragmentNotAssigned(fragment, fragmentTokenId);
+        }
         assignableNFT.unassign(fragmentTokenId);
         (uint64 ref, ) = IPatchworkLiteRef(target).getLiteReference(fragment, fragmentTokenId);
         if (ref == 0) {
             revert FragmentUnregistered(address(fragment));
         }
-        require(scope.liteRefs[ref], "ref not found in scope");
+        if (!scope.liteRefs[ref]) {
+            revert RefNotFoundInScope(scopeName, target, fragment, fragmentTokenId);
+        }
         scope.liteRefs[ref] = false;
         IPatchworkLiteRef(target).removeReference(targetTokenId, ref);
         emit Unassign(IERC721(target).ownerOf(targetTokenId), fragment, fragmentTokenId, target, targetTokenId);
@@ -426,11 +444,13 @@ contract PatchworkProtocol {
         address nft = msg.sender;
         if (IERC165(nft).supportsInterface(IPATCHWORKASSIGNABLENFT_INTERFACE)) {
             IPatchworkAssignableNFT assignableNFT = IPatchworkAssignableNFT(nft);
-            (address addr, uint256 _tokenId) = assignableNFT.getAssignedTo(tokenId);
-            require(addr == address(0) && _tokenId == 0, "transfer blocked by assignment");
+            (address addr,) = assignableNFT.getAssignedTo(tokenId);
+            if (addr != address(0)) {
+                revert TransferBlockedByAssignment(nft, tokenId);
+            }
         }
         if (IERC165(nft).supportsInterface(IPATCHWORKPATCH_INTERFACE)) {
-            revert("soulbound transfer not allowed");
+            revert SoulboundTransferNotAllowed(nft, tokenId);
         }
         if (IERC165(nft).supportsInterface(IPATCHWORKNFT_INTERFACE)) {
             if (IPatchworkNFT(nft).locked(tokenId)) {
@@ -449,10 +469,14 @@ contract PatchworkProtocol {
     }
 
     function _applyAssignedTransfer(address nft, address from, address to, uint256 tokenId, address assignedToNFT_, uint256 assignedToTokenId_) internal {
-        require(IERC165(nft).supportsInterface(IPATCHWORKASSIGNABLENFT_INTERFACE), "assigned 721 not patchwork assignable");
+        if (!IERC165(nft).supportsInterface(IPATCHWORKASSIGNABLENFT_INTERFACE)) {
+            revert NotPatchworkAssignable(nft);
+        }
         (address assignedToNFT, uint256 assignedToTokenId) = IPatchworkAssignableNFT(nft).getAssignedTo(tokenId);
         // 2-way Check the assignment to prevent spoofing
-        require(assignedToNFT_ == assignedToNFT && assignedToTokenId_ == assignedToTokenId, "data integrity error");
+        if (assignedToNFT_ != assignedToNFT || assignedToTokenId_ != assignedToTokenId) {
+            revert DataIntegrityError(assignedToNFT_, assignedToTokenId_, assignedToNFT, assignedToTokenId);
+        }
         IPatchworkAssignableNFT(nft).onAssignedTransfer(from, to, tokenId);
         if (IERC165(nft).supportsInterface(IPATCHWORKLITEREF_INTERFACE)) {
             address nft_ = nft; // local variable prevents optimizer stack issue in v0.8.18

@@ -139,26 +139,27 @@ contract PatchworkNFTBaseTest is Test {
         // test not frozen revert
         testPatchworkNFT.setFrozen(1, false);
         assertEq(user2Address, testPatchworkNFT.ownerOf(1));
-        vm.expectRevert("not frozen");
+
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotFrozen.selector, testPatchworkNFT, 1));
         testPatchworkNFT.transferFromWithFreezeNonce(user2Address, userAddress, 1, 1);
         assertEq(user2Address, testPatchworkNFT.ownerOf(1));
-        vm.expectRevert("not frozen");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotFrozen.selector, testPatchworkNFT, 1));
         testPatchworkNFT.safeTransferFromWithFreezeNonce(user2Address, userAddress, 1, 1);
         assertEq(user2Address, testPatchworkNFT.ownerOf(1));
-        vm.expectRevert("not frozen");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotFrozen.selector, testPatchworkNFT, 1));
         testPatchworkNFT.safeTransferFromWithFreezeNonce(user2Address, userAddress, 1, bytes("abcd"), 1);
         assertEq(user2Address, testPatchworkNFT.ownerOf(1));
 
         // test incorrect nonce revert
         testPatchworkNFT.setFrozen(1, true);
         assertEq(user2Address, testPatchworkNFT.ownerOf(1));
-        vm.expectRevert("incorrect nonce");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.IncorrectNonce.selector, testPatchworkNFT, 1, 0));
         testPatchworkNFT.transferFromWithFreezeNonce(user2Address, userAddress, 1, 0);
         assertEq(user2Address, testPatchworkNFT.ownerOf(1));
-        vm.expectRevert("incorrect nonce");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.IncorrectNonce.selector, testPatchworkNFT, 1, 0));
         testPatchworkNFT.safeTransferFromWithFreezeNonce(user2Address, userAddress, 1, 0);
         assertEq(user2Address, testPatchworkNFT.ownerOf(1));
-        vm.expectRevert("incorrect nonce");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.IncorrectNonce.selector, testPatchworkNFT, 1, 0));
         testPatchworkNFT.safeTransferFromWithFreezeNonce(user2Address, userAddress, 1, bytes("abcd"), 0);
         assertEq(user2Address, testPatchworkNFT.ownerOf(1));
         vm.stopPrank();
@@ -184,7 +185,7 @@ contract PatchworkNFTBaseTest is Test {
         uint256 patchTokenId = prot.createPatch(address(testBaseNFT), baseTokenId, address(testPatchLiteRefNFT));
         bool locked = testPatchLiteRefNFT.locked(patchTokenId);
         assertFalse(locked);
-        vm.expectRevert("cannot lock a soul-bound patch");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.CannotLockSoulboundPatch.selector, testPatchLiteRefNFT));
         testPatchLiteRefNFT.setLocked(patchTokenId, true);
     }
 
@@ -340,13 +341,13 @@ contract PatchworkNFTBaseTest is Test {
         vm.startPrank(scopeOwner);
         uint8 refIdx = testPatchLiteRefNFT.registerReferenceAddress(address(testFragmentLiteRefNFT));
         assertEq(1, refIdx);
-        vm.expectRevert("Already registered");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.FragmentAlreadyRegistered.selector, address(testFragmentLiteRefNFT)));
         testPatchLiteRefNFT.registerReferenceAddress(address(testFragmentLiteRefNFT));
         // Fill ID 2 to 254 then test overflow
         for (uint8 i = 2; i < 255; i++) {
             refIdx = testPatchLiteRefNFT.registerReferenceAddress(address(bytes20(uint160(i))));
         }
-        vm.expectRevert("out of IDs");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.OutOfIDs.selector));
         refIdx = testPatchLiteRefNFT.registerReferenceAddress(address(256));
     }
     
@@ -369,7 +370,7 @@ contract PatchworkNFTBaseTest is Test {
         assertEq((uint256(r1) << 56) + 1, ref);
         (ref, redacted) = testFragmentLiteRefNFT.getLiteReference(address(1), 0xFFFFFFFFFFFFFF);
         assertEq((uint256(r1) << 56) + 0xFFFFFFFFFFFFFF, ref);
-        vm.expectRevert("unsupported tokenId");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.UnsupportedTokenId.selector, 1 << 56));
         testFragmentLiteRefNFT.getLiteReference(address(1), 1 << 56);
     }
 
