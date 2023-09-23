@@ -166,7 +166,7 @@ interface IPatchworkNFT is PatchworkNFTInterfaceMeta, IERC5192 {
     /**
     @notice Gets the freeze status of a token (ERC-5192)
     @param tokenId ID of the token
-    @return bool true if locked, false if not
+    @return bool true if frozen, false if not
      */
     function frozen(uint256 tokenId) external view returns (bool);
 
