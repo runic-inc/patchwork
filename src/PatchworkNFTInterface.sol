@@ -11,49 +11,65 @@ import "./IERC5192.sol";
 @notice Metadata for IPatchworkNFT and related contract interfaces
 */
 interface PatchworkNFTInterfaceMeta {
+    /**
+    @notice Enumeration of possible field data types.
+    @dev This defines the various basic data types for the fields.
+     */
+    enum FieldType {
+        BOOLEAN,  ///< A Boolean type (true or false).
+        INT8,     ///< An 8-bit signed integer.
+        INT16,    ///< A 16-bit signed integer.
+        INT32,    ///< A 32-bit signed integer.
+        INT64,    ///< A 64-bit signed integer.
+        INT128,   ///< A 128-bit signed integer.
+        INT256,   ///< A 256-bit signed integer.
+        UINT8,    ///< An 8-bit unsigned integer.
+        UINT16,   ///< A 16-bit unsigned integer.
+        UINT32,   ///< A 32-bit unsigned integer.
+        UINT64,   ///< A 64-bit unsigned integer.
+        UINT128,  ///< A 128-bit unsigned integer.
+        UINT256,  ///< A 256-bit unsigned integer.
+        CHAR8,    ///< An 8-character string.
+        CHAR16,   ///< A 16-character string.
+        CHAR32,   ///< A 32-character string.
+        CHAR64,   ///< A 64-character string.
+        LITEREF  ///< A Literef reference to a patchwork fragment
+    }
 
-  enum FieldType {
-    BOOLEAN,
-    INT8,
-    INT16,
-    INT32,
-    INT64,
-    INT128,
-    INT256,
-    UINT8,
-    UINT16,
-    UINT32,
-    UINT64,
-    UINT128,
-    UINT256,
-    CHAR8,
-    CHAR16,
-    CHAR32,
-    CHAR64,
-    LITEREF
- }
+    /**
+    @notice Struct defining the metadata schema.
+    @dev This defines the overall structure of the metadata and contains entries describing each data field.
+    */
+    struct MetadataSchema {
+        uint256 version;                    ///< Version of the metadata schema.
+        MetadataSchemaEntry[] entries;      ///< Array of entries in the schema.
+    }
 
-  struct MetadataSchema {
-    uint256 version;
-    MetadataSchemaEntry[] entries;
-  }
+    /**
+    @notice Struct defining individual entries within the metadata schema.
+    @dev Represents each data field in the schema, detailing its properties and type.
+    */
+    struct MetadataSchemaEntry {
+        uint256 id;                        ///< Index or unique identifier of the entry.
+        uint256 permissionId;              ///< Permission identifier associated with the entry.
+        FieldType fieldType;               ///< Type of field data (from the FieldType enum).
+        uint256 arrayLength;               ///< Length of array for the field (0 means it's a single field).
+        FieldVisibility visibility;        ///< Visibility level of the field.
+        uint256 slot;                      ///< Starting storage slot, may span multiple slots based on width.
+        uint256 offset;                    ///< Offset in bits within the storage slot.
+        string key;                        ///< Key or name associated with the field.
+    }
 
-  struct MetadataSchemaEntry {
-    uint256 id; // index
-    uint256 permissionId;
-    FieldType fieldType;
-    uint256 arrayLength; // 0 is single field
-    FieldVisibility visibility;
-    uint256 slot; // start, may span more than one depending on width
-    uint256 offset; // in bits
-    string key;
-  }
-
-  enum FieldVisibility {
-    PUBLIC,
-    PRIVATE
-  }
+    /**
+    @notice Enumeration of field visibility options.
+    @dev Specifies whether a field is publicly accessible or private.
+    */
+    enum FieldVisibility {
+        PUBLIC,  ///< Field is publicly accessible.
+        PRIVATE  ///< Field is private
+    }
 }
+
 
 bytes4 constant IPATCHWORKNFT_INTERFACE = 0x017609f2;
 bytes4 constant IPATCHWORKPATCH_INTERFACE = 0x4d721caf;
@@ -86,25 +102,29 @@ interface IPatchworkNFT is PatchworkNFTInterfaceMeta, IERC5192 {
     event PermissionChange(address indexed to, uint256 permissions);
 
     /**
-    @notice Returns the name of the scope
+    @notice Get the scope this NFT claims to belong to
+    @return string the name of the scope
     */
     function getScopeName() external returns (string memory);
 
     /**
     @notice Returns the URI of the schema
+    @return string the URI of the schema
     */
     function schemaURI() external returns (string memory);
 
     /**
     @notice Returns the metadata schema
+    @return MetadataSchema the metadata schema
     */
     function schema() external returns (MetadataSchema memory);
 
     /**
     @notice Returns the URI of the image associated with the given token ID
-    @param _tokenId ID of the token
+    @param tokenId ID of the token
+    @return string the image URI
     */
-    function imageURI(uint256 _tokenId) external returns (string memory);
+    function imageURI(uint256 tokenId) external returns (string memory);
 
     /**
     @notice Sets permissions for a given address
@@ -115,22 +135,24 @@ interface IPatchworkNFT is PatchworkNFTInterfaceMeta, IERC5192 {
 
     /**
     @notice Stores packed metadata for a given token ID and slot
-    @param _tokenId ID of the token
+    @param tokenId ID of the token
     @param slot Slot to store metadata
     @param data Metadata to store
     */
-    function storePackedMetadataSlot(uint256 _tokenId, uint256 slot, uint256 data) external;
+    function storePackedMetadataSlot(uint256 tokenId, uint256 slot, uint256 data) external;
 
     /**
     @notice Loads packed metadata for a given token ID and slot
-    @param _tokenId ID of the token
+    @param tokenId ID of the token
     @param slot Slot to load metadata from
+    @return uint256 the raw slot data as a uint256
     */
-    function loadPackedMetadataSlot(uint256 _tokenId, uint256 slot) external returns (uint256);
+    function loadPackedMetadataSlot(uint256 tokenId, uint256 slot) external returns (uint256);
 
     /**
     @notice Returns the freeze nonce for a given token ID
     @param tokenId ID of the token
+    @return nonce the nonce
     */
     function getFreezeNonce(uint256 tokenId) external returns (uint256 nonce);
 
@@ -144,7 +166,7 @@ interface IPatchworkNFT is PatchworkNFTInterfaceMeta, IERC5192 {
     /**
     @notice Gets the freeze status of a token (ERC-5192)
     @param tokenId ID of the token
-    @return bool true if locked, false if not
+    @return bool true if frozen, false if not
      */
     function frozen(uint256 tokenId) external view returns (bool);
 
@@ -170,7 +192,8 @@ interface IPatchworkNFT is PatchworkNFTInterfaceMeta, IERC5192 {
 */
 interface IPatchworkPatch {
     /**
-    @notice Returns the name of the scope
+    @notice Get the scope this NFT claims to belong to
+    @return string the name of the scope
     */
     function getScopeName() external returns (string memory);
 
@@ -181,7 +204,7 @@ interface IPatchworkPatch {
     @param originalNFTTokenId ID of the original NFT token
     @return tokenId ID of the newly minted token
     */
-    function mintPatch(address owner, address originalNFTAddress, uint originalNFTTokenId) external returns (uint256 tokenId);
+    function mintPatch(address owner, address originalNFTAddress, uint256 originalNFTTokenId) external returns (uint256 tokenId);
 
     /**
     @notice Updates the real underlying ownership of a token in storage (if different from current)
@@ -210,9 +233,10 @@ interface IPatchworkPatch {
 */
 interface IPatchworkAssignableNFT {
     /**
-    @notice Returns the name of the scope
+    @notice Get the scope this NFT claims to belong to
+    @return string the name of the scope
     */
-    function getScopeName() external view returns (string memory);
+    function getScopeName() external returns (string memory);
 
     /**
     @notice Assigns a token to another
@@ -231,14 +255,15 @@ interface IPatchworkAssignableNFT {
     /**
     @notice Returns the address and token ID that our token is assigned to
     @param ourTokenId ID of our token
-    @return Address and token ID our token is assigned to
+    @return address the address this is assigned to
+    @return uint256 the tokenId this is assigned to
     */
     function getAssignedTo(uint256 ourTokenId) external view returns (address, uint256);
 
     /**
     @notice Returns the underlying stored owner of a token ignoring current assignment
     @param ourTokenId ID of our token
-    @return Address of the owner
+    @return address address of the owner
     */
     function unassignedOwnerOf(uint256 ourTokenId) external view returns (address);
 
