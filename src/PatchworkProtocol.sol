@@ -264,11 +264,7 @@ contract PatchworkProtocol {
         IPatchworkPatch patch = IPatchworkPatch(patchAddress);
         string memory scopeName = patch.getScopeName();
         // mint a Patch that is soulbound to the originalNFT using the contract address at patchAddress which must support Patchwork metadata
-        // TODO refactor to _requireScope()
-        Scope storage scope = _scopes[scopeName];
-        if (scope.owner == address(0)) {
-            revert ScopeDoesNotExist(scopeName);
-        }
+        Scope storage scope = _requireScope(scopeName);
         // TODO refactor to _checkWhitelist()
         if (scope.requireWhitelist && !scope.whitelist[patchAddress]) {
             revert NotWhitelisted(scopeName, patchAddress);
@@ -333,6 +329,19 @@ contract PatchworkProtocol {
         IPatchworkLiteRef(target).batchAddReferences(targetTokenId, refs);
     }
 
+    /**
+    @notice Requires that scopeName is present
+    @dev will revert with ScopeDoesNotExist if not present
+    @return scope the scope
+    */
+    function _requireScope(string memory scopeName) private view returns (Scope storage scope) {
+        Scope storage scope = _scopes[scopeName];
+        if (scope.owner == address(0)) {
+            revert ScopeDoesNotExist(scopeName);
+        }
+        return scope;
+    }
+
     function _doAssign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, address targetOwner) private returns (uint64) {
         if (_checkFrozen(fragment, fragmentTokenId)) {
             revert Frozen(fragment, fragmentTokenId);
@@ -346,11 +355,7 @@ contract PatchworkProtocol {
         }
         // Use the fragment's scope for permissions, target already has to have fragment registered to be assignable
         string memory scopeName = assignableNFT.getScopeName();
-        // TODO refactor to _requireScope
-        Scope storage scope = _scopes[scopeName];
-        if (scope.owner == address(0)) {
-            revert ScopeDoesNotExist(scopeName);
-        }
+        Scope storage scope = _requireScope(scopeName);
         // _checkWhitelist
         if (scope.requireWhitelist && !scope.whitelist[fragment]) {
             revert NotWhitelisted(scopeName, fragment);
@@ -401,11 +406,7 @@ contract PatchworkProtocol {
         }
         IPatchworkAssignableNFT assignableNFT = IPatchworkAssignableNFT(fragment);
         string memory scopeName = assignableNFT.getScopeName();
-        Scope storage scope = _scopes[scopeName];
-        // TODO _requireScope
-        if (scope.owner == address(0)) {
-            revert ScopeDoesNotExist(scopeName);
-        }
+        Scope storage scope = _requireScope(scopeName);
         if (scope.owner == msg.sender || scope.operators[msg.sender]) {
             // continue
         } else if (scope.allowUserAssign) {
@@ -490,6 +491,7 @@ contract PatchworkProtocol {
         }
     }
 
+    // TODO rename to _isFrozen, add modifier to call and revert
     function _checkFrozen(address nft, uint256 tokenId) internal view returns (bool frozen) {
         if (IERC165(nft).supportsInterface(IPATCHWORKNFT_INTERFACE)) {
             if (IPatchworkNFT(nft).frozen(tokenId)) {
@@ -505,6 +507,7 @@ contract PatchworkProtocol {
         return false;
     }
 
+    // TODO rename to _isLocked, see if modifier makes sense
     function _checkLocked(address nft, uint256 tokenId) internal view returns (bool locked) {
         if (IERC165(nft).supportsInterface(IPATCHWORKNFT_INTERFACE)) {
             if (IPatchworkNFT(nft).locked(tokenId)) {
