@@ -176,13 +176,6 @@ interface IPatchworkNFT is PatchworkNFTInterfaceMeta, IERC5192 {
     @param locked Lock status to set
     */
     function setLocked(uint256 tokenId, bool locked) external;
-
-    /**
-    @notice Gets the lock status of a token (ERC-5192)
-    @param tokenId ID of the token
-    @return bool true if locked, false if not
-     */
-    function locked(uint256 tokenId) external view returns (bool);
 }
 
 /**
