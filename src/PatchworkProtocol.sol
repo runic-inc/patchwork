@@ -609,22 +609,22 @@ contract PatchworkProtocol {
     */
     function applyTransfer(address from, address to, uint256 tokenId) public {
         address nft = msg.sender;
-        if (IERC165(nft).supportsInterface(IPATCHWORKASSIGNABLENFT_INTERFACE)) {
+        if (IERC165(nft).supportsInterface(type(IPatchworkAssignableNFT).interfaceId)) {
             IPatchworkAssignableNFT assignableNFT = IPatchworkAssignableNFT(nft);
             (address addr,) = assignableNFT.getAssignedTo(tokenId);
             if (addr != address(0)) {
                 revert TransferBlockedByAssignment(nft, tokenId);
             }
         }
-        if (IERC165(nft).supportsInterface(IPATCHWORKPATCH_INTERFACE)) {
+        if (IERC165(nft).supportsInterface(type(IPatchworkPatch).interfaceId)) {
             revert SoulboundTransferNotAllowed(nft, tokenId);
         }
-        if (IERC165(nft).supportsInterface(IPATCHWORKNFT_INTERFACE)) {
+        if (IERC165(nft).supportsInterface(type(IPatchworkNFT).interfaceId)) {
             if (IPatchworkNFT(nft).locked(tokenId)) {
                 revert Locked(nft, tokenId);
             }
         }
-        if (IERC165(nft).supportsInterface(IPATCHWORKLITEREF_INTERFACE)) {
+        if (IERC165(nft).supportsInterface(type(IPatchworkLiteRef).interfaceId)) {
             IPatchworkLiteRef liteRefNFT = IPatchworkLiteRef(nft);
             (address[] memory addresses, uint256[] memory tokenIds) = liteRefNFT.loadAllReferences(tokenId);
             for (uint i = 0; i < addresses.length; i++) {
@@ -636,7 +636,7 @@ contract PatchworkProtocol {
     }
 
     function _applyAssignedTransfer(address nft, address from, address to, uint256 tokenId, address assignedToNFT_, uint256 assignedToTokenId_) private {
-        if (!IERC165(nft).supportsInterface(IPATCHWORKASSIGNABLENFT_INTERFACE)) {
+        if (!IERC165(nft).supportsInterface(type(IPatchworkAssignableNFT).interfaceId)) {
             revert NotPatchworkAssignable(nft);
         }
         (address assignedToNFT, uint256 assignedToTokenId) = IPatchworkAssignableNFT(nft).getAssignedTo(tokenId);
@@ -645,7 +645,7 @@ contract PatchworkProtocol {
             revert DataIntegrityError(assignedToNFT_, assignedToTokenId_, assignedToNFT, assignedToTokenId);
         }
         IPatchworkAssignableNFT(nft).onAssignedTransfer(from, to, tokenId);
-        if (IERC165(nft).supportsInterface(IPATCHWORKLITEREF_INTERFACE)) {
+        if (IERC165(nft).supportsInterface(type(IPatchworkLiteRef).interfaceId)) {
             address nft_ = nft; // local variable prevents optimizer stack issue in v0.8.18
             IPatchworkLiteRef liteRefNFT = IPatchworkLiteRef(nft);
             (address[] memory addresses, uint256[] memory tokenIds) = liteRefNFT.loadAllReferences(tokenId);
@@ -663,7 +663,7 @@ contract PatchworkProtocol {
     @param tokenId The ID of the token whose ownership tree needs to be updated
     */
     function updateOwnershipTree(address nft, uint256 tokenId) public {
-        if (IERC165(nft).supportsInterface(IPATCHWORKLITEREF_INTERFACE)) {
+        if (IERC165(nft).supportsInterface(type(IPatchworkLiteRef).interfaceId)) {
             IPatchworkLiteRef liteRefNFT = IPatchworkLiteRef(nft);
             (address[] memory addresses, uint256[] memory tokenIds) = liteRefNFT.loadAllReferences(tokenId);
             for (uint i = 0; i < addresses.length; i++) {
@@ -672,9 +672,9 @@ contract PatchworkProtocol {
                 }
             }
         }
-        if (IERC165(nft).supportsInterface(IPATCHWORKASSIGNABLENFT_INTERFACE)) {
+        if (IERC165(nft).supportsInterface(type(IPatchworkAssignableNFT).interfaceId)) {
             IPatchworkAssignableNFT(nft).updateOwnership(tokenId);
-        } else if (IERC165(nft).supportsInterface(IPATCHWORKPATCH_INTERFACE)) {
+        } else if (IERC165(nft).supportsInterface(type(IPatchworkPatch).interfaceId)) {
             IPatchworkPatch(nft).updateOwnership(tokenId);
         }
     }
@@ -746,11 +746,11 @@ contract PatchworkProtocol {
     @return frozen if the nft or an owner up the tree is frozen
     */
     function _isFrozen(address nft, uint256 tokenId) private view returns (bool frozen) {
-        if (IERC165(nft).supportsInterface(IPATCHWORKNFT_INTERFACE)) {
+        if (IERC165(nft).supportsInterface(type(IPatchworkNFT).interfaceId)) {
             if (IPatchworkNFT(nft).frozen(tokenId)) {
                 return true;
             }
-            if (IERC165(nft).supportsInterface(IPATCHWORKASSIGNABLENFT_INTERFACE)) {
+            if (IERC165(nft).supportsInterface(type(IPatchworkAssignableNFT).interfaceId)) {
                 (address assignedAddr, uint256 assignedTokenId) = IPatchworkAssignableNFT(nft).getAssignedTo(tokenId);
                 if (assignedAddr != address(0)) {
                     return _isFrozen(assignedAddr, assignedTokenId);
@@ -767,7 +767,7 @@ contract PatchworkProtocol {
     @return locked if the nft is locked
     */
     function _isLocked(address nft, uint256 tokenId) private view returns (bool locked) {
-        if (IERC165(nft).supportsInterface(IPATCHWORKNFT_INTERFACE)) {
+        if (IERC165(nft).supportsInterface(type(IPatchworkNFT).interfaceId)) {
             if (IPatchworkNFT(nft).locked(tokenId)) {
                 return true;
             }

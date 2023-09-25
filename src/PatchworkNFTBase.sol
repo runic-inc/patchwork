@@ -101,10 +101,10 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT, IERC4906 {
     @dev See {IERC165-supportsInterface}
     */
     function supportsInterface(bytes4 interfaceID) public view virtual override(ERC721, IERC165) returns (bool) {
-        return interfaceID == IPATCHWORKNFT_INTERFACE ||  //PatchworkNFTInterface id
-            ERC721.supportsInterface(interfaceID) ||
+        return interfaceID == type(IPatchworkNFT).interfaceId ||
             interfaceID == type(IERC5192).interfaceId ||
-            interfaceID == type(IERC4906).interfaceId;        
+            interfaceID == type(IERC4906).interfaceId ||    
+            ERC721.supportsInterface(interfaceID);
     }
 
     /**
@@ -301,6 +301,14 @@ abstract contract PatchworkPatch is PatchworkNFT, IPatchworkPatch {
     mapping(uint256 => uint256) internal _patchedTokenIds;
 
     /**
+    @dev See {IERC165-supportsInterface}
+    */
+    function supportsInterface(bytes4 interfaceID) public view virtual override returns (bool) {
+        return interfaceID == type(IPatchworkPatch).interfaceId ||
+        super.supportsInterface(interfaceID); 
+    }
+
+    /**
     @dev See {IPatchworkNFT-getScopeName}
     */
     function getScopeName() public view virtual override(PatchworkNFT, IPatchworkPatch) returns (string memory) {
@@ -396,7 +404,7 @@ abstract contract PatchworkFragment is PatchworkNFT, IPatchworkAssignableNFT {
     @dev See {IERC165-supportsInterface}
     */
     function supportsInterface(bytes4 interfaceID) public view virtual override returns (bool) {
-        return interfaceID == IPATCHWORKASSIGNABLENFT_INTERFACE || // PatchworkAssignableInterface id
+        return interfaceID == type(IPatchworkAssignableNFT).interfaceId ||
         super.supportsInterface(interfaceID); 
     }
 
@@ -534,7 +542,7 @@ abstract contract PatchworkLiteRef is IPatchworkLiteRef, ERC165 {
     @dev See {IERC165-supportsInterface}
     */
     function supportsInterface(bytes4 interfaceID) public view virtual override returns (bool) {
-        return interfaceID == IPATCHWORKLITEREF_INTERFACE ||
+        return interfaceID == type(IPatchworkLiteRef).interfaceId ||
             ERC165.supportsInterface(interfaceID);
     }
 

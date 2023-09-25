@@ -34,10 +34,9 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
     }
 
     // ERC-165
-    function supportsInterface(bytes4 interfaceID) public view virtual override(PatchworkNFT, PatchworkLiteRef) returns (bool) {
-        return PatchworkLiteRef.supportsInterface(interfaceID) || 
-            PatchworkNFT.supportsInterface(interfaceID) ||
-            interfaceID == IPATCHWORKPATCH_INTERFACE;             
+    function supportsInterface(bytes4 interfaceID) public view virtual override(PatchworkPatch, PatchworkLiteRef) returns (bool) {
+        return PatchworkLiteRef.supportsInterface(interfaceID) ||
+            PatchworkPatch.supportsInterface(interfaceID);        
     }
 
     function schemaURI() pure external override returns (string memory) {
