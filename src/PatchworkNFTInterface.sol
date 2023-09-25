@@ -70,12 +70,6 @@ interface PatchworkNFTInterfaceMeta {
     }
 }
 
-
-bytes4 constant IPATCHWORKNFT_INTERFACE = 0x017609f2;
-bytes4 constant IPATCHWORKPATCH_INTERFACE = 0x4d721caf;
-bytes4 constant IPATCHWORKASSIGNABLENFT_INTERFACE = 0x2c2b633b;
-bytes4 constant IPATCHWORKLITEREF_INTERFACE = 0x0c790993;
-
 /**
 @title Patchwork Protocol NFT Interface
 @author Runic Labs, Inc
@@ -366,35 +360,4 @@ interface IPatchworkLiteRef {
     @return tokenIds Array of token IDs
     */
     function loadAllReferences(uint256 tokenId) external view returns (address[] memory addresses, uint256[] memory tokenIds);
-}
-
-
-contract Selector {
-    function calculatePatchworkNFTSelector() external pure returns (bytes4) {
-        IPatchworkNFT i;
-        return i.getScopeName.selector ^ i.schemaURI.selector ^ i.schema.selector ^ i.imageURI.selector ^ i.setPermissions.selector ^ 
-            i.storePackedMetadataSlot.selector ^ i.loadPackedMetadataSlot.selector ^ i.getFreezeNonce.selector ^
-            i.frozen.selector ^ i.setFrozen.selector ^ i.setLocked.selector;
-    }
-    function calculateERC165Selector() external pure returns (bytes4) {
-        ERC165 i;
-        return i.supportsInterface.selector;
-    }
-    function calculatePatchworkPatchSelector() external pure returns (bytes4) {
-        IPatchworkPatch i;
-        return i.getScopeName.selector ^ i.mintPatch.selector ^ i.updateOwnership.selector ^ i.unpatchedOwnerOf.selector ^
-            i.patchworkCompatible_.selector;
-    }
-    function calculatePatchworkAssignableNFTSelector() external pure returns (bytes4) {
-        IPatchworkAssignableNFT i;
-        return i.getScopeName.selector ^ i.assign.selector ^ i.unassign.selector ^ i.getAssignedTo.selector ^ 
-            i.unassignedOwnerOf.selector ^ i.onAssignedTransfer.selector ^ i.updateOwnership.selector ^ 
-            i.patchworkCompatible_.selector;
-    }
-    function calculatePatchworkLightRefSelector() external pure returns (bytes4) {
-        IPatchworkLiteRef i;
-        return i.registerReferenceAddress.selector ^ i.redactReferenceAddress.selector ^ i.unredactReferenceAddress.selector ^ i.getLiteReference.selector ^ i.getReferenceAddressAndTokenId.selector ^ 
-            i.addReference.selector ^ i.removeReference.selector ^ i.batchAddReferences.selector ^ i.loadReferenceAddressAndTokenId.selector ^ 
-            i.loadAllReferences.selector;
-    }
 }
