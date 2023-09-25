@@ -448,10 +448,7 @@ contract PatchworkProtocol {
         string memory scopeName = patch.getScopeName();
         // mint a Patch that is soulbound to the originalNFT using the contract address at patchAddress which must support Patchwork metadata
         Scope storage scope = _mustHaveScope(scopeName);
-        // TODO refactor to _checkWhitelist()
-        if (scope.requireWhitelist && !scope.whitelist[patchAddress]) {
-            revert NotWhitelisted(scopeName, patchAddress);
-        }
+        _mustBeWhitelisted(scopeName, scope, patchAddress);
         address tokenOwner = IERC721(originalNFTAddress).ownerOf(originalNFTTokenId);
         if (scope.owner == msg.sender || scope.operators[msg.sender]) {
             // continue
@@ -506,6 +503,15 @@ contract PatchworkProtocol {
         IPatchworkLiteRef(target).batchAddReferences(targetTokenId, refs);
     }
 
+    /**
+    @notice Performs assignment of an IPatchworkAssignableNFT to an IPatchworkLiteRef
+    @param fragment the IPatchworkAssignableNFT's address
+    @param fragmentTokenId the IPatchworkAssignableNFT's tokenId
+    @param target the IPatchworkLiteRef target's address
+    @param targetTokenId the IPatchworkLiteRef target's tokenId
+    @param targetOwner the owner address of the target
+    @return uint64 literef of assignable in target
+    */
     function _doAssign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, address targetOwner) private mustNotBeFrozen(fragment, fragmentTokenId) returns (uint64) {
         if (fragment == target && fragmentTokenId == targetTokenId) {
             revert SelfAssignmentNotAllowed(fragment, fragmentTokenId);
@@ -517,10 +523,7 @@ contract PatchworkProtocol {
         // Use the fragment's scope for permissions, target already has to have fragment registered to be assignable
         string memory scopeName = assignableNFT.getScopeName();
         Scope storage scope = _mustHaveScope(scopeName);
-        // _checkWhitelist
-        if (scope.requireWhitelist && !scope.whitelist[fragment]) {
-            revert NotWhitelisted(scopeName, fragment);
-        }
+        _mustBeWhitelisted(scopeName, scope, fragment);
         if (scope.owner == msg.sender || scope.operators[msg.sender]) {
             // Fragment and target must be same owner
             if (IERC721(fragment).ownerOf(fragmentTokenId) != targetOwner) {
@@ -688,18 +691,47 @@ contract PatchworkProtocol {
         }
     }
 
-    function _mustBeOwner(Scope storage s) private view {
-        if (msg.sender != s.owner) {
+    /**
+    @notice Requires that addr is whitelisted if whitelisting is enabled
+    @dev will revert with NotWhitelisted if whitelisting is enabled and address is not whitelisted
+    @param scopeName the name of the scope
+    @param scope the scope
+    @param addr the address to check
+    */
+    function _mustBeWhitelisted(string memory scopeName, Scope storage scope, address addr) private view {
+        if (scope.requireWhitelist && !scope.whitelist[addr]) {
+            revert NotWhitelisted(scopeName, addr);
+        }
+    }
+
+    /**
+    @notice Requires that msg.sender is owner of scope
+    @dev will revert with NotAuthorized if msg.sender is not owner
+    @param scope the scope
+    */
+    function _mustBeOwner(Scope storage scope) private view {
+        if (msg.sender != scope.owner) {
             revert NotAuthorized(msg.sender);
         }
     }
 
-    function _mustBeOwnerOrOperator(Scope storage s) private view {
-        if (msg.sender != s.owner && !s.operators[msg.sender]) {
+    /**
+    @notice Requires that msg.sender is owner or operator of scope
+    @dev will revert with NotAuthorized if msg.sender is not owner or operator
+    @param scope the scope
+    */
+    function _mustBeOwnerOrOperator(Scope storage scope) private view {
+        if (msg.sender != scope.owner && !scope.operators[msg.sender]) {
             revert NotAuthorized(msg.sender);
         }
     }
 
+    /**
+    @notice Requires that nft is not frozen
+    @dev will revert with Frozen if nft is frozen
+    @param nft the address of nft
+    @param tokenId the tokenId of nft
+    */
     modifier mustNotBeFrozen(address nft, uint256 tokenId) {
         if (_isFrozen(nft, tokenId)) {
             revert Frozen(nft, tokenId);
@@ -707,6 +739,12 @@ contract PatchworkProtocol {
         _;
     }
 
+    /**
+    @notice Determines if nft is frozen using ownership hierarchy
+    @param nft the address of nft
+    @param tokenId the tokenId of nft
+    @return frozen if the nft or an owner up the tree is frozen
+    */
     function _isFrozen(address nft, uint256 tokenId) private view returns (bool frozen) {
         if (IERC165(nft).supportsInterface(IPATCHWORKNFT_INTERFACE)) {
             if (IPatchworkNFT(nft).frozen(tokenId)) {
@@ -722,6 +760,12 @@ contract PatchworkProtocol {
         return false;
     }
 
+    /**
+    @notice Determines if nft is locked
+    @param nft the address of nft
+    @param tokenId the tokenId of nft
+    @return locked if the nft is locked
+    */
     function _isLocked(address nft, uint256 tokenId) private view returns (bool locked) {
         if (IERC165(nft).supportsInterface(IPATCHWORKNFT_INTERFACE)) {
             if (IPatchworkNFT(nft).locked(tokenId)) {
