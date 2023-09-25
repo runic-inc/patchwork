@@ -158,49 +158,6 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT, IERC4906 {
         safeTransferFrom(from, to, tokenId, data);
     }
 
-    function _toString8(uint64 raw) internal pure returns (string memory out) {
-        bytes memory byteArray = abi.encodePacked(bytes8(raw));
-        // optimized shortcut out for full string value and no checks required later
-        if (byteArray[7] != 0) {
-            return string(byteArray);
-        }
-        return _trimUp(byteArray);
-    }
-
-    function _toString16(uint128 raw) internal pure returns (string memory out) {
-        bytes memory byteArray = abi.encodePacked(bytes16(raw));
-        // optimized shortcut out for full string value and no checks required later
-        if (byteArray[15] != 0) {
-            return string(byteArray);
-        }
-        return _trimUp(byteArray);
-    }
-
-    function _toString32(uint256 raw) internal pure returns (string memory out) {
-        bytes memory byteArray = abi.encodePacked(bytes32(raw));
-        // optimized shortcut out for full string value and no checks required later
-        if (byteArray[31] != 0) {
-            return string(byteArray);
-        }
-        return _trimUp(byteArray);
-    }
-
-    function _trimUp(bytes memory byteArray) internal pure returns (string memory out) {
-        // uses about 40 more gas per call to be DRY, consider inlining to save gas if contract isn't too big
-        uint nullPos = 0;
-        while (true) {
-            if (byteArray[nullPos] == 0) {
-                break;
-            }
-            nullPos++;
-        }
-        bytes memory trimmedByteArray = new bytes(nullPos);
-        for (uint256 i = 0; i < nullPos; i++) {
-            trimmedByteArray[i] = byteArray[i];
-        }
-        out = string(trimmedByteArray);
-    }
-
     /**
     @dev See {IPatchworkNFT-getFreezeNonce}
     */

@@ -31,20 +31,4 @@ contract TestPatchworkNFT is PatchworkNFT {
         _mint(to, tokenId);
         _metadataStorage[tokenId] = new uint256[](1);
     }
-
-    // for _toString8
-    function toString8(uint64 raw) public pure returns (string memory) {
-        return _toString8(raw);
-    }
-
-    // for _toString16
-    function toString16(uint128 raw) public pure returns (string memory) {
-        return _toString16(raw);
-    }
-
-    // for _toString32
-    function toString32(uint256 raw) public pure returns (string memory) {
-        return _toString32(raw);
-    }
-
 }
