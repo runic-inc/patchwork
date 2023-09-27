@@ -344,7 +344,7 @@ contract PatchworkProtocol {
             revert ScopeExists(scopeName);
         }
         s.owner = msg.sender;
-        // s.requireWhitelist = true; // better security by default - enable in future PR
+        s.requireWhitelist = true; // better security by default
         emit ScopeClaim(scopeName, msg.sender);
     }
 
