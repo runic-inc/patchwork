@@ -525,6 +525,7 @@ abstract contract PatchworkLiteRef is IPatchworkLiteRef, ERC165 {
     */
     function redactReferenceAddress(uint8 id) public virtual _mustHaveWriteAuth {
         _redactedReferenceIds[id] = true;
+        emit Redact(address(this), _referenceAddresses[id]);
     }
 
     /**
@@ -532,6 +533,7 @@ abstract contract PatchworkLiteRef is IPatchworkLiteRef, ERC165 {
     */
     function unredactReferenceAddress(uint8 id) public virtual _mustHaveWriteAuth {
         _redactedReferenceIds[id] = false;
+        emit Unredact(address(this), _referenceAddresses[id]);
     }
 
     /**
@@ -542,7 +544,7 @@ abstract contract PatchworkLiteRef is IPatchworkLiteRef, ERC165 {
         if (refId == 0) {
             return (0, false);
         }
-        if (tokenId > 0xFFFFFFFFFFFFFF) {
+        if (tokenId > type(uint56).max) {
             revert PatchworkProtocol.UnsupportedTokenId(tokenId);
         }
         return (uint64(uint256(refId) << 56 | tokenId), _redactedReferenceIds[refId]);

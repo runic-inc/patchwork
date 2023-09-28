@@ -282,6 +282,20 @@ interface IPatchworkAssignableNFT {
 */
 interface IPatchworkLiteRef {
     /**
+    @notice Emitted when a contract redacts a fragment
+    @param target the contract which issued the redaction
+    @param fragment the fragment that was redacted
+    */
+    event Redact(address indexed target, address indexed fragment);
+
+    /**
+    @notice Emitted when a contract unredacts a fragment
+    @param target the contract which revoked the redaction
+    @param fragment the fragment that was unredacted
+    */
+    event Unredact(address indexed target, address indexed fragment);
+
+    /**
     @notice Registers a reference address
     @param addr Address to register
     @return id ID assigned to the address
