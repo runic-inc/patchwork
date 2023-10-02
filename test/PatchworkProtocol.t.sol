@@ -765,4 +765,24 @@ contract PatchworkProtocolTest is Test {
         vm.prank(userAddress);
         testFragmentLiteRefNFT.transferFrom(userAddress, user2Address, fragment1);
     }
+
+    function testLiteRefCollision() public {
+        TestFragmentLiteRefNFT testFrag2 = new TestFragmentLiteRefNFT(address(prot));
+        vm.startPrank(scopeOwner);
+        prot.claimScope(scopeName);
+        prot.setScopeRules(scopeName, false, false, false);
+        testPatchLiteRefNFT.registerReferenceAddress(address(testFragmentLiteRefNFT));
+        testFragmentLiteRefNFT.registerReferenceAddress(address(testFrag2));
+        uint256 frag1 = testFragmentLiteRefNFT.mint(userAddress);
+        uint256 frag2 = testFrag2.mint(userAddress);
+        uint256 testBaseNFTTokenId = testBaseNFT.mint(userAddress);
+        uint256 patchTokenId = prot.createPatch(address(testBaseNFT), testBaseNFTTokenId, address(testPatchLiteRefNFT));
+        prot.assignNFT(address(testFragmentLiteRefNFT), frag1, address(testPatchLiteRefNFT), patchTokenId);
+        // The second assign succeeding combined with the assertion that they are equal ref values means there is no collision in the scope.
+        prot.assignNFT(address(testFrag2), frag2, address(testFragmentLiteRefNFT), frag1);
+        // LiteRef IDs should match because it is idx1 tokenID 0 for both (0x1. 0x0)
+        (uint64 lr1,) = testPatchLiteRefNFT.getLiteReference(address(testFragmentLiteRefNFT), frag1);
+        (uint64 lr2,) = testFragmentLiteRefNFT.getLiteReference(address(testFrag2), frag2);
+        assertEq(lr1, lr2);
+    }
 }

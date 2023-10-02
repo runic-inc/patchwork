@@ -228,9 +228,9 @@ contract PatchworkProtocol {
 
         /**
         @notice Mapped list of lightweight references within this scope
-        // TODO: A unique hash of liteRefAddr + reference will be needed for uniqueness
+        @dev A hash of liteRefAddr + reference provides uniqueness
         */
-        mapping(uint64 => bool) liteRefs;
+        mapping(bytes32 => bool) liteRefs;
 
         /**
         @notice Mapped whitelist of addresses that belong to this scope
@@ -541,26 +541,28 @@ contract PatchworkProtocol {
         } else {
             revert NotAuthorized(msg.sender);
         }
+        bytes32 targetRef;
         // reduce stack to stay under limit
-        uint64 ref;
-        {
-            (uint64 _ref, bool redacted) = IPatchworkLiteRef(target).getLiteReference(fragment, fragmentTokenId);
-            ref = _ref;
-            if (ref == 0) {
-                revert FragmentUnregistered(address(fragment));
-            }
-            if (redacted) {
-                revert FragmentRedacted(address(fragment));
-            }
-            if (scope.liteRefs[ref]) {
-                revert FragmentAlreadyAssignedInScope(scopeName, address(fragment), fragmentTokenId);
-            }
+        address _target = target;
+        uint256 _targetTokenId = targetTokenId;
+        address _fragment = fragment;
+        uint256 _fragmentTokenId = fragmentTokenId;
+        (uint64 ref, bool redacted) = IPatchworkLiteRef(_target).getLiteReference(_fragment, _fragmentTokenId);
+        targetRef = keccak256(abi.encodePacked(_target, ref));
+        if (ref == 0) {
+            revert FragmentUnregistered(address(_fragment));
+        }
+        if (redacted) {
+            revert FragmentRedacted(address(_fragment));
+        }
+        if (scope.liteRefs[targetRef]) {
+            revert FragmentAlreadyAssignedInScope(scopeName, address(_fragment), _fragmentTokenId);
         }
         // call assign on the fragment
-        assignableNFT.assign(fragmentTokenId, target, targetTokenId);
+        assignableNFT.assign(_fragmentTokenId, _target, _targetTokenId);
         // add to our storage of scope->target assignments
-        scope.liteRefs[ref] = true;
-        emit Assign(targetOwner, fragment, fragmentTokenId, target, targetTokenId);
+        scope.liteRefs[targetRef] = true;
+        emit Assign(targetOwner, _fragment, _fragmentTokenId, _target, _targetTokenId);
         return ref;
     }
 
@@ -593,10 +595,11 @@ contract PatchworkProtocol {
         if (ref == 0) {
             revert FragmentUnregistered(address(fragment));
         }
-        if (!scope.liteRefs[ref]) {
+        bytes32 targetRef = keccak256(abi.encodePacked(target, ref));
+        if (!scope.liteRefs[targetRef]) {
             revert RefNotFoundInScope(scopeName, target, fragment, fragmentTokenId);
         }
-        scope.liteRefs[ref] = false;
+        scope.liteRefs[targetRef] = false;
         IPatchworkLiteRef(target).removeReference(targetTokenId, ref);
         emit Unassign(IERC721(target).ownerOf(targetTokenId), fragment, fragmentTokenId, target, targetTokenId);
     }
