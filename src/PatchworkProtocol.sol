@@ -203,6 +203,12 @@ contract PatchworkProtocol {
         address owner;
 
         /**
+        @notice Owner-elect
+        @dev Used in two-step transfer process. If this is set, only this owner can accept the transfer
+        */
+        address ownerElect;
+
+        /**
         @notice Indicates whether a user is allowed to patch within this scope
         @dev True if a user can patch, false otherwise. If false, only operators and the scope owner can perform patching.
         */
@@ -350,6 +356,7 @@ contract PatchworkProtocol {
 
     /**
     @notice Transfer ownership of a scope
+    @dev must be accepted by transferee - see {acceptScopeTransfer}
     @param scopeName Name of the scope
     @param newOwner Address of the new owner
     */
@@ -359,8 +366,42 @@ contract PatchworkProtocol {
         if (newOwner == address(0)) {
             revert ScopeTransferNotAllowed(address(0));
         }
-        s.owner = newOwner;
-        emit ScopeTransfer(scopeName, msg.sender, newOwner);
+        s.ownerElect = newOwner;
+    }
+
+    /**
+    @notice Cancel a pending scope transfer
+    @param scopeName Name of the scope
+    */
+    function cancelScopeTransfer(string calldata scopeName) public {
+        Scope storage s = _mustHaveScope(scopeName);
+        _mustBeOwner(s);
+        s.ownerElect = address(0);
+    }
+
+    /**
+    @notice Accept a scope transfer
+    @param scopeName Name of the scope
+    */
+    function acceptScopeTransfer(string calldata scopeName) public {
+        Scope storage s = _mustHaveScope(scopeName);
+        if (s.ownerElect == msg.sender) {
+            address oldOwner = s.owner;
+            s.owner = msg.sender;
+            s.ownerElect = address(0);
+            emit ScopeTransfer(scopeName, oldOwner, msg.sender);
+        } else {
+            revert NotAuthorized(msg.sender);
+        }
+    }
+
+    /**
+    @notice Get owner-elect of a scope
+    @param scopeName Name of the scope
+    @return ownerElect Address of the scope's owner-elect
+    */
+    function getScopeOwnerElect(string calldata scopeName) public view returns (address ownerElect) {
+        return _scopes[scopeName].ownerElect;
     }
 
     /**
