@@ -517,6 +517,7 @@ abstract contract PatchworkLiteRef is IPatchworkLiteRef, ERC165 {
         }
         _referenceAddresses[refId] = addr;
         _referenceAddressIds[addr] = refId;
+        emit Register(address(this), addr, refId);
         return refId;
     }
 

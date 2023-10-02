@@ -296,6 +296,14 @@ interface IPatchworkLiteRef {
     event Unredact(address indexed target, address indexed fragment);
 
     /**
+    @notice Emitted when a contract registers a fragment
+    @param target the contract that registered the fragment
+    @param fragment the fragment that was registered
+    @param idx the idx of the literef
+    */
+    event Register(address indexed target, address indexed fragment, uint8 idx);
+
+    /**
     @notice Registers a reference address
     @param addr Address to register
     @return id ID assigned to the address
