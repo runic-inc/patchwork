@@ -96,6 +96,12 @@ interface IPatchworkNFT is PatchworkNFTInterfaceMeta, IERC5192 {
     event PermissionChange(address indexed to, uint256 permissions);
 
     /**
+    @notice Emitted when the schema has changed for an NFT
+    @param addr the address of the NFT
+    */
+    event SchemaChange(address indexed addr);
+    
+    /**
     @notice Get the scope this NFT claims to belong to
     @return string the name of the scope
     */
