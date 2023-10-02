@@ -38,6 +38,8 @@ contract PatchworkNFTBaseTest is Test {
         scopeName = "testscope";
         vm.prank(scopeOwner);
         prot.claimScope(scopeName);
+        vm.prank(scopeOwner);
+        prot.setScopeRules(scopeName, false, false, false);
 
         vm.prank(userAddress);
         testBaseNFT = new TestBaseNFT();

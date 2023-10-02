@@ -84,6 +84,7 @@ contract PatchworkProtocolTest is Test {
     function testCreatePatchNFTNoVerification() public {
         vm.startPrank(scopeOwner);
         prot.claimScope(scopeName);
+        prot.setScopeRules(scopeName, false, false, false);
         uint256 testBaseNFTTokenId = testBaseNFT.mint(userAddress);
         uint256 tokenId = prot.createPatch(address(testBaseNFT), testBaseNFTTokenId, address(testPatchLiteRefNFT));
         assertEq(tokenId, 0);
@@ -92,7 +93,6 @@ contract PatchworkProtocolTest is Test {
     function testCreatePatchNFTUnverified() public {
         vm.startPrank(scopeOwner);
         prot.claimScope(scopeName);
-        prot.setScopeRules(scopeName, false, false, true);
         uint256 testBaseNFTTokenId = testBaseNFT.mint(userAddress);
         vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotWhitelisted.selector, scopeName, address(testPatchLiteRefNFT)));
         prot.createPatch(address(testBaseNFT), testBaseNFTTokenId, address(testPatchLiteRefNFT));
@@ -101,7 +101,6 @@ contract PatchworkProtocolTest is Test {
     function testCreatePatchNFTVerified() public {
         vm.startPrank(scopeOwner);
         prot.claimScope(scopeName);
-        prot.setScopeRules(scopeName, false, false, true);
         vm.stopPrank();
         vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotAuthorized.selector, userAddress));
         vm.prank(userAddress);
@@ -124,7 +123,6 @@ contract PatchworkProtocolTest is Test {
     function testUserPermissions() public {
         vm.startPrank(scopeOwner);
         prot.claimScope(scopeName);
-        prot.setScopeRules(scopeName, false, false, true);
         uint256 testBaseNFTTokenId = testBaseNFT.mint(userAddress);
         prot.addWhitelist(scopeName, address(testPatchLiteRefNFT));
         prot.addWhitelist(scopeName, address(testFragmentLiteRefNFT));
@@ -164,6 +162,7 @@ contract PatchworkProtocolTest is Test {
 
         vm.startPrank(scopeOwner);
         prot.claimScope(scopeName);
+        prot.setScopeRules(scopeName, false, false, false);
         uint256 patchTokenId = prot.createPatch(address(testBaseNFT), testBaseNFTTokenId, address(testPatchLiteRefNFT));
         vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.AlreadyPatched.selector, address(testBaseNFT), testBaseNFTTokenId, address(testPatchLiteRefNFT)));
         patchTokenId = prot.createPatch(address(testBaseNFT), testBaseNFTTokenId, address(testPatchLiteRefNFT));
@@ -287,6 +286,7 @@ contract PatchworkProtocolTest is Test {
         uint256 testBaseNFTTokenId = testBaseNFT.mint(userAddress);
         vm.startPrank(scopeOwner);
         prot.claimScope(scopeName);
+        prot.setScopeRules(scopeName, false, false, false);
         uint256 patchTokenId = prot.createPatch(address(testBaseNFT), testBaseNFTTokenId, address(testPatchLiteRefNFT));
  
         uint256 fragmentTokenId = testFragmentLiteRefNFT.mint(user2Address);
@@ -307,6 +307,7 @@ contract PatchworkProtocolTest is Test {
 
         vm.startPrank(scopeOwner);
         prot.claimScope(scopeName);
+        prot.setScopeRules(scopeName, false, false, false);
         uint256 patchTokenId = prot.createPatch(address(testBaseNFT), testBaseNFTTokenId, address(testPatchLiteRefNFT));
 
         testPatchLiteRefNFT.registerReferenceAddress(address(testFragmentLiteRefNFT));
@@ -369,6 +370,7 @@ contract PatchworkProtocolTest is Test {
 
         vm.startPrank(scopeOwner);
         prot.claimScope(scopeName);
+        prot.setScopeRules(scopeName, false, false, false);
         uint256 patchTokenId = prot.createPatch(address(testBaseNFT), testBaseNFTTokenId, address(testPatchLiteRefNFT));
         address[] memory fragmentAddresses = new address[](8);
         uint256[] memory fragments = new uint256[](8);
@@ -528,6 +530,7 @@ contract PatchworkProtocolTest is Test {
 
         vm.startPrank(scopeOwner);
         prot.claimScope(scopeName);
+        prot.setScopeRules(scopeName, false, false, false);
 
         //Register testFragmentLiteRefNFT to testFragmentLiteRefNFT to allow recursion
         testFragmentLiteRefNFT.registerReferenceAddress(address(testFragmentLiteRefNFT));
@@ -557,6 +560,7 @@ contract PatchworkProtocolTest is Test {
 
         vm.startPrank(scopeOwner);
         prot.claimScope(scopeName);
+        prot.setScopeRules(scopeName, false, false, false);
 
         //Register testFragmentLiteRefNFT to testFragmentLiteRefNFT to allow recursion
         testFragmentLiteRefNFT.registerReferenceAddress(address(testFragmentLiteRefNFT));
@@ -596,6 +600,7 @@ contract PatchworkProtocolTest is Test {
         testPatchworkNFT.mint(userAddress, 1);
         vm.startPrank(scopeOwner);
         prot.claimScope(scopeName);
+        prot.setScopeRules(scopeName, false, false, false);
         uint256 patchTokenId = prot.createPatch(address(testBaseNFT), testBaseNFTTokenId, address(testPatchLiteRefNFT));
 
         testPatchLiteRefNFT.registerReferenceAddress(address(testFragmentLiteRefNFT));
@@ -660,6 +665,7 @@ contract PatchworkProtocolTest is Test {
 
         vm.startPrank(scopeOwner);
         prot.claimScope(scopeName);
+        prot.setScopeRules(scopeName, false, false, false);
         uint256 patchTokenId = prot.createPatch(address(testBaseNFT), testBaseNFTTokenId, address(testPatchLiteRefNFT));
 
         testPatchLiteRefNFT.registerReferenceAddress(address(testFragmentLiteRefNFT));
