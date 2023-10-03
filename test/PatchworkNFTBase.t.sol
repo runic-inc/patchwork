@@ -198,6 +198,12 @@ contract PatchworkNFTBaseTest is Test {
         assertEq(0, ref);
         vm.prank(scopeOwner);
         refIdx = testPatchLiteRefNFT.registerReferenceAddress(address(testFragmentLiteRefNFT));
+        (uint8 _id, bool _redacted) = testPatchLiteRefNFT.getReferenceId(address(testFragmentLiteRefNFT));
+        assertEq(refIdx, _id);
+        assertFalse(_redacted);
+        (address _addr, bool _redacted2) = testPatchLiteRefNFT.getReferenceAddress(refIdx);
+        assertEq(address(testFragmentLiteRefNFT), _addr);
+        assertFalse(_redacted2);
         (ref, redacted) = testPatchLiteRefNFT.getLiteReference(address(testFragmentLiteRefNFT), 1);
         (address refAddr, uint256 tokenId) = testPatchLiteRefNFT.getReferenceAddressAndTokenId(ref);
         assertEq(address(testFragmentLiteRefNFT), refAddr);
