@@ -317,6 +317,22 @@ interface IPatchworkLiteRef {
     function registerReferenceAddress(address addr) external returns (uint8 id);
 
     /**
+    @notice Gets the ID assigned to the address from registration
+    @param addr Registered address
+    @return id ID assigned to the address
+    @return redacted Redacted status
+    */
+    function getReferenceId(address addr) external returns (uint8 id, bool redacted);
+
+    /**
+    @notice Gets the address assigned to this id
+    @param id ID assigned to the address
+    @return addr Registered address
+    @return redacted Redacted status
+    */
+    function getReferenceAddress(uint8 id) external returns (address addr, bool redacted);
+
+    /**
     @notice Redacts a reference address
     @param id ID of the address to redact
     */

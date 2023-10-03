@@ -522,6 +522,21 @@ abstract contract PatchworkLiteRef is IPatchworkLiteRef, ERC165 {
     }
 
     /**
+    @dev See {IPatchworkLiteRef-getReferenceId}
+    */
+    function getReferenceId(address addr) public virtual returns (uint8 id, bool redacted) {
+        uint8 refId = _referenceAddressIds[addr];
+        return (refId, _redactedReferenceIds[refId]);
+    }
+
+    /**
+    @dev See {IPatchworkLiteRef-getReferenceAddress}
+    */
+    function getReferenceAddress(uint8 id) public virtual returns (address addr, bool redacted) {
+        return (_referenceAddresses[id], _redactedReferenceIds[id]);
+    }
+
+    /**
     @dev See {IPatchworkLiteRef-redactReferenceAddress}
     */
     function redactReferenceAddress(uint8 id) public virtual _mustHaveWriteAuth {
