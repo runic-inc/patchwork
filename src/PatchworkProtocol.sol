@@ -57,6 +57,13 @@ contract PatchworkProtocol {
     error NotWhitelisted(string scopeName, address addr);
 
     /**
+    @notice The address at the given address has already been patched
+    @param addr The address that was patched
+    @param patchAddress Address of the patch applied
+    */
+    error AddressAlreadyPatched(address addr, address patchAddress);
+
+    /**
     @notice The token at the given address has already been patched
     @param addr Address of the token owner
     @param tokenId ID of the patched token
