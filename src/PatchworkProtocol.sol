@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./PatchworkNFTInterface.sol";
+import "./IPatchworkAccountPatch.sol";
 
 /** 
 @title Patchwork Protocol
@@ -61,7 +62,7 @@ contract PatchworkProtocol {
     @param addr The address that was patched
     @param patchAddress Address of the patch applied
     */
-    error AddressAlreadyPatched(address addr, address patchAddress);
+    error AccountAlreadyPatched(address addr, address patchAddress);
 
     /**
     @notice The token at the given address has already been patched
@@ -285,6 +286,15 @@ contract PatchworkProtocol {
     event Patch(address indexed owner, address originalAddress, uint256 originalTokenId, address indexed patchAddress, uint256 indexed patchTokenId);
 
     /**
+    @notice Emitted when an account patch is minted
+    @param owner The owner of the patch
+    @param originalAddress The address of the original NFT's contract
+    @param patchAddress The address of the patch's contract
+    @param patchTokenId The tokenId of the patch
+    */
+    event AccountPatch(address indexed owner, address originalAddress, address indexed patchAddress, uint256 indexed patchTokenId);
+
+    /**
     @notice Emitted when a new scope is claimed
     @param scopeName The name of the claimed scope
     @param owner The owner of the scope
@@ -472,6 +482,36 @@ contract PatchworkProtocol {
         scope.uniquePatches[_hash] = true;
         tokenId = patch.mintPatch(tokenOwner, originalNFTAddress, originalNFTTokenId);
         emit Patch(tokenOwner, originalNFTAddress, originalNFTTokenId, patchAddress, tokenId);
+        return tokenId;
+    }
+
+    /**
+    @notice Create a new account patch
+    @param originalAddress Address of the original account
+    @param patchAddress Address of the IPatchworkPatch to mint
+    @return tokenId Token ID of the newly created patch
+    */
+    function createAccountPatch(address owner, address originalAddress, address patchAddress) public returns (uint256 tokenId) {
+        IPatchworkAccountPatch patch = IPatchworkAccountPatch(patchAddress);
+        string memory scopeName = patch.getScopeName();
+        // mint a Patch that is soulbound to the originalNFT using the contract address at patchAddress which must support Patchwork metadata
+        Scope storage scope = _mustHaveScope(scopeName);
+        _mustBeWhitelisted(scopeName, scope, patchAddress);
+        if (scope.owner == msg.sender || scope.operators[msg.sender]) {
+            // continue
+        } else if (scope.allowUserPatch) { // This allows any user to patch any address
+            // continue
+        } else {
+            revert NotAuthorized(msg.sender);
+        }
+        // limit this to one unique patch (originalAddress+TokenID+patchAddress)
+        bytes32 _hash = keccak256(abi.encodePacked(originalAddress, patchAddress));
+        if (scope.uniquePatches[_hash]) {
+            revert AccountAlreadyPatched(originalAddress, patchAddress);
+        }
+        scope.uniquePatches[_hash] = true;
+        tokenId = patch.mintPatch(owner, originalAddress);
+        emit AccountPatch(owner, originalAddress, patchAddress, tokenId);
         return tokenId;
     }
 

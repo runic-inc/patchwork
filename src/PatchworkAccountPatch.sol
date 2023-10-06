@@ -16,8 +16,6 @@ abstract contract PatchworkAccountPatch is PatchworkNFT, IPatchworkAccountPatch 
     
     /// @dev Mapping from token ID to the address of the NFT that this patch is applied to.
     mapping(uint256 => address) internal _patchedAddresses;
-    /// @dev Mapping of address to track unique addresses patched
-    mapping(address => bool) internal _uniqueAddresses;
 
     /**
     @dev See {IERC165-supportsInterface}
@@ -40,10 +38,7 @@ abstract contract PatchworkAccountPatch is PatchworkNFT, IPatchworkAccountPatch 
     @param originalNFTAddress the account we are patching
     */
     function _storePatch(uint256 tokenId, address originalNFTAddress) internal virtual {
-        if (_uniqueAddresses[originalNFTAddress]) {
-            revert PatchworkProtocol.AddressAlreadyPatched(originalNFTAddress, address(this));
-        }
-        _uniqueAddresses[originalNFTAddress] = true;
+        // PatchworkProtocol handles uniqueness assertion
         _patchedAddresses[tokenId] = originalNFTAddress;
     }
 
@@ -54,7 +49,6 @@ abstract contract PatchworkAccountPatch is PatchworkNFT, IPatchworkAccountPatch 
         super._burn(tokenId);
         address addr = _patchedAddresses[tokenId];
         delete _patchedAddresses[tokenId];
-        delete _uniqueAddresses[addr];
     }
 
     /**
