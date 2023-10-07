@@ -330,6 +330,13 @@ abstract contract PatchworkPatch is PatchworkNFT, IPatchworkPatch {
     }
 
     /**
+    @dev See {ERC721-_burn}
+    */ 
+    function _burn(uint256 /*tokenId*/) internal virtual override {
+        revert("unsupported");
+    }
+
+    /**
     @dev See {IPatchworkPatch-patchworkCompatible_}
     */ 
     function patchworkCompatible_() external pure returns (bytes1) {}

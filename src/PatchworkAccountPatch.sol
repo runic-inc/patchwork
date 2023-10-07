@@ -43,10 +43,8 @@ abstract contract PatchworkAccountPatch is PatchworkNFT, IPatchworkAccountPatch 
     /**
     @dev See {ERC721-_burn}
     */ 
-    function _burn(uint256 tokenId) internal virtual override {
-        super._burn(tokenId);
-        address addr = _patchedAddresses[tokenId];
-        delete _patchedAddresses[tokenId];
+    function _burn(uint256 /*tokenId*/) internal virtual override {
+        revert("unsupported");
     }
 
     /**

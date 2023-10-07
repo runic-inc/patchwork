@@ -47,6 +47,11 @@ contract TestAccountPatchNFT is PatchworkAccountPatch {
         return tokenId;
     }
 
+    function burn(uint256 tokenId) public {
+        // test only
+        _burn(tokenId);
+    }
+
     function _beforeTokenTransfer(
         address from,
         address to,
