@@ -11,8 +11,6 @@ import "./PatchworkProtocol.sol";
 @dev It extends the functionalities of PatchworkNFT and implements the IPatchworkAccountPatch interface.
 */
 abstract contract PatchworkAccountPatch is PatchworkNFT, IPatchworkAccountPatch {
-
-    // TODO ownership models? Patched address is owner vs contract owner is owner vs assignable?
     
     /// @dev Mapping from token ID to the address of the NFT that this patch is applied to.
     mapping(uint256 => address) internal _patchedAddresses;

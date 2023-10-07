@@ -174,6 +174,9 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
     }
 
     function mintPatch(address originalNFTOwner, address originalNFTAddress, uint originalNFTTokenId) external returns (uint256 tokenId){
+        if (msg.sender != _manager) {
+            revert();
+        }
         // Just for testing
         tokenId = _nextTokenId;
         _nextTokenId++;
