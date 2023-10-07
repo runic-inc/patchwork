@@ -55,9 +55,9 @@ contract TestAccountPatchNFT is PatchworkAccountPatch {
     function _beforeTokenTransfer(
         address from,
         address to,
-        uint256 firstTokenId,
-        uint256 batchSize
-    ) internal override {
+        uint256 /*firstTokenId*/,
+        uint256 /*batchSize*/
+    ) internal override view{
         if (_sameOwnerModel) {
             // allow burn only
             if (from == address(0)) {
