@@ -44,7 +44,7 @@ abstract contract PatchworkAccountPatch is PatchworkNFT, IPatchworkAccountPatch 
     @dev See {ERC721-_burn}
     */ 
     function _burn(uint256 /*tokenId*/) internal virtual override {
-        revert("unsupported");
+        revert PatchworkProtocol.UnsupportedOperation();
     }
 
     /**

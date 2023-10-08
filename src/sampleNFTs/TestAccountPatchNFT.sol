@@ -32,11 +32,11 @@ contract TestAccountPatchNFT is PatchworkAccountPatch {
 
     function mintPatch(address to, address original) public returns (uint256) {
         if (msg.sender != _manager) {
-            revert("not manager");
+            revert PatchworkProtocol.NotAuthorized(msg.sender);
         }
         if (_sameOwnerModel) {
             if (to != original) {
-                revert("must be account owner");
+                revert PatchworkProtocol.MintNotAllowed(to);
             }
         }
         uint256 tokenId = _nextTokenId;
@@ -55,7 +55,7 @@ contract TestAccountPatchNFT is PatchworkAccountPatch {
     function _beforeTokenTransfer(
         address from,
         address to,
-        uint256 /*firstTokenId*/,
+        uint256 firstTokenId,
         uint256 /*batchSize*/
     ) internal override view{
         if (_sameOwnerModel) {
@@ -63,7 +63,7 @@ contract TestAccountPatchNFT is PatchworkAccountPatch {
             if (from == address(0)) {
                 // mint allowed
             } else if (to != address(0)) {
-                revert("transfer not allowed");
+                revert PatchworkProtocol.TransferNotAllowed(address(this), firstTokenId);
             }
        }
     }

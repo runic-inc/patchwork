@@ -199,7 +199,7 @@ contract PatchworkProtocolTest is Test {
         vm.stopPrank();
         
         vm.prank(userAddress);
-        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.SoulboundTransferNotAllowed.selector, address(testPatchLiteRefNFT), patchTokenId));
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.TransferNotAllowed.selector, address(testPatchLiteRefNFT), patchTokenId));
         testPatchLiteRefNFT.transferFrom(userAddress, user2Address, patchTokenId);
     }
 
@@ -360,7 +360,7 @@ contract PatchworkProtocolTest is Test {
         // try to transfer a patch directly - it should be blocked because it is soulbound
         assertEq(address(7), testPatchLiteRefNFT.ownerOf(patchTokenId)); // Report as soulbound
         vm.startPrank(userAddress); // Prank from underlying owner address
-        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.SoulboundTransferNotAllowed.selector, address(testPatchLiteRefNFT), patchTokenId));
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.TransferNotAllowed.selector, address(testPatchLiteRefNFT), patchTokenId));
         testPatchLiteRefNFT.transferFrom(userAddress, address(7), patchTokenId);
         vm.stopPrank();
     }

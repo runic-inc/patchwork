@@ -273,7 +273,7 @@ contract PatchworkNFTBaseTest is Test {
         uint256 baseTokenId = testBaseNFT.mint(userAddress);
         vm.prank(scopeOwner);
         uint256 patchTokenId = prot.createPatch(address(testBaseNFT), baseTokenId, address(testPatchLiteRefNFT));
-        vm.expectRevert("unsupported");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.UnsupportedOperation.selector));
         testPatchLiteRefNFT.burn(patchTokenId);
     }
     

@@ -170,11 +170,11 @@ contract PatchworkProtocol {
     error SelfAssignmentNotAllowed(address addr, uint256 tokenId);
 
     /**
-    @notice Transfer of the soulbound token with the provided ID at the given address is not allowed
+    @notice Transfer of the token with the provided ID at the given address is not allowed
     @param addr Address of the token owner
     @param tokenId ID of the token
     */
-    error SoulboundTransferNotAllowed(address addr, uint256 tokenId);
+    error TransferNotAllowed(address addr, uint256 tokenId);
 
     /**
     @notice Transfer of the token with the provided ID at the given address is blocked by an assignment
@@ -182,6 +182,12 @@ contract PatchworkProtocol {
     @param tokenId ID of the token
     */
     error TransferBlockedByAssignment(address addr, uint256 tokenId);
+
+    /**
+    @notice A rule is blocking the mint to this owner address
+    @param addr Address of the token owner
+    */
+    error MintNotAllowed(address addr);
 
     /**
     @notice The token at the given address is not IPatchworkAssignable
@@ -198,6 +204,11 @@ contract PatchworkProtocol {
     @param tokenId2 ID of the second token
     */
     error DataIntegrityError(address addr, uint256 tokenId, address addr2, uint256 tokenId2);
+
+    /**
+    @notice The operation is not supported
+    */
+    error UnsupportedOperation();
 
     /**
     @notice Represents a defined scope within the system
@@ -664,7 +675,7 @@ contract PatchworkProtocol {
             }
         }
         if (IERC165(nft).supportsInterface(type(IPatchworkPatch).interfaceId)) {
-            revert SoulboundTransferNotAllowed(nft, tokenId);
+            revert TransferNotAllowed(nft, tokenId);
         }
         if (IERC165(nft).supportsInterface(type(IPatchworkNFT).interfaceId)) {
             if (IPatchworkNFT(nft).locked(tokenId)) {

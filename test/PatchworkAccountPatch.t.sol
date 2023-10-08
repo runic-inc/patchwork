@@ -54,7 +54,7 @@ contract PatchworkAccountPatchTest is Test {
         vm.prank(_userAddress);
         testAccountPatchNFT.transferFrom(_userAddress, address(55), tokenId);
         vm.prank(address(55));
-        vm.expectRevert("unsupported");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.UnsupportedOperation.selector));
         testAccountPatchNFT.burn(tokenId);
     }
 
@@ -62,12 +62,12 @@ contract PatchworkAccountPatchTest is Test {
         // Same owner model, not transferrable
         vm.prank(_scopeOwner);
         TestAccountPatchNFT testAccountPatchNFT = new TestAccountPatchNFT(address(_prot), true);
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.MintNotAllowed.selector, _userAddress));
         vm.prank(_scopeOwner);
-        vm.expectRevert();
         _prot.createAccountPatch(_userAddress, _user2Address, address(testAccountPatchNFT));
         vm.prank(_scopeOwner);
         uint256 tokenId = _prot.createAccountPatch(_userAddress, _userAddress, address(testAccountPatchNFT));
-        vm.expectRevert("transfer not allowed");
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.TransferNotAllowed.selector, address(testAccountPatchNFT), tokenId));
         vm.prank(_userAddress);
         testAccountPatchNFT.transferFrom(_userAddress, address(55), tokenId);
     }
