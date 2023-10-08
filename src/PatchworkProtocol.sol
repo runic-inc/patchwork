@@ -291,6 +291,22 @@ contract PatchworkProtocol {
     event ScopeClaim(string indexed scopeName, address indexed owner);
 
     /**
+    @notice Emitted when a scope has elected a new owner to transfer to
+    @param scopeName The name of the transferred scope
+    @param from The owner of the scope
+    @param to The owner-elect of the scope
+    */
+    event ScopeTransferElect(string indexed scopeName, address indexed from, address indexed to);
+
+    /**
+    @notice Emitted when a scope transfer is canceled
+    @param scopeName The name of the transferred scope
+    @param from The owner of the scope
+    @param to The owner-elect of the scope
+    */
+    event ScopeTransferCancel(string indexed scopeName, address indexed from, address indexed to);
+
+    /**
     @notice Emitted when a scope is transferred
     @param scopeName The name of the transferred scope
     @param from The address transferring the scope
@@ -367,6 +383,7 @@ contract PatchworkProtocol {
             revert ScopeTransferNotAllowed(address(0));
         }
         s.ownerElect = newOwner;
+        emit ScopeTransferElect(scopeName, s.owner, s.ownerElect);
     }
 
     /**
@@ -376,6 +393,7 @@ contract PatchworkProtocol {
     function cancelScopeTransfer(string calldata scopeName) public {
         Scope storage s = _mustHaveScope(scopeName);
         _mustBeOwner(s);
+        emit ScopeTransferCancel(scopeName, s.owner, s.ownerElect);
         s.ownerElect = address(0);
     }
 
