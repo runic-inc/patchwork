@@ -9,9 +9,6 @@ pragma solidity ^0.8.13;
   Has metadata as defined in totem-metadata.json
 */
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "forge-std/console.sol";
-import "../PatchworkNFTInterface.sol";
 import "../PatchworkNFTBase.sol";
 
 

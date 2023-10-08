@@ -2,8 +2,10 @@
 pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import "./PatchworkNFTInterface.sol";
+import "./IPatchworkNFT.sol";
+import "./IPatchworkAssignableNFT.sol";
+import "./IPatchworkLiteRef.sol";
+import "./IPatchworkPatch.sol";
 import "./IPatchworkProtocol.sol";
 import "./IERC4906.sol";
 

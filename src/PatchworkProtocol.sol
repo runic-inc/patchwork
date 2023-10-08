@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "./PatchworkNFTInterface.sol";
+import "./IPatchworkNFT.sol";
+import "./IPatchworkAssignableNFT.sol";
+import "./IPatchworkLiteRef.sol";
+import "./IPatchworkPatch.sol";
 import "./IPatchworkAccountPatch.sol";
 import "./IPatchworkProtocol.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 /** 
 @title Patchwork Protocol
