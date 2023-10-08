@@ -2,8 +2,8 @@
 pragma solidity ^0.8.13;
 
 import "./IPatchworkAccountPatch.sol";
-import "./PatchworkNFTBase.sol";
-import "./PatchworkProtocol.sol";
+import "./IPatchworkProtocol.sol";
+import "./PatchworkNFT.sol";
 
 /**
 @title PatchworkAccountPatch
@@ -44,7 +44,7 @@ abstract contract PatchworkAccountPatch is PatchworkNFT, IPatchworkAccountPatch 
     @dev See {ERC721-_burn}
     */ 
     function _burn(uint256 /*tokenId*/) internal virtual override {
-        revert PatchworkProtocol.UnsupportedOperation();
+        revert IPatchworkProtocol.UnsupportedOperation();
     }
 
     /**

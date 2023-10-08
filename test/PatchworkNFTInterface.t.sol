@@ -4,7 +4,6 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
-import "../src/PatchworkNFTInterface.sol";
 import "../src/sampleNFTs/TestPatchLiteRefNFT.sol";
 import "../src/sampleNFTs/TestFragmentLiteRefNFT.sol";
 

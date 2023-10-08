@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "../PatchworkNFTInterface.sol";
-import "../PatchworkNFTBase.sol";
+import "../PatchworkNFT.sol";
 
 contract TestPatchworkNFT is PatchworkNFT {
 
