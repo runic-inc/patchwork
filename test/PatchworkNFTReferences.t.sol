@@ -8,11 +8,8 @@ import "../src/PatchworkProtocol.sol";
 import "../src/sampleNFTs/TestPatchLiteRefNFT.sol";
 import "../src/sampleNFTs/TestFragmentLiteRefNFT.sol";
 import "../src/sampleNFTs/TestBaseNFT.sol";
-import "../src/sampleNFTs/TestPatchworkNFT.sol";
 
-contract PatchworkNFTBaseTest is Test {
-    event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
-
+contract PatchworkNFTCombinedTest is Test {
     PatchworkProtocol _prot;
     TestBaseNFT _testBaseNFT;
     TestPatchLiteRefNFT _testPatchLiteRefNFT;
@@ -45,21 +42,6 @@ contract PatchworkNFTBaseTest is Test {
         vm.stopPrank();
         vm.prank(_userAddress);
         _testBaseNFT = new TestBaseNFT();
-    }
-
-    function testScopeName() public {
-        assertEq(_scopeName, _testPatchLiteRefNFT.getScopeName());
-        assertEq(_scopeName, _testFragmentLiteRefNFT.getScopeName());
-    }
-
-    function testLocks() public {
-        uint256 baseTokenId = _testBaseNFT.mint(_userAddress);
-        vm.prank(_scopeOwner);
-        uint256 patchTokenId = _prot.createPatch(address(_testBaseNFT), baseTokenId, address(_testPatchLiteRefNFT));
-        bool locked = _testPatchLiteRefNFT.locked(patchTokenId);
-        assertFalse(locked);
-        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.CannotLockSoulboundPatch.selector, _testPatchLiteRefNFT));
-        _testPatchLiteRefNFT.setLocked(patchTokenId, true);
     }
 
     function testReferenceAddresses() public {
@@ -139,36 +121,4 @@ contract PatchworkNFTBaseTest is Test {
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.OutOfIDs.selector));
         refIdx = _testPatchLiteRefNFT.registerReferenceAddress(address(256));
     }
-    
-    function testBurn() public {
-        uint256 baseTokenId = _testBaseNFT.mint(_userAddress);
-        vm.prank(_scopeOwner);
-        uint256 patchTokenId = _prot.createPatch(address(_testBaseNFT), baseTokenId, address(_testPatchLiteRefNFT));
-        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedOperation.selector));
-        _testPatchLiteRefNFT.burn(patchTokenId);
-    }
-    
-    function testOnAssignedTransferError() public {
-        vm.expectRevert();
-        _testFragmentLiteRefNFT.onAssignedTransfer(address(0), address(1), 1);
-    }
-
-    function testPatchworkCompatible() public {
-        bytes1 r1 = _testPatchLiteRefNFT.patchworkCompatible_();
-        assertEq(0, r1);
-        bytes2 r2 = _testFragmentLiteRefNFT.patchworkCompatible_();
-        assertEq(0, r2);
-    }
-
-    function testLiteref56bitlimit() public {
-        vm.prank(_scopeOwner);
-        uint8 r1 = _testFragmentLiteRefNFT.registerReferenceAddress(address(1));
-        (uint64 ref, bool redacted) = _testFragmentLiteRefNFT.getLiteReference(address(1), 1);
-        assertEq((uint256(r1) << 56) + 1, ref);
-        (ref, redacted) = _testFragmentLiteRefNFT.getLiteReference(address(1), 0xFFFFFFFFFFFFFF);
-        assertEq((uint256(r1) << 56) + 0xFFFFFFFFFFFFFF, ref);
-        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedTokenId.selector, 1 << 56));
-        _testFragmentLiteRefNFT.getLiteReference(address(1), 1 << 56);
-    }
-
 }
