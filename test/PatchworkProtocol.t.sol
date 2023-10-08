@@ -55,27 +55,64 @@ contract PatchworkProtocolTest is Test {
         vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.ScopeExists.selector, scopeName));
         prot.claimScope(scopeName);
         vm.stopPrank();
+        // Current user is not scope owner so can't transfer it
         vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotAuthorized.selector, defaultUser));
         prot.transferScopeOwnership(scopeName, address(2));
+        // Real owner can transfer it
+        vm.prank(scopeOwner);
+        prot.transferScopeOwnership(scopeName, address(3));
+        // scopeOwner still owns it until it's accepted
+        assertEq(prot.getScopeOwner(scopeName), scopeOwner);
+        assertEq(prot.getScopeOwnerElect(scopeName), address(3));
+        // test changing the pending transfer elect
         vm.prank(scopeOwner);
         prot.transferScopeOwnership(scopeName, address(2));
+        assertEq(prot.getScopeOwnerElect(scopeName), address(2));
+        // Non-owner may not cancel the transfer
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotAuthorized.selector, address(10)));
+        vm.prank(address(10));
+        prot.cancelScopeTransfer(scopeName);
+        // Real owner can cancel the transfer
+        vm.prank(scopeOwner);
+        prot.cancelScopeTransfer(scopeName);
+        assertEq(prot.getScopeOwnerElect(scopeName), address(0));
+        // Now retry the transfer
+        vm.prank(scopeOwner);
+        prot.transferScopeOwnership(scopeName, address(2));
+        // User 10 is not elect and may not accept the transfer
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotAuthorized.selector, address(10)));
+        vm.prank(address(10));
+        prot.acceptScopeTransfer(scopeName);
+        // Finally real elect accepts scope transfer
+        vm.prank(address(2));
+        prot.acceptScopeTransfer(scopeName);
         assertEq(prot.getScopeOwner(scopeName), address(2));
+        assertEq(prot.getScopeOwnerElect(scopeName), address(0));
+        // Old owner may not transfer it
         vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotAuthorized.selector, scopeOwner));
         vm.prank(scopeOwner);
         prot.transferScopeOwnership(scopeName, address(2));
+        // New owner may transfer it back to old owner
         vm.prank(address(2));
         prot.transferScopeOwnership(scopeName, scopeOwner);
+        vm.prank(scopeOwner);
+        prot.acceptScopeTransfer(scopeName);
         assertEq(prot.getScopeOwner(scopeName), scopeOwner);
+        // Non-owner may not add operator
         vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotAuthorized.selector, address(2)));
         vm.prank(address(2));
         prot.addOperator(scopeName, address(2));
+        // Real owner may add operator
         vm.prank(scopeOwner);
         prot.addOperator(scopeName, address(2));
+        // Non-owner may not remove operator
         vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotAuthorized.selector, address(2)));
         vm.prank(address(2));
         prot.removeOperator(scopeName, address(2));
+        // Real owner may remove operator
         vm.prank(scopeOwner);
         prot.removeOperator(scopeName, address(2));
+        // Non-owner may not set scope rules
         vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotAuthorized.selector, address(2)));
         vm.prank(address(2));
         prot.setScopeRules(scopeName, true, true, true);
@@ -770,5 +807,25 @@ contract PatchworkProtocolTest is Test {
         vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotPatchworkAssignable.selector, address(testBaseNFT)));
         vm.prank(userAddress);
         testFragmentLiteRefNFT.transferFrom(userAddress, user2Address, fragment1);
+    }
+
+    function testLiteRefCollision() public {
+        TestFragmentLiteRefNFT testFrag2 = new TestFragmentLiteRefNFT(address(prot));
+        vm.startPrank(scopeOwner);
+        prot.claimScope(scopeName);
+        prot.setScopeRules(scopeName, false, false, false);
+        testPatchLiteRefNFT.registerReferenceAddress(address(testFragmentLiteRefNFT));
+        testFragmentLiteRefNFT.registerReferenceAddress(address(testFrag2));
+        uint256 frag1 = testFragmentLiteRefNFT.mint(userAddress);
+        uint256 frag2 = testFrag2.mint(userAddress);
+        uint256 testBaseNFTTokenId = testBaseNFT.mint(userAddress);
+        uint256 patchTokenId = prot.createPatch(address(testBaseNFT), testBaseNFTTokenId, address(testPatchLiteRefNFT));
+        prot.assignNFT(address(testFragmentLiteRefNFT), frag1, address(testPatchLiteRefNFT), patchTokenId);
+        // The second assign succeeding combined with the assertion that they are equal ref values means there is no collision in the scope.
+        prot.assignNFT(address(testFrag2), frag2, address(testFragmentLiteRefNFT), frag1);
+        // LiteRef IDs should match because it is idx1 tokenID 0 for both (0x1. 0x0)
+        (uint64 lr1,) = testPatchLiteRefNFT.getLiteReference(address(testFragmentLiteRefNFT), frag1);
+        (uint64 lr2,) = testFragmentLiteRefNFT.getLiteReference(address(testFrag2), frag2);
+        assertEq(lr1, lr2);
     }
 }

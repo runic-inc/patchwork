@@ -222,6 +222,12 @@ contract PatchworkProtocol {
         address owner;
 
         /**
+        @notice Owner-elect
+        @dev Used in two-step transfer process. If this is set, only this owner can accept the transfer
+        */
+        address ownerElect;
+
+        /**
         @notice Indicates whether a user is allowed to patch within this scope
         @dev True if a user can patch, false otherwise. If false, only operators and the scope owner can perform patching.
         */
@@ -247,9 +253,9 @@ contract PatchworkProtocol {
 
         /**
         @notice Mapped list of lightweight references within this scope
-        // TODO: A unique hash of liteRefAddr + reference will be needed for uniqueness
+        @dev A hash of liteRefAddr + reference provides uniqueness
         */
-        mapping(uint64 => bool) liteRefs;
+        mapping(bytes32 => bool) liteRefs;
 
         /**
         @notice Mapped whitelist of addresses that belong to this scope
@@ -311,6 +317,22 @@ contract PatchworkProtocol {
     @param owner The owner of the scope
     */
     event ScopeClaim(string indexed scopeName, address indexed owner);
+
+    /**
+    @notice Emitted when a scope has elected a new owner to transfer to
+    @param scopeName The name of the transferred scope
+    @param from The owner of the scope
+    @param to The owner-elect of the scope
+    */
+    event ScopeTransferElect(string indexed scopeName, address indexed from, address indexed to);
+
+    /**
+    @notice Emitted when a scope transfer is canceled
+    @param scopeName The name of the transferred scope
+    @param from The owner of the scope
+    @param to The owner-elect of the scope
+    */
+    event ScopeTransferCancel(string indexed scopeName, address indexed from, address indexed to);
 
     /**
     @notice Emitted when a scope is transferred
@@ -378,6 +400,7 @@ contract PatchworkProtocol {
 
     /**
     @notice Transfer ownership of a scope
+    @dev must be accepted by transferee - see {acceptScopeTransfer}
     @param scopeName Name of the scope
     @param newOwner Address of the new owner
     */
@@ -387,8 +410,44 @@ contract PatchworkProtocol {
         if (newOwner == address(0)) {
             revert ScopeTransferNotAllowed(address(0));
         }
-        s.owner = newOwner;
-        emit ScopeTransfer(scopeName, msg.sender, newOwner);
+        s.ownerElect = newOwner;
+        emit ScopeTransferElect(scopeName, s.owner, s.ownerElect);
+    }
+
+    /**
+    @notice Cancel a pending scope transfer
+    @param scopeName Name of the scope
+    */
+    function cancelScopeTransfer(string calldata scopeName) public {
+        Scope storage s = _mustHaveScope(scopeName);
+        _mustBeOwner(s);
+        emit ScopeTransferCancel(scopeName, s.owner, s.ownerElect);
+        s.ownerElect = address(0);
+    }
+
+    /**
+    @notice Accept a scope transfer
+    @param scopeName Name of the scope
+    */
+    function acceptScopeTransfer(string calldata scopeName) public {
+        Scope storage s = _mustHaveScope(scopeName);
+        if (s.ownerElect == msg.sender) {
+            address oldOwner = s.owner;
+            s.owner = msg.sender;
+            s.ownerElect = address(0);
+            emit ScopeTransfer(scopeName, oldOwner, msg.sender);
+        } else {
+            revert NotAuthorized(msg.sender);
+        }
+    }
+
+    /**
+    @notice Get owner-elect of a scope
+    @param scopeName Name of the scope
+    @return ownerElect Address of the scope's owner-elect
+    */
+    function getScopeOwnerElect(string calldata scopeName) public view returns (address ownerElect) {
+        return _scopes[scopeName].ownerElect;
     }
 
     /**
@@ -599,26 +658,28 @@ contract PatchworkProtocol {
         } else {
             revert NotAuthorized(msg.sender);
         }
+        bytes32 targetRef;
         // reduce stack to stay under limit
-        uint64 ref;
-        {
-            (uint64 _ref, bool redacted) = IPatchworkLiteRef(target).getLiteReference(fragment, fragmentTokenId);
-            ref = _ref;
-            if (ref == 0) {
-                revert FragmentUnregistered(address(fragment));
-            }
-            if (redacted) {
-                revert FragmentRedacted(address(fragment));
-            }
-            if (scope.liteRefs[ref]) {
-                revert FragmentAlreadyAssignedInScope(scopeName, address(fragment), fragmentTokenId);
-            }
+        address _target = target;
+        uint256 _targetTokenId = targetTokenId;
+        address _fragment = fragment;
+        uint256 _fragmentTokenId = fragmentTokenId;
+        (uint64 ref, bool redacted) = IPatchworkLiteRef(_target).getLiteReference(_fragment, _fragmentTokenId);
+        targetRef = keccak256(abi.encodePacked(_target, ref));
+        if (ref == 0) {
+            revert FragmentUnregistered(address(_fragment));
+        }
+        if (redacted) {
+            revert FragmentRedacted(address(_fragment));
+        }
+        if (scope.liteRefs[targetRef]) {
+            revert FragmentAlreadyAssignedInScope(scopeName, address(_fragment), _fragmentTokenId);
         }
         // call assign on the fragment
-        assignableNFT.assign(fragmentTokenId, target, targetTokenId);
+        assignableNFT.assign(_fragmentTokenId, _target, _targetTokenId);
         // add to our storage of scope->target assignments
-        scope.liteRefs[ref] = true;
-        emit Assign(targetOwner, fragment, fragmentTokenId, target, targetTokenId);
+        scope.liteRefs[targetRef] = true;
+        emit Assign(targetOwner, _fragment, _fragmentTokenId, _target, _targetTokenId);
         return ref;
     }
 
@@ -651,10 +712,11 @@ contract PatchworkProtocol {
         if (ref == 0) {
             revert FragmentUnregistered(address(fragment));
         }
-        if (!scope.liteRefs[ref]) {
+        bytes32 targetRef = keccak256(abi.encodePacked(target, ref));
+        if (!scope.liteRefs[targetRef]) {
             revert RefNotFoundInScope(scopeName, target, fragment, fragmentTokenId);
         }
-        scope.liteRefs[ref] = false;
+        scope.liteRefs[targetRef] = false;
         IPatchworkLiteRef(target).removeReference(targetTokenId, ref);
         emit Unassign(IERC721(target).ownerOf(targetTokenId), fragment, fragmentTokenId, target, targetTokenId);
     }
