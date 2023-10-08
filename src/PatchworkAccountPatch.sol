@@ -2,8 +2,8 @@
 pragma solidity ^0.8.13;
 
 import "./IPatchworkAccountPatch.sol";
+import "./IPatchworkProtocol.sol";
 import "./PatchworkNFTBase.sol";
-import "./PatchworkProtocol.sol";
 
 /**
 @title PatchworkAccountPatch

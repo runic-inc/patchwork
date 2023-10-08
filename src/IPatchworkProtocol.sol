@@ -376,4 +376,138 @@ interface IPatchworkProtocol {
     @param addr The address being removed from the whitelist
     */
     event ScopeWhitelistRemove(string indexed scopeName, address indexed actor, address indexed addr);
+
+    /**
+    @notice Claim a scope
+    @param scopeName the name of the scope
+    */
+    function claimScope(string calldata scopeName) external;
+
+    /**
+    @notice Transfer ownership of a scope
+    @dev must be accepted by transferee - see {acceptScopeTransfer}
+    @param scopeName Name of the scope
+    @param newOwner Address of the new owner
+    */
+    function transferScopeOwnership(string calldata scopeName, address newOwner) external;
+
+    /**
+    @notice Cancel a pending scope transfer
+    @param scopeName Name of the scope
+    */
+    function cancelScopeTransfer(string calldata scopeName) external;
+
+    /**
+    @notice Accept a scope transfer
+    @param scopeName Name of the scope
+    */
+    function acceptScopeTransfer(string calldata scopeName) external;
+
+    /**
+    @notice Get owner-elect of a scope
+    @param scopeName Name of the scope
+    @return ownerElect Address of the scope's owner-elect
+    */
+    function getScopeOwnerElect(string calldata scopeName) external returns (address ownerElect);
+
+    /**
+    @notice Get owner of a scope
+    @param scopeName Name of the scope
+    @return owner Address of the scope owner
+    */
+    function getScopeOwner(string calldata scopeName) external returns (address owner);
+
+    /**
+    @notice Add an operator to a scope
+    @param scopeName Name of the scope
+    @param op Address of the operator
+    */
+    function addOperator(string calldata scopeName, address op) external;
+
+    /**
+    @notice Remove an operator from a scope
+    @param scopeName Name of the scope
+    @param op Address of the operator
+    */
+    function removeOperator(string calldata scopeName, address op) external;
+
+    /**
+    @notice Set rules for a scope
+    @param scopeName Name of the scope
+    @param allowUserPatch Boolean indicating whether user patches are allowed
+    @param allowUserAssign Boolean indicating whether user assignments are allowed
+    @param requireWhitelist Boolean indicating whether whitelist is required
+    */
+    function setScopeRules(string calldata scopeName, bool allowUserPatch, bool allowUserAssign, bool requireWhitelist) external;
+
+    /**
+    @notice Add an address to a scope's whitelist
+    @param scopeName Name of the scope
+    @param addr Address to be whitelisted
+    */
+    function addWhitelist(string calldata scopeName, address addr) external;
+
+    /**
+    @notice Remove an address from a scope's whitelist
+    @param scopeName Name of the scope
+    @param addr Address to be removed from the whitelist
+    */
+    function removeWhitelist(string calldata scopeName, address addr) external;
+
+    /**
+    @notice Create a new patch
+    @param originalNFTAddress Address of the original NFT
+    @param originalNFTTokenId Token ID of the original NFT
+    @param patchAddress Address of the IPatchworkPatch to mint
+    @return tokenId Token ID of the newly created patch
+    */
+    function createPatch(address originalNFTAddress, uint originalNFTTokenId, address patchAddress) external returns (uint256 tokenId);
+
+    /**
+    @notice Create a new account patch
+    @param originalAddress Address of the original account
+    @param patchAddress Address of the IPatchworkPatch to mint
+    @return tokenId Token ID of the newly created patch
+    */
+    function createAccountPatch(address owner, address originalAddress, address patchAddress) external returns (uint256 tokenId);
+
+    /**
+    @notice Assigns an NFT relation to have an IPatchworkLiteRef form a LiteRef to a IPatchworkAssignableNFT
+    @param fragment The IPatchworkAssignableNFT address to assign
+    @param fragmentTokenId The IPatchworkAssignableNFT Token ID to assign
+    @param target The IPatchworkLiteRef address to hold the reference to the fragment
+    @param targetTokenId The IPatchworkLiteRef Token ID to hold the reference to the fragment
+    */
+    function assignNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) external;
+
+    /**
+    @notice Assign multiple NFT fragments to a target NFT in batch
+    @param fragments The array of addresses of the fragment IPatchworkAssignableNFTs
+    @param tokenIds The array of token IDs of the fragment IPatchworkAssignableNFTs
+    @param target The address of the target IPatchworkLiteRef NFT
+    @param targetTokenId The token ID of the target IPatchworkLiteRef NFT
+    */
+    function batchAssignNFT(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId) external;
+
+    /**
+    @notice Unassign a NFT fragment from a target NFT
+    @param fragment The IPatchworkAssignableNFT address of the fragment NFT
+    @param fragmentTokenId The IPatchworkAssignableNFT token ID of the fragment NFT
+    */
+    function unassignNFT(address fragment, uint fragmentTokenId) external;
+
+    /**
+    @notice Apply transfer rules and actions of a specific token from one address to another
+    @param from The address of the sender
+    @param to The address of the receiver
+    @param tokenId The ID of the token to be transferred
+    */
+    function applyTransfer(address from, address to, uint256 tokenId) external;
+
+    /**
+    @notice Update the ownership tree of a specific Patchwork NFT
+    @param nft The address of the Patchwork NFT
+    @param tokenId The ID of the token whose ownership tree needs to be updated
+    */
+    function updateOwnershipTree(address nft, uint256 tokenId) external;
 }

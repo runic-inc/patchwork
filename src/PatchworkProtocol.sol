@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./PatchworkNFTInterface.sol";
 import "./IPatchworkAccountPatch.sol";
 import "./IPatchworkProtocol.sol";
@@ -17,8 +17,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
     mapping(string => Scope) private _scopes;
 
     /**
-    @notice Claim a scope
-    @param scopeName the name of the scope
+    @dev See {IPatchworkProtocol-claimScope}
     */
     function claimScope(string calldata scopeName) public {
         Scope storage s = _scopes[scopeName];
@@ -31,10 +30,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
     }
 
     /**
-    @notice Transfer ownership of a scope
-    @dev must be accepted by transferee - see {acceptScopeTransfer}
-    @param scopeName Name of the scope
-    @param newOwner Address of the new owner
+    @dev See {IPatchworkProtocol-transferScopeOwnership}
     */
     function transferScopeOwnership(string calldata scopeName, address newOwner) public {
         Scope storage s = _mustHaveScope(scopeName);
@@ -47,8 +43,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
     }
 
     /**
-    @notice Cancel a pending scope transfer
-    @param scopeName Name of the scope
+    @dev See {IPatchworkProtocol-cancelScopeTransfer}
     */
     function cancelScopeTransfer(string calldata scopeName) public {
         Scope storage s = _mustHaveScope(scopeName);
@@ -58,8 +53,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
     }
 
     /**
-    @notice Accept a scope transfer
-    @param scopeName Name of the scope
+    @dev See {IPatchworkProtocol-acceptScopeTransfer}
     */
     function acceptScopeTransfer(string calldata scopeName) public {
         Scope storage s = _mustHaveScope(scopeName);
@@ -74,27 +68,21 @@ contract PatchworkProtocol is IPatchworkProtocol {
     }
 
     /**
-    @notice Get owner-elect of a scope
-    @param scopeName Name of the scope
-    @return ownerElect Address of the scope's owner-elect
+    @dev See {IPatchworkProtocol-getScopeOwnerElect}
     */
     function getScopeOwnerElect(string calldata scopeName) public view returns (address ownerElect) {
         return _scopes[scopeName].ownerElect;
     }
 
     /**
-    @notice Get owner of a scope
-    @param scopeName Name of the scope
-    @return owner Address of the scope owner
+    @dev See {IPatchworkProtocol-getScopeOwner}
     */
     function getScopeOwner(string calldata scopeName) public view returns (address owner) {
         return _scopes[scopeName].owner;
     }
 
     /**
-    @notice Add an operator to a scope
-    @param scopeName Name of the scope
-    @param op Address of the operator
+    @dev See {IPatchworkProtocol-addOperator}
     */
     function addOperator(string calldata scopeName, address op) public {
         Scope storage s = _mustHaveScope(scopeName);
@@ -104,9 +92,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
     }
 
     /**
-    @notice Remove an operator from a scope
-    @param scopeName Name of the scope
-    @param op Address of the operator
+    @dev See {IPatchworkProtocol-removeOperator}
     */
     function removeOperator(string calldata scopeName, address op) public {
         Scope storage s = _mustHaveScope(scopeName);
@@ -116,11 +102,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
     }
 
     /**
-    @notice Set rules for a scope
-    @param scopeName Name of the scope
-    @param allowUserPatch Boolean indicating whether user patches are allowed
-    @param allowUserAssign Boolean indicating whether user assignments are allowed
-    @param requireWhitelist Boolean indicating whether whitelist is required
+    @dev See {IPatchworkProtocol-setScopeRules}
     */
     function setScopeRules(string calldata scopeName, bool allowUserPatch, bool allowUserAssign, bool requireWhitelist) public {
         Scope storage s = _mustHaveScope(scopeName);
@@ -132,9 +114,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
     }
 
     /**
-    @notice Add an address to a scope's whitelist
-    @param scopeName Name of the scope
-    @param addr Address to be whitelisted
+    @dev See {IPatchworkProtocol-addWhitelist}
     */
     function addWhitelist(string calldata scopeName, address addr) public {
         Scope storage s = _mustHaveScope(scopeName);
@@ -144,9 +124,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
     }
 
     /**
-    @notice Remove an address from a scope's whitelist
-    @param scopeName Name of the scope
-    @param addr Address to be removed from the whitelist
+    @dev See {IPatchworkProtocol-removeWhitelist}
     */
     function removeWhitelist(string calldata scopeName, address addr) public {
         Scope storage s = _mustHaveScope(scopeName);
@@ -156,11 +134,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
     }
 
     /**
-    @notice Create a new patch
-    @param originalNFTAddress Address of the original NFT
-    @param originalNFTTokenId Token ID of the original NFT
-    @param patchAddress Address of the IPatchworkPatch to mint
-    @return tokenId Token ID of the newly created patch
+    @dev See {IPatchworkProtocol-createAccountPatch}
     */
     function createPatch(address originalNFTAddress, uint originalNFTTokenId, address patchAddress) public returns (uint256 tokenId) {
         IPatchworkPatch patch = IPatchworkPatch(patchAddress);
@@ -188,10 +162,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
     }
 
     /**
-    @notice Create a new account patch
-    @param originalAddress Address of the original account
-    @param patchAddress Address of the IPatchworkPatch to mint
-    @return tokenId Token ID of the newly created patch
+    @dev See {IPatchworkProtocol-createAccountPatch}
     */
     function createAccountPatch(address owner, address originalAddress, address patchAddress) public returns (uint256 tokenId) {
         IPatchworkAccountPatch patch = IPatchworkAccountPatch(patchAddress);
@@ -218,11 +189,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
     }
 
     /**
-    @notice Assigns an NFT relation to have an IPatchworkLiteRef form a LiteRef to a IPatchworkAssignableNFT
-    @param fragment The IPatchworkAssignableNFT address to assign
-    @param fragmentTokenId The IPatchworkAssignableNFT Token ID to assign
-    @param target The IPatchworkLiteRef address to hold the reference to the fragment
-    @param targetTokenId The IPatchworkLiteRef Token ID to hold the reference to the fragment
+    @dev See {IPatchworkProtocol-assignNFT}
     */
     function assignNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) public mustNotBeFrozen(target, targetTokenId) {
         address targetOwner = IERC721(target).ownerOf(targetTokenId);
@@ -232,11 +199,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
     }
 
     /**
-    @notice Assign multiple NFT fragments to a target NFT in batch
-    @param fragments The array of addresses of the fragment IPatchworkAssignableNFTs
-    @param tokenIds The array of token IDs of the fragment IPatchworkAssignableNFTs
-    @param target The address of the target IPatchworkLiteRef NFT
-    @param targetTokenId The token ID of the target IPatchworkLiteRef NFT
+    @dev See {IPatchworkProtocol-batchAssignNFT}
     */
     function batchAssignNFT(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId) public mustNotBeFrozen(target, targetTokenId) {
         if (fragments.length != tokenIds.length) {
@@ -316,9 +279,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
     }
 
     /**
-    @notice Unassign a NFT fragment from a target NFT
-    @param fragment The IPatchworkAssignableNFT address of the fragment NFT
-    @param fragmentTokenId The IPatchworkAssignableNFT token ID of the fragment NFT
+    @dev See {IPatchworkProtocol-unassignNFT}
     */
     function unassignNFT(address fragment, uint fragmentTokenId) public mustNotBeFrozen(fragment, fragmentTokenId) {
         IPatchworkAssignableNFT assignableNFT = IPatchworkAssignableNFT(fragment);
@@ -354,10 +315,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
     }
 
     /**
-    @notice Apply transfer rules and actions of a specific token from one address to another
-    @param from The address of the sender
-    @param to The address of the receiver
-    @param tokenId The ID of the token to be transferred
+    @dev See {IPatchworkProtocol-applyTransfer}
     */
     function applyTransfer(address from, address to, uint256 tokenId) public {
         address nft = msg.sender;
@@ -410,10 +368,8 @@ contract PatchworkProtocol is IPatchworkProtocol {
     }
 
     /**
-    @notice Update the ownership tree of a specific Patchwork NFT
-    @param nft The address of the Patchwork NFT
-    @param tokenId The ID of the token whose ownership tree needs to be updated
-    */
+    @dev See {IPatchworkProtocol-updateOwnershipTree}
+    */ 
     function updateOwnershipTree(address nft, uint256 tokenId) public {
         if (IERC165(nft).supportsInterface(type(IPatchworkLiteRef).interfaceId)) {
             IPatchworkLiteRef liteRefNFT = IPatchworkLiteRef(nft);

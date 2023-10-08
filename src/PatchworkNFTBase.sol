@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "./PatchworkNFTInterface.sol";
-import "./PatchworkProtocol.sol";
+import "./IPatchworkProtocol.sol";
 import "./IERC4906.sol";
 
 /**
@@ -111,7 +111,7 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT, IERC4906 {
     @dev See {IERC721-transferFrom}.
     */
     function transferFrom(address from, address to, uint256 tokenId) public virtual override(ERC721, IERC721) {
-        PatchworkProtocol(_manager).applyTransfer(from, to, tokenId);
+        IPatchworkProtocol(_manager).applyTransfer(from, to, tokenId);
         super.transferFrom(from, to, tokenId);
     }
 
@@ -119,7 +119,7 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT, IERC4906 {
     @dev See {IERC721-safeTransferFrom}.
     */
     function safeTransferFrom(address from, address to, uint256 tokenId) public virtual override(ERC721, IERC721) {
-        PatchworkProtocol(_manager).applyTransfer(from, to, tokenId);
+        IPatchworkProtocol(_manager).applyTransfer(from, to, tokenId);
         super.safeTransferFrom(from, to, tokenId);
     }
 
@@ -127,7 +127,7 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT, IERC4906 {
     @dev See {IERC721-safeTransferFrom}.
     */
     function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public virtual override(ERC721, IERC721) {
-        PatchworkProtocol(_manager).applyTransfer(from, to, tokenId);
+        IPatchworkProtocol(_manager).applyTransfer(from, to, tokenId);
         super.safeTransferFrom(from, to, tokenId, data);
     }
 
