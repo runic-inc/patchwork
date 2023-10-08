@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "forge-std/console.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "./IERC5192.sol";
 

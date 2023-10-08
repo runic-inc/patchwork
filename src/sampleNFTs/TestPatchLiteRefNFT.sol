@@ -174,6 +174,9 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
     }
 
     function mintPatch(address originalNFTOwner, address originalNFTAddress, uint originalNFTTokenId) external returns (uint256 tokenId){
+        if (msg.sender != _manager) {
+            revert();
+        }
         // Just for testing
         tokenId = _nextTokenId;
         _nextTokenId++;
@@ -234,5 +237,10 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
     
     function _checkWriteAuth() internal override(PatchworkNFT, PatchworkLiteRef) view returns (bool allow) {
         return PatchworkNFT._checkWriteAuth();
+    }
+
+    function burn(uint256 tokenId) public {
+        // test only
+        _burn(tokenId);
     }
 }

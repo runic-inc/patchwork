@@ -269,6 +269,14 @@ contract PatchworkNFTBaseTest is Test {
         refIdx = testPatchLiteRefNFT.registerReferenceAddress(address(256));
     }
     
+    function testBurn() public {
+        uint256 baseTokenId = testBaseNFT.mint(userAddress);
+        vm.prank(scopeOwner);
+        uint256 patchTokenId = prot.createPatch(address(testBaseNFT), baseTokenId, address(testPatchLiteRefNFT));
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.UnsupportedOperation.selector));
+        testPatchLiteRefNFT.burn(patchTokenId);
+    }
+    
     function testOnAssignedTransferError() public {
         vm.expectRevert();
         testFragmentLiteRefNFT.onAssignedTransfer(address(0), address(1), 1);
