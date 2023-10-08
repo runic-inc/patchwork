@@ -213,31 +213,31 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT, IERC4906 {
 
     modifier mustHaveWriteAuth {
         if (!_checkWriteAuth()) {
-            revert PatchworkProtocol.NotAuthorized(msg.sender);
+            revert IPatchworkProtocol.NotAuthorized(msg.sender);
         }
         _;
     }
 
     modifier mustHaveTokenWriteAuth(uint256 tokenId) {
         if (!_checkTokenWriteAuth(tokenId)) {
-            revert PatchworkProtocol.NotAuthorized(msg.sender);
+            revert IPatchworkProtocol.NotAuthorized(msg.sender);
         }
         _;
     }
         
     modifier mustBeTokenOwner(uint256 tokenId) {
         if (msg.sender != ownerOf(tokenId)) {
-            revert PatchworkProtocol.NotAuthorized(msg.sender);
+            revert IPatchworkProtocol.NotAuthorized(msg.sender);
         }
         _;
     }
 
     modifier mustBeFrozenWithNonce(uint256 tokenId, uint256 nonce) {
         if (!frozen(tokenId)) {
-            revert PatchworkProtocol.NotFrozen(address(this), tokenId);
+            revert IPatchworkProtocol.NotFrozen(address(this), tokenId);
         }
         if (getFreezeNonce(tokenId) != nonce) {
-            revert PatchworkProtocol.IncorrectNonce(address(this), tokenId, nonce);
+            revert IPatchworkProtocol.IncorrectNonce(address(this), tokenId, nonce);
         }
         _;
     }
@@ -326,14 +326,14 @@ abstract contract PatchworkPatch is PatchworkNFT, IPatchworkPatch {
     @dev See {IPatchworkNFT-setLocked}
     */ 
     function setLocked(uint256 /* tokenId */, bool /* locked_ */) public view virtual override {
-        revert PatchworkProtocol.CannotLockSoulboundPatch(address(this));
+        revert IPatchworkProtocol.CannotLockSoulboundPatch(address(this));
     }
 
     /**
     @dev See {ERC721-_burn}
     */ 
     function _burn(uint256 /*tokenId*/) internal virtual override {
-        revert PatchworkProtocol.UnsupportedOperation();
+        revert IPatchworkProtocol.UnsupportedOperation();
     }
 
     /**
@@ -379,7 +379,7 @@ abstract contract PatchworkFragment is PatchworkNFT, IPatchworkAssignableNFT {
         // One time use policy
         Assignment storage a = _assignments[ourTokenId];
         if (a.tokenAddr != address(0)) {
-            revert PatchworkProtocol.FragmentAlreadyAssigned(address(this), ourTokenId);
+            revert IPatchworkProtocol.FragmentAlreadyAssigned(address(this), ourTokenId);
         }
         a.tokenAddr = to;
         a.tokenId = tokenId;
@@ -459,7 +459,7 @@ abstract contract PatchworkFragment is PatchworkNFT, IPatchworkAssignableNFT {
     */
     function setLocked(uint256 tokenId, bool locked_) public virtual override {
         if (msg.sender != ownerOf(tokenId)) {
-            revert PatchworkProtocol.NotAuthorized(msg.sender);
+            revert IPatchworkProtocol.NotAuthorized(msg.sender);
         }
         require(_assignments[tokenId].tokenAddr == address(0), "cannot setLocked assigned fragment");
         super.setLocked(tokenId, locked_);
@@ -516,11 +516,11 @@ abstract contract PatchworkLiteRef is IPatchworkLiteRef, ERC165 {
     function registerReferenceAddress(address addr) public virtual _mustHaveWriteAuth returns (uint8 id) {
         uint8 refId = _nextReferenceId;
         if (_nextReferenceId == 255) {
-            revert PatchworkProtocol.OutOfIDs();
+            revert IPatchworkProtocol.OutOfIDs();
         }
         _nextReferenceId++;
         if (_referenceAddressIds[addr] != 0) {
-            revert PatchworkProtocol.FragmentAlreadyRegistered(addr);
+            revert IPatchworkProtocol.FragmentAlreadyRegistered(addr);
         }
         _referenceAddresses[refId] = addr;
         _referenceAddressIds[addr] = refId;
@@ -568,7 +568,7 @@ abstract contract PatchworkLiteRef is IPatchworkLiteRef, ERC165 {
             return (0, false);
         }
         if (tokenId > type(uint56).max) {
-            revert PatchworkProtocol.UnsupportedTokenId(tokenId);
+            revert IPatchworkProtocol.UnsupportedTokenId(tokenId);
         }
         return (uint64(uint256(refId) << 56 | tokenId), _redactedReferenceIds[refId]);
     }
@@ -585,7 +585,7 @@ abstract contract PatchworkLiteRef is IPatchworkLiteRef, ERC165 {
 
     modifier _mustHaveWriteAuth {
         if (!_checkWriteAuth()) {
-            revert PatchworkProtocol.NotAuthorized(msg.sender);
+            revert IPatchworkProtocol.NotAuthorized(msg.sender);
         }
         _;
     }
