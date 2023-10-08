@@ -55,27 +55,64 @@ contract PatchworkProtocolTest is Test {
         vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.ScopeExists.selector, scopeName));
         prot.claimScope(scopeName);
         vm.stopPrank();
+        // Current user is not scope owner so can't transfer it
         vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotAuthorized.selector, defaultUser));
         prot.transferScopeOwnership(scopeName, address(2));
+        // Real owner can transfer it
+        vm.prank(scopeOwner);
+        prot.transferScopeOwnership(scopeName, address(3));
+        // scopeOwner still owns it until it's accepted
+        assertEq(prot.getScopeOwner(scopeName), scopeOwner);
+        assertEq(prot.getScopeOwnerElect(scopeName), address(3));
+        // test changing the pending transfer elect
         vm.prank(scopeOwner);
         prot.transferScopeOwnership(scopeName, address(2));
+        assertEq(prot.getScopeOwnerElect(scopeName), address(2));
+        // Non-owner may not cancel the transfer
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotAuthorized.selector, address(10)));
+        vm.prank(address(10));
+        prot.cancelScopeTransfer(scopeName);
+        // Real owner can cancel the transfer
+        vm.prank(scopeOwner);
+        prot.cancelScopeTransfer(scopeName);
+        assertEq(prot.getScopeOwnerElect(scopeName), address(0));
+        // Now retry the transfer
+        vm.prank(scopeOwner);
+        prot.transferScopeOwnership(scopeName, address(2));
+        // User 10 is not elect and may not accept the transfer
+        vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotAuthorized.selector, address(10)));
+        vm.prank(address(10));
+        prot.acceptScopeTransfer(scopeName);
+        // Finally real elect accepts scope transfer
+        vm.prank(address(2));
+        prot.acceptScopeTransfer(scopeName);
         assertEq(prot.getScopeOwner(scopeName), address(2));
+        assertEq(prot.getScopeOwnerElect(scopeName), address(0));
+        // Old owner may not transfer it
         vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotAuthorized.selector, scopeOwner));
         vm.prank(scopeOwner);
         prot.transferScopeOwnership(scopeName, address(2));
+        // New owner may transfer it back to old owner
         vm.prank(address(2));
         prot.transferScopeOwnership(scopeName, scopeOwner);
+        vm.prank(scopeOwner);
+        prot.acceptScopeTransfer(scopeName);
         assertEq(prot.getScopeOwner(scopeName), scopeOwner);
+        // Non-owner may not add operator
         vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotAuthorized.selector, address(2)));
         vm.prank(address(2));
         prot.addOperator(scopeName, address(2));
+        // Real owner may add operator
         vm.prank(scopeOwner);
         prot.addOperator(scopeName, address(2));
+        // Non-owner may not remove operator
         vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotAuthorized.selector, address(2)));
         vm.prank(address(2));
         prot.removeOperator(scopeName, address(2));
+        // Real owner may remove operator
         vm.prank(scopeOwner);
         prot.removeOperator(scopeName, address(2));
+        // Non-owner may not set scope rules
         vm.expectRevert(abi.encodeWithSelector(PatchworkProtocol.NotAuthorized.selector, address(2)));
         vm.prank(address(2));
         prot.setScopeRules(scopeName, true, true, true);
