@@ -33,11 +33,11 @@ abstract contract PatchworkAccountPatch is PatchworkNFT, IPatchworkAccountPatch 
     /**
     @notice stores a patch
     @param tokenId the tokenId of the patch
-    @param originalNFTAddress the account we are patching
+    @param originalAccountAddress the account we are patching
     */
-    function _storePatch(uint256 tokenId, address originalNFTAddress) internal virtual {
+    function _storePatch(uint256 tokenId, address originalAccountAddress) internal virtual {
         // PatchworkProtocol handles uniqueness assertion
-        _patchedAddresses[tokenId] = originalNFTAddress;
+        _patchedAddresses[tokenId] = originalAccountAddress;
     }
 
     /**

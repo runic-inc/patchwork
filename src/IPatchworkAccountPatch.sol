@@ -16,10 +16,10 @@ interface IPatchworkAccountPatch {
     /**
     @notice Creates a new token for the owner, representing a patch
     @param owner Address of the owner of the token
-    @param originalNFTAddress Address of the original account
+    @param originalAccountAddress Address of the original account
     @return tokenId ID of the newly minted token
     */
-    function mintPatch(address owner, address originalNFTAddress) external returns (uint256 tokenId);
+    function mintPatch(address owner, address originalAccountAddress) external returns (uint256 tokenId);
 
     /**
     @notice A deliberately incompatible function to block implementing both assignable and patch
