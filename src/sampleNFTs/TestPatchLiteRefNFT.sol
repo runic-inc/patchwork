@@ -9,8 +9,8 @@ pragma solidity ^0.8.13;
   Has metadata as defined in totem-metadata.json
 */
 
-import "../PatchworkNFTBase.sol";
-
+import "../PatchworkPatch.sol";
+import "../PatchworkLiteRef.sol";
 
 struct TestPatchLiteRefNFTMetadata {
     uint64[8] artifactIDs;

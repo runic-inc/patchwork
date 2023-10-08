@@ -69,6 +69,7 @@ interface PatchworkNFTInterfaceMeta {
     }
 }
 
+// TODO - Protocol assumes this is IERC721. Should we just declare it here?
 /**
 @title Patchwork Protocol NFT Interface
 @author Runic Labs, Inc

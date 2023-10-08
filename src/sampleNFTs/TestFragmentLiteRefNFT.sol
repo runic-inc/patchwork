@@ -9,8 +9,8 @@ pragma solidity ^0.8.13;
   Has metadata as defined in totem-metadata.json
 */
 
-import "../PatchworkNFTBase.sol";
-
+import "../PatchworkFragment.sol";
+import "../PatchworkLiteRef.sol";
 
 enum FragmentType {
     BASE,
