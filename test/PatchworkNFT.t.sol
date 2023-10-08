@@ -40,6 +40,14 @@ contract PatchworkNFTTest is Test {
         assertEq(_scopeName, _testPatchworkNFT.getScopeName());
     }
 
+    function testSupportsInterface() public {
+        assertTrue(_testPatchworkNFT.supportsInterface(type(IERC165).interfaceId));
+        assertTrue(_testPatchworkNFT.supportsInterface(type(IERC721).interfaceId));
+        assertTrue(_testPatchworkNFT.supportsInterface(type(IERC4906).interfaceId));
+        assertTrue(_testPatchworkNFT.supportsInterface(type(IERC5192).interfaceId));
+        assertTrue(_testPatchworkNFT.supportsInterface(type(IPatchworkNFT).interfaceId));
+    }
+
     function testLoadStorePackedMetadataSlot() public {
         _testPatchworkNFT.mint(_userAddress, 1);
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _defaultUser));

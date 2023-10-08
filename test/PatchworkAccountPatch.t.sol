@@ -36,6 +36,23 @@ contract PatchworkAccountPatchTest is Test {
         vm.stopPrank();
     }
 
+    function testScopeName() public {
+        vm.prank(_scopeOwner);
+        TestAccountPatchNFT testAccountPatchNFT = new TestAccountPatchNFT(address(_prot), false);
+        assertEq(_scopeName, testAccountPatchNFT.getScopeName());
+    }
+    
+    function testSupportsInterface() public {
+        vm.prank(_scopeOwner);
+        TestAccountPatchNFT testAccountPatchNFT = new TestAccountPatchNFT(address(_prot), false);
+        assertTrue(testAccountPatchNFT.supportsInterface(type(IERC165).interfaceId));
+        assertTrue(testAccountPatchNFT.supportsInterface(type(IERC721).interfaceId));
+        assertTrue(testAccountPatchNFT.supportsInterface(type(IERC4906).interfaceId));
+        assertTrue(testAccountPatchNFT.supportsInterface(type(IERC5192).interfaceId));
+        assertTrue(testAccountPatchNFT.supportsInterface(type(IPatchworkNFT).interfaceId));
+        assertTrue(testAccountPatchNFT.supportsInterface(type(IPatchworkAccountPatch).interfaceId));
+    }
+
     function testAccountPatchNotSameOwner() public {
         // Not same owner model, yes transferrable
         vm.prank(_scopeOwner);

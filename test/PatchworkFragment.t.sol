@@ -43,6 +43,15 @@ contract PatchworkFragmentTest is Test {
         assertEq(_scopeName, _testFragmentLiteRefNFT.getScopeName());
     }
     
+    function testSupportsInterface() public {
+        assertTrue(_testFragmentLiteRefNFT.supportsInterface(type(IERC165).interfaceId));
+        assertTrue(_testFragmentLiteRefNFT.supportsInterface(type(IERC721).interfaceId));
+        assertTrue(_testFragmentLiteRefNFT.supportsInterface(type(IERC4906).interfaceId));
+        assertTrue(_testFragmentLiteRefNFT.supportsInterface(type(IERC5192).interfaceId));
+        assertTrue(_testFragmentLiteRefNFT.supportsInterface(type(IPatchworkNFT).interfaceId));
+        assertTrue(_testFragmentLiteRefNFT.supportsInterface(type(IPatchworkAssignableNFT).interfaceId));
+    }
+
     function testOnAssignedTransferError() public {
         vm.expectRevert();
         _testFragmentLiteRefNFT.onAssignedTransfer(address(0), address(1), 1);
