@@ -494,7 +494,7 @@ interface IPatchworkProtocol {
     @param fragment The IPatchworkAssignableNFT address of the fragment NFT
     @param fragmentTokenId The IPatchworkAssignableNFT token ID of the fragment NFT
     */
-    function unassignNFT(address fragment, uint fragmentTokenId) external;
+    function unassignSingleNFT(address fragment, uint fragmentTokenId) external;
 
     /**
     @notice Apply transfer rules and actions of a specific token from one address to another

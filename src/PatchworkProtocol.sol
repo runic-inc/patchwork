@@ -286,7 +286,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
     /**
     @dev See {IPatchworkProtocol-unassignNFT}
     */
-    function unassignNFT(address fragment, uint fragmentTokenId) public mustNotBeFrozen(fragment, fragmentTokenId) {
+    function unassignSingleNFT(address fragment, uint fragmentTokenId) public mustNotBeFrozen(fragment, fragmentTokenId) {
         IPatchworkAssignableNFT assignableNFT = IPatchworkAssignableNFT(fragment);
         string memory scopeName = assignableNFT.getScopeName();
         Scope storage scope = _mustHaveScope(scopeName);
