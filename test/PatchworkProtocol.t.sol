@@ -731,6 +731,7 @@ contract PatchworkProtocolTest is Test {
         vm.stopPrank();
         vm.prank(userAddress);
         testPatchLiteRefNFT.setFrozen(patchTokenId, true);
+
         // It will return that the fragment is frozen even though the patch is the root cause, because all assigned to the patch inherit the freeze
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.Frozen.selector, address(testFragmentLiteRefNFT), fragment2));
         vm.prank(scopeOwner);

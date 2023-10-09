@@ -8,10 +8,6 @@ pragma solidity ^0.8.13;
 */
 interface IPatchworkAssignableNFT {
 
-    enum RelationType { SINGLE, MULTI }
-
-    function relationType() external returns (RelationType);
-
     /**
     @notice Get the scope this NFT claims to belong to
     @return string the name of the scope
@@ -31,35 +27,6 @@ interface IPatchworkAssignableNFT {
     @param ourTokenId ID of our token
     */
     function unassign(uint256 ourTokenId) external;
-
-    /**
-    @notice Returns the address and token ID that our token is assigned to
-    @param ourTokenId ID of our token
-    @return address the address this is assigned to
-    @return uint256 the tokenId this is assigned to
-    */
-    function getAssignedTo(uint256 ourTokenId) external view returns (address, uint256);
-
-    /**
-    @notice Returns the underlying stored owner of a token ignoring current assignment
-    @param ourTokenId ID of our token
-    @return address address of the owner
-    */
-    function unassignedOwnerOf(uint256 ourTokenId) external view returns (address);
-
-    /**
-    @notice Sends events for a token when the assigned-to token has been transferred
-    @param from Sender address
-    @param to Recipient address
-    @param tokenId ID of the token
-    */
-    function onAssignedTransfer(address from, address to, uint256 tokenId) external;
-
-    /**
-    @notice Updates the real underlying ownership of a token in storage (if different from current)
-    @param tokenId ID of the token
-    */
-    function updateOwnership(uint256 tokenId) external;
 
     /**
     @notice A deliberately incompatible function to block implementing both assignable and patch

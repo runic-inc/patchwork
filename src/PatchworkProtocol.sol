@@ -2,7 +2,8 @@
 pragma solidity ^0.8.13;
 
 import "./IPatchworkNFT.sol";
-import "./IPatchworkAssignableNFT.sol";
+import "./IPatchworkSingleAssignableNFT.sol";
+import "./IPatchworkMultiAssignableNFT.sol";
 import "./IPatchworkLiteRef.sol";
 import "./IPatchworkPatch.sol";
 import "./IPatchworkAccountPatch.sol";
@@ -281,6 +282,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
         return ref;
     }
 
+    // TODO should this be unassignSingleNFT?
     /**
     @dev See {IPatchworkProtocol-unassignNFT}
     */
@@ -299,7 +301,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
         } else {
             revert NotAuthorized(msg.sender);
         }
-        (address target, uint256 targetTokenId) = IPatchworkAssignableNFT(fragment).getAssignedTo(fragmentTokenId);
+        (address target, uint256 targetTokenId) = IPatchworkSingleAssignableNFT(fragment).getAssignedTo(fragmentTokenId);
         if (target == address(0)) {
             revert FragmentNotAssigned(fragment, fragmentTokenId);
         }
@@ -322,8 +324,8 @@ contract PatchworkProtocol is IPatchworkProtocol {
     */
     function applyTransfer(address from, address to, uint256 tokenId) public {
         address nft = msg.sender;
-        if (IERC165(nft).supportsInterface(type(IPatchworkAssignableNFT).interfaceId)) {
-            IPatchworkAssignableNFT assignableNFT = IPatchworkAssignableNFT(nft);
+        if (IERC165(nft).supportsInterface(type(IPatchworkSingleAssignableNFT).interfaceId)) {
+            IPatchworkSingleAssignableNFT assignableNFT = IPatchworkSingleAssignableNFT(nft);
             (address addr,) = assignableNFT.getAssignedTo(tokenId);
             if (addr != address(0)) {
                 revert TransferBlockedByAssignment(nft, tokenId);
@@ -349,15 +351,15 @@ contract PatchworkProtocol is IPatchworkProtocol {
     }
 
     function _applyAssignedTransfer(address nft, address from, address to, uint256 tokenId, address assignedToNFT_, uint256 assignedToTokenId_) private {
-        if (!IERC165(nft).supportsInterface(type(IPatchworkAssignableNFT).interfaceId)) {
+        if (!IERC165(nft).supportsInterface(type(IPatchworkSingleAssignableNFT).interfaceId)) {
             revert NotPatchworkAssignable(nft);
         }
-        (address assignedToNFT, uint256 assignedToTokenId) = IPatchworkAssignableNFT(nft).getAssignedTo(tokenId);
+        (address assignedToNFT, uint256 assignedToTokenId) = IPatchworkSingleAssignableNFT(nft).getAssignedTo(tokenId);
         // 2-way Check the assignment to prevent spoofing
         if (assignedToNFT_ != assignedToNFT || assignedToTokenId_ != assignedToTokenId) {
             revert DataIntegrityError(assignedToNFT_, assignedToTokenId_, assignedToNFT, assignedToTokenId);
         }
-        IPatchworkAssignableNFT(nft).onAssignedTransfer(from, to, tokenId);
+        IPatchworkSingleAssignableNFT(nft).onAssignedTransfer(from, to, tokenId);
         if (IERC165(nft).supportsInterface(type(IPatchworkLiteRef).interfaceId)) {
             address nft_ = nft; // local variable prevents optimizer stack issue in v0.8.18
             IPatchworkLiteRef liteRefNFT = IPatchworkLiteRef(nft);
@@ -383,8 +385,8 @@ contract PatchworkProtocol is IPatchworkProtocol {
                 }
             }
         }
-        if (IERC165(nft).supportsInterface(type(IPatchworkAssignableNFT).interfaceId)) {
-            IPatchworkAssignableNFT(nft).updateOwnership(tokenId);
+        if (IERC165(nft).supportsInterface(type(IPatchworkSingleAssignableNFT).interfaceId)) {
+            IPatchworkSingleAssignableNFT(nft).updateOwnership(tokenId);
         } else if (IERC165(nft).supportsInterface(type(IPatchworkPatch).interfaceId)) {
             IPatchworkPatch(nft).updateOwnership(tokenId);
         }
@@ -461,8 +463,8 @@ contract PatchworkProtocol is IPatchworkProtocol {
             if (IPatchworkNFT(nft).frozen(tokenId)) {
                 return true;
             }
-            if (IERC165(nft).supportsInterface(type(IPatchworkAssignableNFT).interfaceId)) {
-                (address assignedAddr, uint256 assignedTokenId) = IPatchworkAssignableNFT(nft).getAssignedTo(tokenId);
+            if (IERC165(nft).supportsInterface(type(IPatchworkSingleAssignableNFT).interfaceId)) {
+                (address assignedAddr, uint256 assignedTokenId) = IPatchworkSingleAssignableNFT(nft).getAssignedTo(tokenId);
                 if (assignedAddr != address(0)) {
                     return _isFrozen(assignedAddr, assignedTokenId);
                 }

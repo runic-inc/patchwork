@@ -2,13 +2,16 @@
 pragma solidity ^0.8.13;
 
 import "./PatchworkNFT.sol";
-import "./IPatchworkAssignableNFT.sol";
+import "./IPatchworkSingleAssignableNFT.sol";
+
+// TODO create a patch fragment implementation where ownership is weak for fragments
+// TODO change the patchworkCompatible to make that work
 
 /**
 @title PatchworkFragmentSingle
-@dev base implementation of a Single-relation Fragment is IPatchworkAssignableNFT
+@dev base implementation of a Single-relation Fragment is IPatchworkSingleAssignableNFT
 */
-abstract contract PatchworkFragmentSingle is PatchworkNFT, IPatchworkAssignableNFT {
+abstract contract PatchworkFragmentSingle is PatchworkNFT, IPatchworkSingleAssignableNFT {
  
     /// Represents an assignment of a token from an external NFT contract to a token in this contract.
     struct Assignment {
@@ -18,10 +21,6 @@ abstract contract PatchworkFragmentSingle is PatchworkNFT, IPatchworkAssignableN
 
     /// A mapping from token IDs in this contract to their assignments.
     mapping(uint256 => Assignment) internal _assignments;
-
-    function relationType() public pure virtual override returns (RelationType) {
-        return RelationType.SINGLE;
-    }
 
     /**
     @dev See {IPatchworkNFT-getScopeName}
@@ -35,6 +34,7 @@ abstract contract PatchworkFragmentSingle is PatchworkNFT, IPatchworkAssignableN
     */
     function supportsInterface(bytes4 interfaceID) public view virtual override returns (bool) {
         return interfaceID == type(IPatchworkAssignableNFT).interfaceId ||
+        interfaceID == type(IPatchworkSingleAssignableNFT).interfaceId ||
         super.supportsInterface(interfaceID); 
     }
 
