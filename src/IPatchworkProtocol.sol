@@ -491,13 +491,24 @@ interface IPatchworkProtocol {
 
     /**
     @notice Unassign a NFT fragment from a target NFT
-    @param fragment The IPatchworkAssignableNFT address of the fragment NFT
-    @param fragmentTokenId The IPatchworkAssignableNFT token ID of the fragment NFT
+    @param fragment The IPatchworkSingleAssignableNFT address of the fragment NFT
+    @param fragmentTokenId The IPatchworkSingleAssignableNFT token ID of the fragment NFT
+    @dev reverts if fragment is not an IPatchworkSingleAssignableNFT
     */
     function unassignSingleNFT(address fragment, uint fragmentTokenId) external;
 
     /**
-    @notice Unassigns an NFT relation
+    @notice Unassigns a multi NFT relation
+    @param fragment The IPatchworMultiAssignableNFT address to unassign
+    @param fragmentTokenId The IPatchworkMultiAssignableNFT Token ID to unassign
+    @param target The IPatchworkLiteRef address which holds a reference to the fragment
+    @param targetTokenId The IPatchworkLiteRef Token ID which holds a reference to the fragment
+    @dev reverts if fragment is not an IPatchworkMultiAssignableNFT
+    */
+    function unassignMultiNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) external;
+
+    /**
+    @notice Unassigns an NFT relation (single or multi)
     @param fragment The IPatchworkAssignableNFT address to unassign
     @param fragmentTokenId The IPatchworkAssignableNFT Token ID to unassign
     @param target The IPatchworkLiteRef address which holds a reference to the fragment

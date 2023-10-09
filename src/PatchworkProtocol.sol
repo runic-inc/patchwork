@@ -284,29 +284,35 @@ contract PatchworkProtocol is IPatchworkProtocol {
 
     function unassignNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) public {
         if (IERC165(fragment).supportsInterface(type(IPatchworkMultiAssignableNFT).interfaceId)) {
-            // TODO what do we care about being locked, frozen, etc?
-            IPatchworkMultiAssignableNFT assignable = IPatchworkMultiAssignableNFT(fragment);
-            string memory scopeName = assignable.getScopeName();
-            Scope storage scope = _mustHaveScope(scopeName);
-            // TODO permissions
-            assignable.unassign(fragmentTokenId, target, targetTokenId);
-            // TODO refactor to make common
-            (uint64 ref, ) = IPatchworkLiteRef(target).getLiteReference(fragment, fragmentTokenId);
-            if (ref == 0) {
-                revert FragmentUnregistered(address(fragment));
-            }
-            bytes32 targetRef = keccak256(abi.encodePacked(target, ref));
-            if (!scope.liteRefs[targetRef]) {
-                revert RefNotFoundInScope(scopeName, target, fragment, fragmentTokenId);
-            }
-            scope.liteRefs[targetRef] = false;
-            IPatchworkLiteRef(target).removeReference(targetTokenId, ref);
+            unassignMultiNFT(fragment, fragmentTokenId, target, targetTokenId);
         } else if (IERC165(fragment).supportsInterface(type(IPatchworkSingleAssignableNFT).interfaceId)) {
             // TODO check the target and use common logic with unassignSingleNFT - we want to revert if target doesn't match
             unassignSingleNFT(fragment, fragmentTokenId);
         } else {
             // TODO revert
         }
+    }
+
+    function unassignMultiNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) public {
+        // TODO refactor all of this into an internal function unassignMultiNFT to keep it clean
+        // TODO what do we care about being locked, frozen, etc?
+        IPatchworkMultiAssignableNFT assignable = IPatchworkMultiAssignableNFT(fragment);
+        string memory scopeName = assignable.getScopeName();
+        Scope storage scope = _mustHaveScope(scopeName);
+        // TODO permissions
+        assignable.unassign(fragmentTokenId, target, targetTokenId);
+        // TODO refactor to make common
+        (uint64 ref, ) = IPatchworkLiteRef(target).getLiteReference(fragment, fragmentTokenId);
+        if (ref == 0) {
+            revert FragmentUnregistered(address(fragment));
+        }
+        bytes32 targetRef = keccak256(abi.encodePacked(target, ref));
+        if (!scope.liteRefs[targetRef]) {
+            revert RefNotFoundInScope(scopeName, target, fragment, fragmentTokenId);
+        }
+        scope.liteRefs[targetRef] = false;
+        IPatchworkLiteRef(target).removeReference(targetTokenId, ref);
+        // TODO emit an event
     }
 
     /**
