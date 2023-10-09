@@ -497,6 +497,15 @@ interface IPatchworkProtocol {
     function unassignSingleNFT(address fragment, uint fragmentTokenId) external;
 
     /**
+    @notice Unassigns an NFT relation
+    @param fragment The IPatchworkAssignableNFT address to unassign
+    @param fragmentTokenId The IPatchworkAssignableNFT Token ID to unassign
+    @param target The IPatchworkLiteRef address which holds a reference to the fragment
+    @param targetTokenId The IPatchworkLiteRef Token ID which holds a reference to the fragment
+    */
+    function unassignNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) external;
+
+    /**
     @notice Apply transfer rules and actions of a specific token from one address to another
     @param from The address of the sender
     @param to The address of the receiver

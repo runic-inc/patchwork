@@ -9,6 +9,13 @@ import "./IPatchworkAssignableNFT.sol";
 @notice Interface for contracts supporting Patchwork assignment
 */
 interface IPatchworkMultiAssignableNFT is IPatchworkAssignableNFT {
-    // TODO isAssignedTo
     // TODO getAssignmentCount? getAssignments paginated?
+
+    function isAssignedTo(uint256 ourTokenId, address target, uint256 targetTokenId) external returns (bool);
+
+    /**
+    @notice Unassigns a token
+    @param ourTokenId ID of our token
+    */
+    function unassign(uint256 ourTokenId, address target, uint256 targetTokenId) external;
 }

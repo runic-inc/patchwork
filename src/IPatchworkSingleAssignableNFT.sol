@@ -10,6 +10,12 @@ import "./IPatchworkAssignableNFT.sol";
 */
 interface IPatchworkSingleAssignableNFT is IPatchworkAssignableNFT {
     /**
+    @notice Unassigns a token
+    @param ourTokenId ID of our token
+    */
+    function unassign(uint256 ourTokenId) external;
+
+    /**
     @notice Returns the address and token ID that our token is assigned to
     @param ourTokenId ID of our token
     @return address the address this is assigned to

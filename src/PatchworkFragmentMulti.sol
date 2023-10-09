@@ -28,16 +28,21 @@ abstract contract PatchworkFragmentMulti is PatchworkNFT, IPatchworkMultiAssigna
         /**
     @dev See {IPatchworkAssignableNFT-assign}
     */
-    function assign(uint256 ourTokenId, address to, uint256 tokenId) public virtual mustHaveTokenWriteAuth(tokenId) {
+    function assign(uint256 ourTokenId, address to, uint256 tokenId) public virtual mustHaveTokenWriteAuth(ourTokenId) {
         // TODO add this to ourTokenId
     }
 
     /**
-    @dev See {IPatchworkAssignableNFT-unassign}
+    @notice Unassigns a token
+    @param ourTokenId ID of our token
     */
-    function unassign(uint256 tokenId) public virtual mustHaveTokenWriteAuth(tokenId) {
-        // TODO remove this from ourTokenId
+    function unassign(uint256 ourTokenId, address target, uint256 targetTokenId) public virtual mustHaveTokenWriteAuth(ourTokenId) {
     }
+
+    function isAssignedTo(uint256 ourTokenId, address target, uint256 targetTokenId) public view virtual returns (bool) {
+        return false;
+    }
+    
 
     /**
     @dev See {IPatchworkAssignableNFT-getAssignedTo}

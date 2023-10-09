@@ -23,12 +23,6 @@ interface IPatchworkAssignableNFT {
     function assign(uint256 ourTokenId, address to, uint256 tokenId) external;
 
     /**
-    @notice Unassigns a token
-    @param ourTokenId ID of our token
-    */
-    function unassign(uint256 ourTokenId) external;
-
-    /**
     @notice A deliberately incompatible function to block implementing both assignable and patch
     @return bytes2 Always returns 0x0000
     */
