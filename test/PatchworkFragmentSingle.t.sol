@@ -8,7 +8,7 @@ import "../src/PatchworkProtocol.sol";
 import "../src/sampleNFTs/TestFragmentLiteRefNFT.sol";
 import "../src/sampleNFTs/TestBaseNFT.sol";
 
-contract PatchworkFragmentTest is Test {
+contract PatchworkFragmentSingleTest is Test {
     PatchworkProtocol _prot;
     TestFragmentLiteRefNFT _testFragmentLiteRefNFT;
 

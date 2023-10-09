@@ -7,6 +7,11 @@ pragma solidity ^0.8.13;
 @notice Interface for contracts supporting Patchwork assignment
 */
 interface IPatchworkAssignableNFT {
+
+    enum RelationType { SINGLE, MULTI }
+
+    function relationType() external returns (RelationType);
+
     /**
     @notice Get the scope this NFT claims to belong to
     @return string the name of the scope

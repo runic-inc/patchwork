@@ -5,10 +5,10 @@ import "./PatchworkNFT.sol";
 import "./IPatchworkAssignableNFT.sol";
 
 /**
-@title PatchworkFragment
-@dev base implementation of a Fragment is IPatchworkAssignableNFT
+@title PatchworkFragmentSingle
+@dev base implementation of a Single-relation Fragment is IPatchworkAssignableNFT
 */
-abstract contract PatchworkFragment is PatchworkNFT, IPatchworkAssignableNFT {
+abstract contract PatchworkFragmentSingle is PatchworkNFT, IPatchworkAssignableNFT {
  
     /// Represents an assignment of a token from an external NFT contract to a token in this contract.
     struct Assignment {
@@ -18,6 +18,10 @@ abstract contract PatchworkFragment is PatchworkNFT, IPatchworkAssignableNFT {
 
     /// A mapping from token IDs in this contract to their assignments.
     mapping(uint256 => Assignment) internal _assignments;
+
+    function relationType() public pure virtual override returns (RelationType) {
+        return RelationType.SINGLE;
+    }
 
     /**
     @dev See {IPatchworkNFT-getScopeName}
