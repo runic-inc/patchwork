@@ -45,16 +45,16 @@ abstract contract PatchworkFragmentMulti is PatchworkNFT, IPatchworkMultiAssigna
     @dev See {IPatchworkAssignableNFT-assign}
     */
     function assign(uint256 ourTokenId, address to, uint256 tokenId) public virtual mustHaveTokenWriteAuth(ourTokenId) {
-        // TODO add this to ourTokenId
         AssignmentStorage storage store = _assignmentStorage[ourTokenId];
-        bytes32 targetHash = keccak256(abi.encodePacked(to, tokenId));
-        if (store.index[targetHash] == 0) {
-            // Either the first element or does not exist
-            // TODO dupe
+        (bool present,, bytes32 targetHash) = _assignmentIndexOf(store, to, tokenId);
+        if (present) {
+            revert IPatchworkProtocol.FragmentAlreadyAssigned(address(this), ourTokenId);
         }
-        uint256 idx = store.assignments.length;
-        store.assignments[idx] = Assignment(to, tokenId);
+        Assignment[] storage assignments = store.assignments;
+        uint256 idx = assignments.length;
+        assignments.push(Assignment(to, tokenId));
         store.index[targetHash] = idx;
+        // TODO emit event?
     }
 
     /**
@@ -62,23 +62,46 @@ abstract contract PatchworkFragmentMulti is PatchworkNFT, IPatchworkMultiAssigna
     @param ourTokenId ID of our token
     */
     function unassign(uint256 ourTokenId, address target, uint256 targetTokenId) public virtual mustHaveTokenWriteAuth(ourTokenId) {
+        AssignmentStorage storage store = _assignmentStorage[ourTokenId];
+        (bool present, uint256 index, bytes32 targetHash) = _assignmentIndexOf(store, target, targetTokenId);
+        if (present) {
+            Assignment[] storage assignments = store.assignments;
+            if (assignments.length > 1) {
+                // move the last element of the array into this index
+                assignments[index] = assignments[assignments.length-1];
+            }
+            // shorten the array by 1
+            assignments.pop();
+            // delete the index
+            delete store.index[targetHash];
+        } else {
+            revert IPatchworkProtocol.FragmentNotAssigned(address(this), ourTokenId);
+        }
+        // TODO emit event?
     }
 
     function isAssignedTo(uint256 ourTokenId, address target, uint256 targetTokenId) public view virtual returns (bool) {
-        return false;
+        (bool present,, bytes32 targetHash) = _assignmentIndexOf(_assignmentStorage[ourTokenId], target, targetTokenId);
+        return present;
     }
     
-
-    /**
-    @dev See {IPatchworkAssignableNFT-getAssignedTo}
-    */
-    function getAssignedTo(uint256 ourTokenId) public virtual view returns (address, uint256) {
-        // TODO this doesn't make sense for multi - need list to return but that could be super expensive
-        // TODO we can have isAssignedTo that checks for ownership, but otherwise an indexer needs to handle this
-
-        // Assignment storage a = _assignments[ourTokenId];
-        //return (a.tokenAddr, a.tokenId); 
-        return (address(0), 0);
+    function _assignmentIndexOf(AssignmentStorage storage store, address target, uint256 targetTokenId) internal view returns (bool present, uint256 index, bytes32 targetHash) {
+        targetHash = keccak256(abi.encodePacked(target, targetTokenId));
+        uint256 storageIndex = store.index[targetHash];
+        Assignment[] storage assignments = store.assignments;
+        if (storageIndex == 0) {
+            // Either the first element or does not exist
+            if (assignments.length > 0) {
+                // there is an assignment of some kind - need to check if it's this one
+                if (assignments[0].tokenAddr == target && assignments[0].tokenId == targetTokenId) {
+                    return (true, 0, targetHash);
+                }
+            }
+        } else {
+            // There is definitely an index to this.
+            return (true, storageIndex, targetHash);
+        }
+        return (false, 0, targetHash);
     }
 
     /**
