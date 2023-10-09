@@ -10,6 +10,22 @@ import "./IPatchworkMultiAssignableNFT.sol";
 */
 abstract contract PatchworkFragmentMulti is PatchworkNFT, IPatchworkMultiAssignableNFT {
 
+    struct AssignmentStorage {
+        mapping(bytes32 => uint256) index;
+        Assignment[] assignments;
+    }
+
+    /// Represents an assignment of a token from an external NFT contract to a token in this contract.
+    struct Assignment {
+        address tokenAddr;  /// The address of the external NFT contract.
+        uint256 tokenId;    /// The ID of the token in the external NFT contract.
+    }
+
+    // Only presence-checking is available here
+
+    /// A mapping from token IDs in this contract to their assignments.
+    mapping(uint256 => AssignmentStorage) internal _assignmentStorage;
+
     /**
     @dev See {IPatchworkNFT-getScopeName}
     */
@@ -30,6 +46,15 @@ abstract contract PatchworkFragmentMulti is PatchworkNFT, IPatchworkMultiAssigna
     */
     function assign(uint256 ourTokenId, address to, uint256 tokenId) public virtual mustHaveTokenWriteAuth(ourTokenId) {
         // TODO add this to ourTokenId
+        AssignmentStorage storage store = _assignmentStorage[ourTokenId];
+        bytes32 targetHash = keccak256(abi.encodePacked(to, tokenId));
+        if (store.index[targetHash] == 0) {
+            // Either the first element or does not exist
+            // TODO dupe
+        }
+        uint256 idx = store.assignments.length;
+        store.assignments[idx] = Assignment(to, tokenId);
+        store.index[targetHash] = idx;
     }
 
     /**
