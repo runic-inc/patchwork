@@ -264,7 +264,8 @@ contract PatchworkProtocol is IPatchworkProtocol {
         address _fragment = fragment;
         uint256 _fragmentTokenId = fragmentTokenId;
         (uint64 ref, bool redacted) = IPatchworkLiteRef(_target).getLiteReference(_fragment, _fragmentTokenId);
-        targetRef = keccak256(abi.encodePacked(_target, ref));
+        // targetRef is a compound key (targetAddr+targetTokenID+fragmentAddr+fragmentTokenID) - blocks duplicate assignments
+        targetRef = keccak256(abi.encodePacked(_target, _targetTokenId, ref));
         if (ref == 0) {
             revert FragmentUnregistered(address(_fragment));
         }
@@ -306,7 +307,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
         if (ref == 0) {
             revert FragmentUnregistered(address(fragment));
         }
-        bytes32 targetRef = keccak256(abi.encodePacked(target, ref));
+        bytes32 targetRef = keccak256(abi.encodePacked(target, targetTokenId, ref));
         if (!scope.liteRefs[targetRef]) {
             revert RefNotFoundInScope(scopeName, target, fragment, fragmentTokenId);
         }
@@ -342,7 +343,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
         if (ref == 0) {
             revert FragmentUnregistered(address(fragment));
         }
-        bytes32 targetRef = keccak256(abi.encodePacked(target, ref));
+        bytes32 targetRef = keccak256(abi.encodePacked(target, targetTokenId, ref));
         if (!scope.liteRefs[targetRef]) {
             revert RefNotFoundInScope(scopeName, target, fragment, fragmentTokenId);
         }

@@ -38,6 +38,7 @@ abstract contract PatchworkFragmentMulti is PatchworkNFT, IPatchworkMultiAssigna
     */
     function supportsInterface(bytes4 interfaceID) public view virtual override returns (bool) {
         return interfaceID == type(IPatchworkAssignableNFT).interfaceId ||
+        interfaceID == type(IPatchworkMultiAssignableNFT).interfaceId ||
         super.supportsInterface(interfaceID); 
     }
 

@@ -50,6 +50,7 @@ contract PatchworkFragmentSingleTest is Test {
         assertTrue(_testFragmentLiteRefNFT.supportsInterface(type(IERC5192).interfaceId));
         assertTrue(_testFragmentLiteRefNFT.supportsInterface(type(IPatchworkNFT).interfaceId));
         assertTrue(_testFragmentLiteRefNFT.supportsInterface(type(IPatchworkAssignableNFT).interfaceId));
+        assertTrue(_testFragmentLiteRefNFT.supportsInterface(type(IPatchworkSingleAssignableNFT).interfaceId));
     }
 
     function testOnAssignedTransferError() public {
