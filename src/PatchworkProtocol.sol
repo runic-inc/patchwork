@@ -311,7 +311,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
         if (!scope.liteRefs[targetRef]) {
             revert RefNotFoundInScope(scopeName, target, fragment, fragmentTokenId);
         }
-        scope.liteRefs[targetRef] = false;
+        delete scope.liteRefs[targetRef];
         IPatchworkLiteRef(target).removeReference(targetTokenId, ref);
         // TODO emit an event
     }
@@ -347,7 +347,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
         if (!scope.liteRefs[targetRef]) {
             revert RefNotFoundInScope(scopeName, target, fragment, fragmentTokenId);
         }
-        scope.liteRefs[targetRef] = false;
+        delete scope.liteRefs[targetRef];
         IPatchworkLiteRef(target).removeReference(targetTokenId, ref);
         emit Unassign(IERC721(target).ownerOf(targetTokenId), fragment, fragmentTokenId, target, targetTokenId);
     }
