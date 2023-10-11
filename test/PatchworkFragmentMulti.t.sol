@@ -136,7 +136,5 @@ contract PatchworkFragmentMultiTest is Test {
         _prot.assignNFT(address(_testMultiNFT), m2, address(_testFragmentLiteRefNFT), lr2);
     }
     
-
-    // TODO test permissions, scope owner vs user
-    // TODO check coverage
+    // TODO finish coverage and protocol refactors to complete
 }
