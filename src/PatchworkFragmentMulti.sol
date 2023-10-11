@@ -15,12 +15,6 @@ abstract contract PatchworkFragmentMulti is PatchworkNFT, IPatchworkMultiAssigna
         Assignment[] assignments;
     }
 
-    /// Represents an assignment of a token from an external NFT contract to a token in this contract.
-    struct Assignment {
-        address tokenAddr;  /// The address of the external NFT contract.
-        uint256 tokenId;    /// The ID of the token in the external NFT contract.
-    }
-
     // Only presence-checking is available here
 
     /// A mapping from token IDs in this contract to their assignments.
@@ -103,6 +97,36 @@ abstract contract PatchworkFragmentMulti is PatchworkNFT, IPatchworkMultiAssigna
             return (true, storageIndex, targetHash);
         }
         return (false, 0, targetHash);
+    }
+
+
+    /**
+    @dev See {IPatchworkNFT-getAssignmentCount}
+    */
+    function getAssignmentCount(uint256 tokenId) public view returns (uint256) {
+        return _assignmentStorage[tokenId].assignments.length;
+    }
+
+    /**
+    @dev See {IPatchworkNFT-getAssignments}
+    */
+    function getAssignments(uint256 tokenId, uint256 offset, uint256 count) external view returns (Assignment[] memory) {
+        AssignmentStorage storage store = _assignmentStorage[tokenId];
+        Assignment[] storage assignments = store.assignments;
+        if (offset >= assignments.length) {
+            return new Assignment[](0);
+        }
+        // Determine the actual count of assignments to return
+        uint256 retCount = count;
+        if (offset + count > assignments.length) {
+            retCount = assignments.length - offset;
+        }
+        // Fetch assignments
+        Assignment[] memory page = new Assignment[](retCount);
+        for (uint256 i = 0; i < retCount; i++) {
+            page[i] = assignments[offset + i];
+        }
+        return page;
     }
 
     /**

@@ -136,5 +136,32 @@ contract PatchworkFragmentMultiTest is Test {
         _prot.assignNFT(address(_testMultiNFT), m2, address(_testFragmentLiteRefNFT), lr2);
     }
     
+    function testGetAssignments() public {
+        vm.startPrank(_scopeOwner);
+        uint256 m1 = _testMultiNFT.mint(_user2Address);
+        _testFragmentLiteRefNFT.registerReferenceAddress(address(_testMultiNFT));
+        uint256[] memory liteRefIds = new uint256[](20);
+        for (uint256 i = 0; i < liteRefIds.length; i++) {
+            liteRefIds[i] = _testFragmentLiteRefNFT.mint(_userAddress);
+            _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), liteRefIds[i]);
+        }
+        assertEq(20, _testMultiNFT.getAssignmentCount(m1));
+        IPatchworkMultiAssignableNFT.Assignment[] memory page1 = _testMultiNFT.getAssignments(m1, 0, 8);
+        IPatchworkMultiAssignableNFT.Assignment[] memory page2 = _testMultiNFT.getAssignments(m1, 8, 8);
+        IPatchworkMultiAssignableNFT.Assignment[] memory page3 = _testMultiNFT.getAssignments(m1, 16, 8);
+        IPatchworkMultiAssignableNFT.Assignment[] memory page4 = _testMultiNFT.getAssignments(m1, 24, 8);
+        assertEq(8, page1.length);
+        assertEq(8, page2.length);
+        assertEq(4, page3.length);
+        assertEq(0, page4.length);
+        assertEq(page1[0].tokenAddr, address(_testFragmentLiteRefNFT));
+        assertEq(page1[0].tokenId, liteRefIds[0]);
+        assertEq(page2[0].tokenAddr, address(_testFragmentLiteRefNFT));
+        assertEq(page2[0].tokenId, liteRefIds[8]);
+        assertEq(page3[0].tokenAddr, address(_testFragmentLiteRefNFT));
+        assertEq(page3[0].tokenId, liteRefIds[16]);
+    }
+
     // TODO finish coverage and protocol refactors to complete
+
 }
