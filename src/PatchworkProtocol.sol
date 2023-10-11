@@ -308,7 +308,17 @@ contract PatchworkProtocol is IPatchworkProtocol {
         IPatchworkMultiAssignableNFT assignable = IPatchworkMultiAssignableNFT(fragment);
         string memory scopeName = assignable.getScopeName();
         Scope storage scope = _mustHaveScope(scopeName);
-        // TODO permissions
+        if (scope.owner == msg.sender || scope.operators[msg.sender]) {
+            // continue
+        } else if (scope.allowUserAssign) {
+            // If allowUserAssign is set for this scope, the sender must own the target
+            if (IERC721(target).ownerOf(targetTokenId) != msg.sender) {
+                revert NotAuthorized(msg.sender);
+            }
+            // continue
+        } else {
+            revert NotAuthorized(msg.sender);
+        }
         assignable.unassign(fragmentTokenId, target, targetTokenId);
         // TODO refactor to make common
         (uint64 ref, ) = IPatchworkLiteRef(target).getLiteReference(fragment, fragmentTokenId);
@@ -334,7 +344,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
         if (scope.owner == msg.sender || scope.operators[msg.sender]) {
             // continue
         } else if (scope.allowUserAssign) {
-            // If allowUserAssign is set for this scope, the sender must own both fragment
+            // If allowUserAssign is set for this scope, the sender must own the target but since this is single, they are the same owner
             if (IERC721(fragment).ownerOf(fragmentTokenId) != msg.sender) {
                 revert NotAuthorized(msg.sender);
             }
