@@ -58,7 +58,7 @@ contract PatchworkFragmentMultiTest is Test {
 
     function testMultiAssign() public {
         vm.startPrank(_scopeOwner);
-        uint256 m1 = _testMultiNFT.mint(_userAddress);
+        uint256 m1 = _testMultiNFT.mint(_user2Address);
         uint256 lr1 = _testFragmentLiteRefNFT.mint(_userAddress);
         uint256 lr2 = _testFragmentLiteRefNFT.mint(_userAddress);
         uint256 lr3 = _testFragmentLiteRefNFT.mint(_userAddress);
@@ -66,9 +66,15 @@ contract PatchworkFragmentMultiTest is Test {
         _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr1);
         _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
         _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr3);
+        assertEq(_testMultiNFT.ownerOf(m1), _user2Address);
         // don't allow duplicate
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentAlreadyAssigned.selector, address(_testMultiNFT), m1));
         _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
 
     }
+
+    // TODO test permissions, scope owner vs user
+    // TODO test unassign, reassign
+    // TODO test ownership
+    // TODO check coverage
 }

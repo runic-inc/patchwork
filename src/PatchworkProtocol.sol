@@ -247,12 +247,14 @@ contract PatchworkProtocol is IPatchworkProtocol {
         Scope storage scope = _mustHaveScope(scopeName);
         _mustBeWhitelisted(scopeName, scope, fragment);
         if (scope.owner == msg.sender || scope.operators[msg.sender]) {
-            // Fragment and target must be same owner
-            if (IERC721(fragment).ownerOf(fragmentTokenId) != targetOwner) {
-                revert NotAuthorized(msg.sender);
+            // Fragment and target must be same owner for single - even for weakref
+            if (IERC165(fragment).supportsInterface(type(IPatchworkSingleAssignableNFT).interfaceId)) {
+                if (IERC721(fragment).ownerOf(fragmentTokenId) != targetOwner) {
+                    revert NotAuthorized(msg.sender);
+                }
             }
         } else if (scope.allowUserAssign) {
-            // If allowUserAssign is set for this scope, the sender must own both fragment and target
+            // If allowUserAssign is set for this scope, the sender must own both fragment and target for both single and multi
             if (IERC721(fragment).ownerOf(fragmentTokenId) != msg.sender) {
                 revert NotAuthorized(msg.sender);
             }
