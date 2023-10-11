@@ -67,9 +67,8 @@ contract PatchworkFragmentMultiTest is Test {
         _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
         _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr3);
         // don't allow duplicate
-        // TODO I don't like this "in scope" business because with this model it should be regardless of scope.
-        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentAlreadyAssignedInScope.selector, _scopeName, address(_testMultiNFT), m1));
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentAlreadyAssigned.selector, address(_testMultiNFT), m1));
         _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
-        
+
     }
 }

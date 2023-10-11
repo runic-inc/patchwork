@@ -93,21 +93,12 @@ interface IPatchworkProtocol {
     error FragmentAlreadyAssigned(address addr, uint256 tokenId);
 
     /**
-    @notice The fragment with the provided ID at the given address is already assigned in the scope
-    @param scopeName Name of the scope
-    @param addr Address of the fragment
-    @param tokenId ID of the fragment
-    */
-    error FragmentAlreadyAssignedInScope(string scopeName, address addr, uint256 tokenId);
-
-    /**
-    @notice The reference was not found in the scope for the given fragment and target
-    @param scopeName Name of the scope
+    @notice The reference was not found for the given fragment and target
     @param target Address of the target token
     @param fragment Address of the fragment
     @param tokenId ID of the fragment
     */
-    error RefNotFoundInScope(string scopeName, address target, address fragment, uint256 tokenId);
+    error RefNotFound(address target, address fragment, uint256 tokenId);
 
     /**
     @notice The fragment with the provided ID at the given address is not assigned
@@ -245,12 +236,6 @@ interface IPatchworkProtocol {
         @dev Address of the operator mapped to a boolean indicating if they are an operator
         */
         mapping(address => bool) operators;
-
-        /**
-        @notice Mapped list of lightweight references within this scope
-        @dev A hash of liteRefAddr + reference provides uniqueness
-        */
-        mapping(bytes32 => bool) liteRefs;
 
         /**
         @notice Mapped whitelist of addresses that belong to this scope

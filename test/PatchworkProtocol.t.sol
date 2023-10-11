@@ -230,7 +230,7 @@ contract PatchworkProtocolTest is Test {
         assertEq(testFragmentLiteRefNFT.ownerOf(fragmentTokenId), userAddress);
 
         testFragmentLiteRefNFT.setTestLockOverride(true);
-        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentAlreadyAssignedInScope.selector, scopeName, address(testFragmentLiteRefNFT), fragmentTokenId));
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentAlreadyAssigned.selector, address(testFragmentLiteRefNFT), fragmentTokenId));
         prot.assignNFT(address(testFragmentLiteRefNFT), fragmentTokenId, address(testPatchLiteRefNFT), patchTokenId);
         testFragmentLiteRefNFT.setTestLockOverride(false);
         vm.stopPrank();
@@ -389,7 +389,7 @@ contract PatchworkProtocolTest is Test {
         assertEq(testFragmentLiteRefNFT.ownerOf(fragment2),  address(7));
 
         testFragmentLiteRefNFT.setGetAssignedToOverride(true, address(testPatchLiteRefNFT));
-        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.RefNotFoundInScope.selector, scopeName, address(testPatchLiteRefNFT), address(testFragmentLiteRefNFT), fragment2));
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.RefNotFound.selector, address(testPatchLiteRefNFT), address(testFragmentLiteRefNFT), fragment2));
         prot.unassignSingleNFT(address(testFragmentLiteRefNFT), fragment2);
         testFragmentLiteRefNFT.setGetAssignedToOverride(false, address(testPatchLiteRefNFT));
         vm.stopPrank();
@@ -499,7 +499,7 @@ contract PatchworkProtocolTest is Test {
             testFragmentLiteRefNFT.setTestLockOverride(true); // setup for next test part
         }
 
-        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentAlreadyAssignedInScope.selector, scopeName, fragmentAddresses[0], fragments[0]));
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentAlreadyAssigned.selector, fragmentAddresses[0], fragments[0]));
         vm.prank(scopeOwner);
         prot.batchAssignNFT(fragmentAddresses, fragments, address(testPatchLiteRefNFT), patchTokenId);
     }

@@ -21,6 +21,12 @@ contract PatchworkProtocol is IPatchworkProtocol {
     mapping(string => Scope) private _scopes;
 
     /**
+    @notice unique references
+    @dev A hash of target + targetTokenId + literef provides uniqueness
+    */
+    mapping(bytes32 => bool) _liteRefs;
+
+    /**
     @dev See {IPatchworkProtocol-claimScope}
     */
     function claimScope(string calldata scopeName) public {
@@ -272,13 +278,13 @@ contract PatchworkProtocol is IPatchworkProtocol {
         if (redacted) {
             revert FragmentRedacted(address(_fragment));
         }
-        if (scope.liteRefs[targetRef]) {
-            revert FragmentAlreadyAssignedInScope(scopeName, address(_fragment), _fragmentTokenId);
+        if (_liteRefs[targetRef]) {
+            revert FragmentAlreadyAssigned(address(_fragment), _fragmentTokenId);
         }
         // call assign on the fragment
         assignableNFT.assign(_fragmentTokenId, _target, _targetTokenId);
         // add to our storage of scope->target assignments
-        scope.liteRefs[targetRef] = true;
+        _liteRefs[targetRef] = true;
         emit Assign(targetOwner, _fragment, _fragmentTokenId, _target, _targetTokenId);
         return ref;
     }
@@ -308,10 +314,10 @@ contract PatchworkProtocol is IPatchworkProtocol {
             revert FragmentUnregistered(address(fragment));
         }
         bytes32 targetRef = keccak256(abi.encodePacked(target, targetTokenId, ref));
-        if (!scope.liteRefs[targetRef]) {
-            revert RefNotFoundInScope(scopeName, target, fragment, fragmentTokenId);
+        if (!_liteRefs[targetRef]) {
+            revert RefNotFound(target, fragment, fragmentTokenId);
         }
-        delete scope.liteRefs[targetRef];
+        delete _liteRefs[targetRef];
         IPatchworkLiteRef(target).removeReference(targetTokenId, ref);
         // TODO emit an event
     }
@@ -344,10 +350,10 @@ contract PatchworkProtocol is IPatchworkProtocol {
             revert FragmentUnregistered(address(fragment));
         }
         bytes32 targetRef = keccak256(abi.encodePacked(target, targetTokenId, ref));
-        if (!scope.liteRefs[targetRef]) {
-            revert RefNotFoundInScope(scopeName, target, fragment, fragmentTokenId);
+        if (!_liteRefs[targetRef]) {
+            revert RefNotFound(target, fragment, fragmentTokenId);
         }
-        delete scope.liteRefs[targetRef];
+        delete _liteRefs[targetRef];
         IPatchworkLiteRef(target).removeReference(targetTokenId, ref);
         emit Unassign(IERC721(target).ownerOf(targetTokenId), fragment, fragmentTokenId, target, targetTokenId);
     }
