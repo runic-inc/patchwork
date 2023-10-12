@@ -39,7 +39,6 @@ contract PatchworkFragmentMultiTest is Test {
         _testMultiNFT = new TestMultiFragmentNFT(address(_prot));
 
         vm.stopPrank();
-        vm.prank(_userAddress);
     }
 
     function testScopeName() public {
@@ -162,6 +161,25 @@ contract PatchworkFragmentMultiTest is Test {
         assertEq(page3[0].tokenId, liteRefIds[16]);
     }
 
+    function testCrossScopeMulti() public {
+        string memory publicScope = "publicmulti";
+        address publicScopeOwner = address(129837123);
+        vm.startPrank(publicScopeOwner);
+        TestMultiFragmentNFT multi = new TestMultiFragmentNFT(address(_prot));
+        multi.setScopeName(publicScope);
+        _prot.claimScope(publicScope);
+        _prot.setScopeRules(publicScope, false, false, true);
+        _prot.addWhitelist(publicScope, address(multi));
+        uint256 m1 = multi.mint(publicScopeOwner);
+        vm.stopPrank();
+        // mow we have a multi fragment in "publicmulti" scope and another scope wants to use it - both require whitelisting
+        vm.startPrank(_scopeOwner);
+        _prot.setScopeRules(_scopeName, false, false, true);
+        _prot.addWhitelist(_scopeName, address(_testFragmentLiteRefNFT));
+        _testFragmentLiteRefNFT.registerReferenceAddress(address(multi));
+        uint256 lr1 = _testFragmentLiteRefNFT.mint(_userAddress);
+        _prot.assignNFT(address(multi), m1, address(_testFragmentLiteRefNFT), lr1);
+    }
     // TODO finish coverage and protocol refactors to complete
 
 }

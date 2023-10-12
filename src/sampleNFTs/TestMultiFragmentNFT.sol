@@ -21,6 +21,11 @@ contract TestMultiFragmentNFT is PatchworkFragmentMulti {
         _metadataStorage[tokenId] = new uint256[](1);
     }
 
+    function setScopeName(string memory scopeName) public {
+        // For testing only
+        _scopeName = scopeName;
+    }
+    
     function schemaURI() pure external returns (string memory) {
         return "https://mything/my-fragment-metadata.json";
     }
