@@ -279,7 +279,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
             } else {
                 revert NotAuthorized(msg.sender);
             }
-            if (!IPatchworkMultiAssignableNFT(fragment).allowAssignment(fragmentTokenId, target, targetTokenId, targetScopeName)) {
+            if (!IPatchworkMultiAssignableNFT(fragment).allowAssignment(fragmentTokenId, target, targetTokenId, msg.sender, targetScopeName)) {
                 revert NotAuthorized(msg.sender);
             }
         } else {

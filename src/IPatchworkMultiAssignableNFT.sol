@@ -48,7 +48,8 @@ interface IPatchworkMultiAssignableNFT is IPatchworkAssignableNFT {
     @param ourTokenId the tokenID to assign
     @param to the address to assign to
     @param toTokenId the tokenID to assign to
+    @param by the account invoking the assignment to Patchwork Protocol
     @param scopeName the scope name of the contract to assign to
     */
-    function allowAssignment(uint256 ourTokenId, address to, uint256 toTokenId, string memory scopeName) external returns (bool);
+    function allowAssignment(uint256 ourTokenId, address to, uint256 toTokenId, address by, string memory scopeName) external returns (bool);
 }
