@@ -122,12 +122,11 @@ contract PatchworkFragmentMultiTest is Test {
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _user2Address));
         vm.prank(_user2Address);
         _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr1);
-        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _userAddress));
+        // target owner should be able to assign to their target as well as the scope owner
         vm.prank(_userAddress);
         _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr1);
-        // now it should work
         vm.prank(_scopeOwner);
-        _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr1);
+        _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
         vm.prank(_scopeOwner);
         uint256 m2 = _testMultiNFT.mint(_userAddress);
         // This should also work because both are owned by the same user

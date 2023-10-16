@@ -42,4 +42,13 @@ interface IPatchworkMultiAssignableNFT is IPatchworkAssignableNFT {
     @param count the maximum numer of entries to return
     */
     function getAssignments(uint256 tokenId, uint256 offset, uint256 count) external returns (Assignment[] memory);
+
+    /**
+    @notice Checks permissions for assignment
+    @param ourTokenId the tokenID to assign
+    @param to the address to assign to
+    @param toTokenId the tokenID to assign to
+    @param scopeName the scope name of the contract to assign to
+    */
+    function allowAssignment(uint256 ourTokenId, address to, uint256 toTokenId, string memory scopeName) external returns (bool);
 }
