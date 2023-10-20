@@ -151,7 +151,7 @@ abstract contract PatchworkFragmentMulti is PatchworkNFT, IPatchworkMultiAssigna
     /**
     @dev See {IPatchworMultiAssignable-allowAssignment}
     */
-    function allowAssignment(uint256 /*ourTokenId*/, address /*to*/, uint256 /*toTokenId*/, address by, string memory /*scopeName*/) pure virtual public returns (bool) {
+    function allowAssignment(uint256 /*ourTokenId*/, address /*to*/, uint256 /*toTokenId*/, address /*by*/, string memory /*scopeName*/) pure virtual public returns (bool) {
         return true;
     }
 
