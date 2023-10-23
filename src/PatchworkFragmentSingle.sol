@@ -62,6 +62,15 @@ abstract contract PatchworkFragmentSingle is PatchworkNFT, IPatchworkSingleAssig
     }
 
     /**
+    @dev See {IPatchworAssignable-allowAssignment}
+    */
+    function allowAssignment(uint256 ourTokenId, address /*target*/, uint256 /*targetTokenId*/, address targetOwner, address /*by*/, string memory /*scopeName*/) public view returns (bool) {
+        // By default only allow single assignments to be to the same owner as the target
+        // Warning - Changing this without changing the other ownership logic in this contract to reflect this will make ownership inconsistent
+        return targetOwner == ownerOf(ourTokenId);
+    }
+
+    /**
     @dev See {IPatchworkAssignableNFT-updateOwnership}
     */
     function updateOwnership(uint256 tokenId) public virtual {

@@ -286,20 +286,24 @@ contract PatchworkProtocolTest is Test {
         uint256 user2FragmentTokenId = testFragmentLiteRefNFT.mint(user2Address);
         assertEq(testFragmentLiteRefNFT.ownerOf(fragmentTokenId), userAddress);
  
+        // Not whitelisted
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotWhitelisted.selector, scopeName, address(testFragmentLiteRefNFT)));
         prot.assignNFT(address(testFragmentLiteRefNFT), fragmentTokenId, address(testPatchLiteRefNFT), patchTokenId);
         vm.stopPrank();
         vm.prank(scopeOwner);
         prot.addWhitelist(scopeName, address(testFragmentLiteRefNFT));
 
+        // user 2 does not own either of these
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, user2Address));
         vm.prank(user2Address);
         prot.assignNFT(address(testFragmentLiteRefNFT), fragmentTokenId, address(testPatchLiteRefNFT), patchTokenId);
 
+        // fragment and target have different owners
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, user2Address));
         vm.prank(user2Address);
         prot.assignNFT(address(testFragmentLiteRefNFT), user2FragmentTokenId, address(testPatchLiteRefNFT), patchTokenId);
 
+        // fragment and target have different owners
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, userAddress));
         vm.startPrank(userAddress);
         prot.assignNFT(address(testFragmentLiteRefNFT), user2FragmentTokenId, address(testPatchLiteRefNFT), patchTokenId);
@@ -310,11 +314,13 @@ contract PatchworkProtocolTest is Test {
         assertEq(tokenId, patchTokenId);
         assertEq(testFragmentLiteRefNFT.ownerOf(fragmentTokenId), userAddress);
         vm.stopPrank();
+        // not owned by user 2
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, user2Address));
         vm.prank(user2Address);
         prot.unassignSingleNFT(address(testFragmentLiteRefNFT), fragmentTokenId);
         vm.startPrank(userAddress);
         prot.unassignSingleNFT(address(testFragmentLiteRefNFT), fragmentTokenId);
+        // not currently assigned
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentNotAssigned.selector, address(testFragmentLiteRefNFT), fragmentTokenId));
         prot.unassignSingleNFT(address(testFragmentLiteRefNFT), fragmentTokenId);
     }
@@ -417,11 +423,13 @@ contract PatchworkProtocolTest is Test {
             fragments[i] = testFragmentLiteRefNFT.mint(userAddress);
         }
 
+        // Fragment must be registered
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentUnregistered.selector, address(testFragmentLiteRefNFT)));
         prot.batchAssignNFT(fragmentAddresses, fragments, address(testPatchLiteRefNFT), patchTokenId);
         uint8 refId = testPatchLiteRefNFT.registerReferenceAddress(address(testFragmentLiteRefNFT));
 
         vm.stopPrank();
+        // User may not assign without userAssign enabled
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, userAddress));
         vm.prank(userAddress);
         prot.batchAssignNFT(fragmentAddresses, fragments, address(testPatchLiteRefNFT), patchTokenId);
@@ -429,17 +437,24 @@ contract PatchworkProtocolTest is Test {
         vm.prank(scopeOwner);
         prot.setScopeRules(scopeName, false, false, true);
         vm.startPrank(scopeOwner);
+        // Whitelist enabled requires whitelisted (both patch and fragment)
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotWhitelisted.selector, scopeName, address(testPatchLiteRefNFT)));
+        prot.batchAssignNFT(fragmentAddresses, fragments, address(testPatchLiteRefNFT), patchTokenId);
+        
+        prot.addWhitelist(scopeName, address(testPatchLiteRefNFT));
+        // Whitelist enabled requires whitelisted (now just fragment)
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotWhitelisted.selector, scopeName, address(testFragmentLiteRefNFT)));
         prot.batchAssignNFT(fragmentAddresses, fragments, address(testPatchLiteRefNFT), patchTokenId);
         
         prot.addWhitelist(scopeName, address(testFragmentLiteRefNFT));
 
+        // Inputs do not match length
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.BadInputLengths.selector));
         prot.batchAssignNFT(new address[](1), fragments, address(testPatchLiteRefNFT), patchTokenId);
-
         vm.stopPrank();
         vm.prank(userAddress);
         testPatchLiteRefNFT.setFrozen(patchTokenId, true);
+        // It's frozen (patch)
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.Frozen.selector, address(testPatchLiteRefNFT), patchTokenId));
         vm.prank(scopeOwner);
         prot.batchAssignNFT(fragmentAddresses, fragments, address(testPatchLiteRefNFT), patchTokenId);
@@ -448,6 +463,7 @@ contract PatchworkProtocolTest is Test {
 
         vm.prank(userAddress);
         testFragmentLiteRefNFT.setFrozen(fragments[0], true);
+        // It's frozen (fragment)
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.Frozen.selector, address(testFragmentLiteRefNFT), fragments[0]));
         vm.prank(scopeOwner);
         prot.batchAssignNFT(fragmentAddresses, fragments, address(testPatchLiteRefNFT), patchTokenId);
@@ -456,6 +472,7 @@ contract PatchworkProtocolTest is Test {
 
         vm.prank(scopeOwner);
         testPatchLiteRefNFT.redactReferenceAddress(refId);
+        // Fragment was redacted
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentRedacted.selector, address(testFragmentLiteRefNFT)));
         vm.prank(scopeOwner);
         prot.batchAssignNFT(fragmentAddresses, fragments, address(testPatchLiteRefNFT), patchTokenId);
@@ -466,12 +483,14 @@ contract PatchworkProtocolTest is Test {
         uint256[] memory selfFrag = new uint256[](1);
         selfAddr[0] = address(testPatchLiteRefNFT);
         selfFrag[0] = patchTokenId;
+        // Self-assignment
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.SelfAssignmentNotAllowed.selector, selfAddr[0], selfFrag[0]));
         vm.prank(scopeOwner);     
         prot.batchAssignNFT(selfAddr, selfFrag, address(testPatchLiteRefNFT), patchTokenId);
 
         vm.prank(userAddress);
         testFragmentLiteRefNFT.setLocked(fragments[0], true);
+        // Fragment is locked
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.Locked.selector, address(testFragmentLiteRefNFT), fragments[0]));
         vm.prank(scopeOwner);
         prot.batchAssignNFT(fragmentAddresses, fragments, address(testPatchLiteRefNFT), patchTokenId);
@@ -483,6 +502,7 @@ contract PatchworkProtocolTest is Test {
         uint256[] memory otherUserFrag = new uint256[](1);
         otherUserAddr[0] = address(testFragmentLiteRefNFT);
         otherUserFrag[0] = testFragmentLiteRefNFT.mint(user2Address);
+        // Target and fragment not same owner
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, scopeOwner));
         vm.prank(scopeOwner);     
         prot.batchAssignNFT(otherUserAddr, otherUserFrag, address(testPatchLiteRefNFT), patchTokenId);

@@ -242,47 +242,29 @@ contract PatchworkProtocol is IPatchworkProtocol {
         if (_isLocked(fragment, fragmentTokenId)) {
             revert Locked(fragment, fragmentTokenId);
         }
-        if (IERC165(fragment).supportsInterface(type(IPatchworkSingleAssignableNFT).interfaceId)) {
-            // Use the fragment's scope for permissions, target already has to have fragment registered to be assignable
-            string memory scopeName = assignableNFT.getScopeName();
-            Scope storage scope = _mustHaveScope(scopeName);
-            _mustBeWhitelisted(scopeName, scope, fragment);
-            if (scope.owner == msg.sender || scope.operators[msg.sender]) {
-                // Fragment and target must be same owner for single - even for weakref
-                if (IERC721(fragment).ownerOf(fragmentTokenId) != targetOwner) {
-                    revert NotAuthorized(msg.sender);
-                }
-            } else if (scope.allowUserAssign) {
-                // If allowUserAssign is set for this scope, the sender must own both fragment and target for both single and multi
-                if (IERC721(fragment).ownerOf(fragmentTokenId) != msg.sender) {
-                    revert NotAuthorized(msg.sender);
-                }
-                if (targetOwner != msg.sender) {
-                    revert NotAuthorized(msg.sender);
-                }
-                // continue
-            } else {
-                revert NotAuthorized(msg.sender);
-            }
-        } else if (IERC165(fragment).supportsInterface(type(IPatchworkMultiAssignableNFT).interfaceId)) {
-            // Use the target's scope for general permission and check the fragment for detailed permissions
-            string memory targetScopeName = IPatchworkNFT(target).getScopeName();
-            Scope storage targetScope = _mustHaveScope(targetScopeName);
-            _mustBeWhitelisted(targetScopeName, targetScope, target);
-            if (targetScope.owner == msg.sender || targetScope.operators[msg.sender]) {
-                // all good
-            } else if (targetScope.allowUserAssign) {
-                // msg.sender must own the target
-                if (targetOwner != msg.sender) {
-                    revert NotAuthorized(msg.sender);
-                }
-            } else {
-                revert NotAuthorized(msg.sender);
-            }
-            if (!IPatchworkMultiAssignableNFT(fragment).allowAssignment(fragmentTokenId, target, targetTokenId, msg.sender, targetScopeName)) {
+        // Use the target's scope for general permission and check the fragment for detailed permissions
+        string memory targetScopeName = IPatchworkNFT(target).getScopeName();
+        Scope storage targetScope = _mustHaveScope(targetScopeName);
+        _mustBeWhitelisted(targetScopeName, targetScope, target);
+        {
+            // Whitelist check, these variables do not need to stay in the function level stack
+            string memory fragmentScopeName = assignableNFT.getScopeName();
+            Scope storage fragmentScope = _mustHaveScope(fragmentScopeName);
+            _mustBeWhitelisted(fragmentScopeName, fragmentScope, fragment);
+        }
+
+        // TODO add same owner trait
+        if (targetScope.owner == msg.sender || targetScope.operators[msg.sender]) {
+            // all good
+        } else if (targetScope.allowUserAssign) {
+            // msg.sender must own the target
+            if (targetOwner != msg.sender) {
                 revert NotAuthorized(msg.sender);
             }
         } else {
+            revert NotAuthorized(msg.sender);
+        }
+        if (!IPatchworkAssignableNFT(fragment).allowAssignment(fragmentTokenId, target, targetTokenId, targetOwner, msg.sender, targetScopeName)) {
             revert NotAuthorized(msg.sender);
         }
         bytes32 targetRef;
