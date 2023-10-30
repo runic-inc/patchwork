@@ -294,7 +294,7 @@ interface IPatchworkProtocol {
     @param scopeName The name of the claimed scope
     @param owner The owner of the scope
     */
-    event ScopeClaim(string indexed scopeName, address indexed owner);
+    event ScopeClaim(string scopeName, address indexed owner);
 
     /**
     @notice Emitted when a scope has elected a new owner to transfer to
@@ -302,7 +302,7 @@ interface IPatchworkProtocol {
     @param from The owner of the scope
     @param to The owner-elect of the scope
     */
-    event ScopeTransferElect(string indexed scopeName, address indexed from, address indexed to);
+    event ScopeTransferElect(string scopeName, address indexed from, address indexed to);
 
     /**
     @notice Emitted when a scope transfer is canceled
@@ -310,7 +310,7 @@ interface IPatchworkProtocol {
     @param from The owner of the scope
     @param to The owner-elect of the scope
     */
-    event ScopeTransferCancel(string indexed scopeName, address indexed from, address indexed to);
+    event ScopeTransferCancel(string scopeName, address indexed from, address indexed to);
 
     /**
     @notice Emitted when a scope is transferred
@@ -318,7 +318,7 @@ interface IPatchworkProtocol {
     @param from The address transferring the scope
     @param to The recipient of the scope
     */
-    event ScopeTransfer(string indexed scopeName, address indexed from, address indexed to);
+    event ScopeTransfer(string scopeName, address indexed from, address indexed to);
 
     /**
     @notice Emitted when a scope has an operator added
@@ -326,7 +326,7 @@ interface IPatchworkProtocol {
     @param actor The address responsible for the action
     @param operator The new operator's address
     */
-    event ScopeAddOperator(string indexed scopeName, address indexed actor, address indexed operator);
+    event ScopeAddOperator(string scopeName, address indexed actor, address indexed operator);
 
     /**
     @notice Emitted when a scope has an operator removed
@@ -334,7 +334,7 @@ interface IPatchworkProtocol {
     @param actor The address responsible for the action
     @param operator The operator's address being removed
     */
-    event ScopeRemoveOperator(string indexed scopeName, address indexed actor, address indexed operator);
+    event ScopeRemoveOperator(string scopeName, address indexed actor, address indexed operator);
 
     /**
     @notice Emitted when a scope's rules are changed
@@ -344,7 +344,7 @@ interface IPatchworkProtocol {
     @param allowUserAssign Indicates whether user assignments are allowed
     @param requireWhitelist Indicates whether a whitelist is required
     */
-    event ScopeRuleChange(string indexed scopeName, address indexed actor, bool allowUserPatch, bool allowUserAssign, bool requireWhitelist);
+    event ScopeRuleChange(string scopeName, address indexed actor, bool allowUserPatch, bool allowUserAssign, bool requireWhitelist);
 
     /**
     @notice Emitted when a scope has an address added to the whitelist
@@ -352,7 +352,7 @@ interface IPatchworkProtocol {
     @param actor The address responsible for the action
     @param addr The address being added to the whitelist
     */
-    event ScopeWhitelistAdd(string indexed scopeName, address indexed actor, address indexed addr);
+    event ScopeWhitelistAdd(string scopeName, address indexed actor, address indexed addr);
 
     /**
     @notice Emitted when a scope has an address removed from the whitelist
@@ -360,7 +360,7 @@ interface IPatchworkProtocol {
     @param actor The address responsible for the action
     @param addr The address being removed from the whitelist
     */
-    event ScopeWhitelistRemove(string indexed scopeName, address indexed actor, address indexed addr);
+    event ScopeWhitelistRemove(string scopeName, address indexed actor, address indexed addr);
 
     /**
     @notice Claim a scope
