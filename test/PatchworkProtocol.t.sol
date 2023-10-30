@@ -278,6 +278,12 @@ contract PatchworkProtocolTest is Test {
         prot.unassignNFT(address(testMultiFragmentNFT), multi1, address(testFragmentLiteRefNFT), fragmentTokenId2);
     }
 
+    function testUnsupportedNFTUnassign() public {
+        uint256 t1 = testBaseNFT.mint(userAddress);
+         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
+        prot.unassignNFT(address(testBaseNFT), t1, address(testBaseNFT), t1);
+    }
+
     function testScopeTransferCannotBeFrontrun() public {
         address maliciousActor = address(120938);
         // A malicious actor attempts to preconfigure and transfer a scope to 0 so an unsuspecting actor claims it but it already has operators preconfigured
