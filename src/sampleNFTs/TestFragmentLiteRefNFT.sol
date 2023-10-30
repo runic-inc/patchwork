@@ -236,4 +236,9 @@ contract TestFragmentLiteRefNFT is PatchworkFragmentSingle, PatchworkLiteRef {
         }
         return super.getAssignedTo(ourTokenId);
     }
+
+    function setScopeName(string memory scopeName) public {
+        // For testing only
+        _scopeName = scopeName;
+    }
 }

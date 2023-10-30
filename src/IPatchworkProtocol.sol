@@ -108,6 +108,15 @@ interface IPatchworkProtocol {
     error FragmentNotAssigned(address addr, uint256 tokenId);
 
     /**
+    @notice The fragment with the provided ID at the given address is not assigned to the target
+    @param addr Address of the fragment
+    @param tokenId ID of the fragment
+    @param targetAddress Address of the target
+    @param targetTokenId ID of the target
+    */
+    error FragmentNotAssignedToTarget(address addr, uint256 tokenId, address targetAddress, uint256 targetTokenId);
+
+    /**
     @notice The fragment at the given address is already registered
     @param addr Address of the registered fragment
     */
@@ -195,6 +204,11 @@ interface IPatchworkProtocol {
     @notice The operation is not supported
     */
     error UnsupportedOperation();
+
+    /**
+    @notice The contract is not supported
+    */
+    error UnsupportedContract();
 
     /**
     @notice Represents a defined scope within the system
