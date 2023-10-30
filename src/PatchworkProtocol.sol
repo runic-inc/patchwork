@@ -298,6 +298,10 @@ contract PatchworkProtocol is IPatchworkProtocol {
         if (IERC165(fragment).supportsInterface(type(IPatchworkMultiAssignableNFT).interfaceId)) {
             unassignMultiNFT(fragment, fragmentTokenId, target, targetTokenId);
         } else if (IERC165(fragment).supportsInterface(type(IPatchworkSingleAssignableNFT).interfaceId)) {
+            (address _target, uint256 _targetTokenId) = IPatchworkSingleAssignableNFT(fragment).getAssignedTo(fragmentTokenId);
+            if (target != _target || _targetTokenId != targetTokenId) {
+                revert FragmentNotAssignedToTarget(fragment, fragmentTokenId, target, targetTokenId);
+            }
             unassignSingleNFT(fragment, fragmentTokenId);
         } else {
             revert UnsupportedContract();

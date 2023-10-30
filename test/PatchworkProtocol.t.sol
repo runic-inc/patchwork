@@ -9,6 +9,7 @@ import "../src/sampleNFTs/TestPatchLiteRefNFT.sol";
 import "../src/sampleNFTs/TestFragmentLiteRefNFT.sol";
 import "../src/sampleNFTs/TestBaseNFT.sol";
 import "../src/sampleNFTs/TestPatchworkNFT.sol";
+import "../src/sampleNFTs/TestMultiFragmentNFT.sol";
 
 contract PatchworkProtocolTest is Test {
     event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
@@ -18,6 +19,7 @@ contract PatchworkProtocolTest is Test {
     TestPatchworkNFT testPatchworkNFT;
     TestPatchLiteRefNFT testPatchLiteRefNFT;
     TestFragmentLiteRefNFT testFragmentLiteRefNFT;
+    TestMultiFragmentNFT testMultiFragmentNFT;
 
     string scopeName;
     address defaultUser;
@@ -46,6 +48,8 @@ contract PatchworkProtocolTest is Test {
         testFragmentLiteRefNFT = new TestFragmentLiteRefNFT(address(prot));
         vm.prank(scopeOwner);
         testPatchworkNFT = new TestPatchworkNFT(address(prot));
+        vm.prank(scopeOwner);
+        testMultiFragmentNFT = new TestMultiFragmentNFT(address(prot));
     }
 
     function testScopeOwnerOperator() public {
@@ -245,22 +249,33 @@ contract PatchworkProtocolTest is Test {
  
         uint256 fragmentTokenId1 = testFragmentLiteRefNFT.mint(userAddress);
         uint256 fragmentTokenId2 = testFragmentLiteRefNFT.mint(userAddress);
+        uint256 multi1 = testMultiFragmentNFT.mint(userAddress);
         //Register testPatchLiteRefNFT to testPatchLiteRefNFT
         testFragmentLiteRefNFT.registerReferenceAddress(address(testFragmentLiteRefNFT));
+        testFragmentLiteRefNFT.registerReferenceAddress(address(testMultiFragmentNFT));
+        // Single
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.ScopeDoesNotExist.selector, scopeName));
         prot.assignNFT(address(testFragmentLiteRefNFT), fragmentTokenId1, address(testFragmentLiteRefNFT), fragmentTokenId2);
+        // Multi
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.ScopeDoesNotExist.selector, scopeName));
+        prot.assignNFT(address(testMultiFragmentNFT), multi1, address(testFragmentLiteRefNFT), fragmentTokenId2);
         address[] memory fragmentAddresses = new address[](1);
         uint256[] memory fragments = new uint256[](1);
         fragmentAddresses[0] = address(testFragmentLiteRefNFT);
         fragments[0] = fragmentTokenId1;
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.ScopeDoesNotExist.selector, scopeName));
         prot.batchAssignNFT(fragmentAddresses, fragments, address(testFragmentLiteRefNFT), fragmentTokenId2);
+        // Claim scope to get assignments done to test unassign
         prot.claimScope(scopeName);
-         prot.setScopeRules(scopeName, false, false, false);
+        prot.setScopeRules(scopeName, false, false, false);
         prot.assignNFT(address(testFragmentLiteRefNFT), fragmentTokenId1, address(testFragmentLiteRefNFT), fragmentTokenId2);
+        prot.assignNFT(address(testMultiFragmentNFT), multi1, address(testFragmentLiteRefNFT), fragmentTokenId2);
         testFragmentLiteRefNFT.setScopeName("foo");
+        testMultiFragmentNFT.setScopeName("foo");
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.ScopeDoesNotExist.selector, "foo"));
-        prot.unassignSingleNFT(address(testFragmentLiteRefNFT), fragmentTokenId1);
+        prot.unassignNFT(address(testFragmentLiteRefNFT), fragmentTokenId1, address(testFragmentLiteRefNFT), fragmentTokenId2);
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.ScopeDoesNotExist.selector, "foo"));
+        prot.unassignNFT(address(testMultiFragmentNFT), multi1, address(testFragmentLiteRefNFT), fragmentTokenId2);
     }
 
     function testScopeTransferCannotBeFrontrun() public {
