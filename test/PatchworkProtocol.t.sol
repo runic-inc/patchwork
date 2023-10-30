@@ -280,7 +280,7 @@ contract PatchworkProtocolTest is Test {
 
     function testUnsupportedNFTUnassign() public {
         uint256 t1 = testBaseNFT.mint(userAddress);
-         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
         prot.unassignNFT(address(testBaseNFT), t1, address(testBaseNFT), t1);
     }
 

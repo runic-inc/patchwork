@@ -76,6 +76,9 @@ contract PatchworkFragmentMultiTest is Test {
         // don't allow duplicate
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentAlreadyAssigned.selector, address(_testMultiNFT), m1));
         _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
+        // Don't allow duplicate (direct on NFT contract)
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentAlreadyAssigned.selector, address(_testMultiNFT), m1));
+        _testMultiNFT.assign(m1, address(_testFragmentLiteRefNFT), lr2);
         // don't allow either owner or random user to unassign
         vm.stopPrank();
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _userAddress));
@@ -95,6 +98,12 @@ contract PatchworkFragmentMultiTest is Test {
         assertFalse(_testMultiNFT.isAssignedTo(m1, address(_testFragmentLiteRefNFT), lr1));
         _prot.unassignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr3);
         assertFalse(_testMultiNFT.isAssignedTo(m1, address(_testFragmentLiteRefNFT), lr3));
+        // not assigned
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentNotAssignedToTarget.selector, address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2));
+        _prot.unassignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
+        // not assigned (direct to contract)
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentNotAssigned.selector, address(_testMultiNFT), m1));
+       _testMultiNFT.unassign(m1, address(_testFragmentLiteRefNFT), lr2);
         // test reassign
         _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
         assertTrue(_testMultiNFT.isAssignedTo(m1, address(_testFragmentLiteRefNFT), lr2));
@@ -147,11 +156,13 @@ contract PatchworkFragmentMultiTest is Test {
         IPatchworkMultiAssignableNFT.Assignment[] memory page1 = _testMultiNFT.getAssignments(m1, 0, 8);
         IPatchworkMultiAssignableNFT.Assignment[] memory page2 = _testMultiNFT.getAssignments(m1, 8, 8);
         IPatchworkMultiAssignableNFT.Assignment[] memory page3 = _testMultiNFT.getAssignments(m1, 16, 8);
-        IPatchworkMultiAssignableNFT.Assignment[] memory page4 = _testMultiNFT.getAssignments(m1, 24, 8);
+        IPatchworkMultiAssignableNFT.Assignment[] memory page4 = _testMultiNFT.getAssignments(m1, 20, 8);
+        IPatchworkMultiAssignableNFT.Assignment[] memory page5 = _testMultiNFT.getAssignments(m1, 100, 8);
         assertEq(8, page1.length);
         assertEq(8, page2.length);
         assertEq(4, page3.length);
         assertEq(0, page4.length);
+        assertEq(0, page5.length);
         assertEq(page1[0].tokenAddr, address(_testFragmentLiteRefNFT));
         assertEq(page1[0].tokenId, liteRefIds[0]);
         assertEq(page2[0].tokenAddr, address(_testFragmentLiteRefNFT));

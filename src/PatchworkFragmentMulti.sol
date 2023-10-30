@@ -36,7 +36,7 @@ abstract contract PatchworkFragmentMulti is PatchworkNFT, IPatchworkMultiAssigna
         super.supportsInterface(interfaceID); 
     }
 
-        /**
+    /**
     @dev See {IPatchworkAssignableNFT-assign}
     */
     function assign(uint256 ourTokenId, address to, uint256 tokenId) public virtual mustHaveTokenWriteAuth(ourTokenId) {
@@ -49,7 +49,6 @@ abstract contract PatchworkFragmentMulti is PatchworkNFT, IPatchworkMultiAssigna
         uint256 idx = assignments.length;
         assignments.push(Assignment(to, tokenId));
         store.index[targetHash] = idx;
-        // TODO emit event?
     }
 
     /**
@@ -59,20 +58,18 @@ abstract contract PatchworkFragmentMulti is PatchworkNFT, IPatchworkMultiAssigna
     function unassign(uint256 ourTokenId, address target, uint256 targetTokenId) public virtual mustHaveTokenWriteAuth(ourTokenId) {
         AssignmentStorage storage store = _assignmentStorage[ourTokenId];
         (bool present, uint256 index, bytes32 targetHash) = _assignmentIndexOf(store, target, targetTokenId);
-        if (present) {
-            Assignment[] storage assignments = store.assignments;
-            if (assignments.length > 1) {
-                // move the last element of the array into this index
-                assignments[index] = assignments[assignments.length-1];
-            }
-            // shorten the array by 1
-            assignments.pop();
-            // delete the index
-            delete store.index[targetHash];
-        } else {
+        if (!present) {
             revert IPatchworkProtocol.FragmentNotAssigned(address(this), ourTokenId);
         }
-        // TODO emit event?
+        Assignment[] storage assignments = store.assignments;
+        if (assignments.length > 1) {
+            // move the last element of the array into this index
+            assignments[index] = assignments[assignments.length-1];
+        }
+        // shorten the array by 1
+        assignments.pop();
+        // delete the index
+        delete store.index[targetHash];
     }
 
     function isAssignedTo(uint256 ourTokenId, address target, uint256 targetTokenId) public view virtual returns (bool) {
@@ -127,25 +124,6 @@ abstract contract PatchworkFragmentMulti is PatchworkNFT, IPatchworkMultiAssigna
             page[i] = assignments[offset + i];
         }
         return page;
-    }
-
-    /**
-    @dev See {IPatchworkNFT-locked}
-    */
-    function locked(uint256 tokenId) public view virtual override returns (bool) {
-        // TODO consider
-        return super.locked(tokenId);
-    }
-
-    /**
-    @dev See {IPatchworkNFT-setLocked}
-    */
-    function setLocked(uint256 tokenId, bool locked_) public virtual override {
-        if (msg.sender != ownerOf(tokenId)) {
-            revert IPatchworkProtocol.NotAuthorized(msg.sender);
-        }
-        // TODO consider
-        super.setLocked(tokenId, locked_);
     }
 
     /**
