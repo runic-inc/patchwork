@@ -169,6 +169,9 @@ contract PatchworkFragmentMultiTest is Test {
         assertEq(page2[0].tokenId, liteRefIds[8]);
         assertEq(page3[0].tokenAddr, address(_testFragmentLiteRefNFT));
         assertEq(page3[0].tokenId, liteRefIds[16]);
+        // Check non existant
+        IPatchworkMultiAssignableNFT.Assignment[] memory np1 = _testMultiNFT.getAssignments(11902381, 100, 8);
+        assertEq(0, np1.length);
     }
 
     function testCrossScopeMulti() public {
@@ -190,6 +193,10 @@ contract PatchworkFragmentMultiTest is Test {
         uint256 lr1 = _testFragmentLiteRefNFT.mint(_userAddress);
         _prot.assignNFT(address(multi), m1, address(_testFragmentLiteRefNFT), lr1);
     }
-    // TODO finish coverage and protocol refactors to complete
+
+    function testPatchworkCompatible() public {
+        TestMultiFragmentNFT multi = new TestMultiFragmentNFT(address(_prot));
+        multi.patchworkCompatible_();
+    }
 
 }

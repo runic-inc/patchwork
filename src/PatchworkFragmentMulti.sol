@@ -73,7 +73,7 @@ abstract contract PatchworkFragmentMulti is PatchworkNFT, IPatchworkMultiAssigna
     }
 
     function isAssignedTo(uint256 ourTokenId, address target, uint256 targetTokenId) public view virtual returns (bool) {
-        (bool present,, bytes32 targetHash) = _assignmentIndexOf(_assignmentStorage[ourTokenId], target, targetTokenId);
+        (bool present,,) = _assignmentIndexOf(_assignmentStorage[ourTokenId], target, targetTokenId);
         return present;
     }
     

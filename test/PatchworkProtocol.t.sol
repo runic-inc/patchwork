@@ -415,6 +415,10 @@ contract PatchworkProtocolTest is Test {
         prot.unassignSingleNFT(address(testFragmentLiteRefNFT), fragment2);
         testFragmentLiteRefNFT.setGetLiteRefOverride(false, 0);
 
+        // Revert b/c this isn't the expected assignment given explicitly
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentNotAssignedToTarget.selector, address(testFragmentLiteRefNFT), fragment2, address(testFragmentLiteRefNFT), 15000));
+        prot.unassignNFT(address(testFragmentLiteRefNFT), fragment2, address(testFragmentLiteRefNFT), 15000);
+
         // Now Id2 -> Id1 -> Id where Id belongs to 7, unassign Id2 from Id1 and check new ownership
         prot.unassignSingleNFT(address(testFragmentLiteRefNFT), fragment2);
         assertEq(testFragmentLiteRefNFT.ownerOf(fragment2),  address(7));
@@ -432,6 +436,25 @@ contract PatchworkProtocolTest is Test {
         testPatchLiteRefNFT.transferFrom(userAddress, address(7), patchTokenId);
         vm.stopPrank();
     }
+
+   function testUnassignMultiNFT() public {
+        vm.expectRevert(); // not unassignable
+        prot.unassignMultiNFT(address(1), 1, address(1), 1);
+
+        uint256 testBaseNFTTokenId = testBaseNFT.mint(userAddress);
+        uint256 fragment1 = testMultiFragmentNFT.mint(userAddress);
+
+        vm.startPrank(scopeOwner);
+        prot.claimScope(scopeName);
+        prot.setScopeRules(scopeName, false, false, false);
+        uint256 patchTokenId = prot.createPatch(address(testBaseNFT), testBaseNFTTokenId, address(testPatchLiteRefNFT));
+
+        testPatchLiteRefNFT.registerReferenceAddress(address(testMultiFragmentNFT));
+        prot.assignNFT(address(testMultiFragmentNFT), fragment1, address(testPatchLiteRefNFT), patchTokenId);
+        prot.unassignNFT(address(testMultiFragmentNFT), fragment1, address(testPatchLiteRefNFT), patchTokenId);
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentNotAssignedToTarget.selector, address(testMultiFragmentNFT), fragment1, address(testPatchLiteRefNFT), patchTokenId));
+        prot.unassignNFT(address(testMultiFragmentNFT), fragment1, address(testPatchLiteRefNFT), patchTokenId);
+   }
 
     function testBatchAssignNFT() public {
         uint256 testBaseNFTTokenId = testBaseNFT.mint(userAddress);
