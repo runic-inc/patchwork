@@ -93,21 +93,12 @@ interface IPatchworkProtocol {
     error FragmentAlreadyAssigned(address addr, uint256 tokenId);
 
     /**
-    @notice The fragment with the provided ID at the given address is already assigned in the scope
-    @param scopeName Name of the scope
-    @param addr Address of the fragment
-    @param tokenId ID of the fragment
-    */
-    error FragmentAlreadyAssignedInScope(string scopeName, address addr, uint256 tokenId);
-
-    /**
-    @notice The reference was not found in the scope for the given fragment and target
-    @param scopeName Name of the scope
+    @notice The reference was not found for the given fragment and target
     @param target Address of the target token
     @param fragment Address of the fragment
     @param tokenId ID of the fragment
     */
-    error RefNotFoundInScope(string scopeName, address target, address fragment, uint256 tokenId);
+    error RefNotFound(address target, address fragment, uint256 tokenId);
 
     /**
     @notice The fragment with the provided ID at the given address is not assigned
@@ -115,6 +106,15 @@ interface IPatchworkProtocol {
     @param tokenId ID of the fragment
     */
     error FragmentNotAssigned(address addr, uint256 tokenId);
+
+    /**
+    @notice The fragment with the provided ID at the given address is not assigned to the target
+    @param addr Address of the fragment
+    @param tokenId ID of the fragment
+    @param targetAddress Address of the target
+    @param targetTokenId ID of the target
+    */
+    error FragmentNotAssignedToTarget(address addr, uint256 tokenId, address targetAddress, uint256 targetTokenId);
 
     /**
     @notice The fragment at the given address is already registered
@@ -206,6 +206,11 @@ interface IPatchworkProtocol {
     error UnsupportedOperation();
 
     /**
+    @notice The contract is not supported
+    */
+    error UnsupportedContract();
+
+    /**
     @notice Represents a defined scope within the system
     @dev Contains details about the scope ownership, permissions, and mappings for references and assignments
     */
@@ -245,12 +250,6 @@ interface IPatchworkProtocol {
         @dev Address of the operator mapped to a boolean indicating if they are an operator
         */
         mapping(address => bool) operators;
-
-        /**
-        @notice Mapped list of lightweight references within this scope
-        @dev A hash of liteRefAddr + reference provides uniqueness
-        */
-        mapping(bytes32 => bool) liteRefs;
 
         /**
         @notice Mapped whitelist of addresses that belong to this scope
@@ -491,10 +490,30 @@ interface IPatchworkProtocol {
 
     /**
     @notice Unassign a NFT fragment from a target NFT
-    @param fragment The IPatchworkAssignableNFT address of the fragment NFT
-    @param fragmentTokenId The IPatchworkAssignableNFT token ID of the fragment NFT
+    @param fragment The IPatchworkSingleAssignableNFT address of the fragment NFT
+    @param fragmentTokenId The IPatchworkSingleAssignableNFT token ID of the fragment NFT
+    @dev reverts if fragment is not an IPatchworkSingleAssignableNFT
     */
-    function unassignNFT(address fragment, uint fragmentTokenId) external;
+    function unassignSingleNFT(address fragment, uint fragmentTokenId) external;
+
+    /**
+    @notice Unassigns a multi NFT relation
+    @param fragment The IPatchworMultiAssignableNFT address to unassign
+    @param fragmentTokenId The IPatchworkMultiAssignableNFT Token ID to unassign
+    @param target The IPatchworkLiteRef address which holds a reference to the fragment
+    @param targetTokenId The IPatchworkLiteRef Token ID which holds a reference to the fragment
+    @dev reverts if fragment is not an IPatchworkMultiAssignableNFT
+    */
+    function unassignMultiNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) external;
+
+    /**
+    @notice Unassigns an NFT relation (single or multi)
+    @param fragment The IPatchworkAssignableNFT address to unassign
+    @param fragmentTokenId The IPatchworkAssignableNFT Token ID to unassign
+    @param target The IPatchworkLiteRef address which holds a reference to the fragment
+    @param targetTokenId The IPatchworkLiteRef Token ID which holds a reference to the fragment
+    */
+    function unassignNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) external;
 
     /**
     @notice Apply transfer rules and actions of a specific token from one address to another

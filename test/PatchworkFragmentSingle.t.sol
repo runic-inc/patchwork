@@ -8,7 +8,7 @@ import "../src/PatchworkProtocol.sol";
 import "../src/sampleNFTs/TestFragmentLiteRefNFT.sol";
 import "../src/sampleNFTs/TestBaseNFT.sol";
 
-contract PatchworkFragmentTest is Test {
+contract PatchworkFragmentSingleTest is Test {
     PatchworkProtocol _prot;
     TestFragmentLiteRefNFT _testFragmentLiteRefNFT;
 
@@ -50,6 +50,7 @@ contract PatchworkFragmentTest is Test {
         assertTrue(_testFragmentLiteRefNFT.supportsInterface(type(IERC5192).interfaceId));
         assertTrue(_testFragmentLiteRefNFT.supportsInterface(type(IPatchworkNFT).interfaceId));
         assertTrue(_testFragmentLiteRefNFT.supportsInterface(type(IPatchworkAssignableNFT).interfaceId));
+        assertTrue(_testFragmentLiteRefNFT.supportsInterface(type(IPatchworkSingleAssignableNFT).interfaceId));
     }
 
     function testOnAssignedTransferError() public {

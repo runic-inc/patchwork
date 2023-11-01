@@ -2,13 +2,16 @@
 pragma solidity ^0.8.13;
 
 import "./PatchworkNFT.sol";
-import "./IPatchworkAssignableNFT.sol";
+import "./IPatchworkSingleAssignableNFT.sol";
+
+// TODO create a patch fragment implementation where ownership is weak for fragments
+// TODO change the patchworkCompatible to make that work
 
 /**
-@title PatchworkFragment
-@dev base implementation of a Fragment is IPatchworkAssignableNFT
+@title PatchworkFragmentSingle
+@dev base implementation of a Single-relation Fragment is IPatchworkSingleAssignableNFT
 */
-abstract contract PatchworkFragment is PatchworkNFT, IPatchworkAssignableNFT {
+abstract contract PatchworkFragmentSingle is PatchworkNFT, IPatchworkSingleAssignableNFT {
  
     /// Represents an assignment of a token from an external NFT contract to a token in this contract.
     struct Assignment {
@@ -31,6 +34,7 @@ abstract contract PatchworkFragment is PatchworkNFT, IPatchworkAssignableNFT {
     */
     function supportsInterface(bytes4 interfaceID) public view virtual override returns (bool) {
         return interfaceID == type(IPatchworkAssignableNFT).interfaceId ||
+        interfaceID == type(IPatchworkSingleAssignableNFT).interfaceId ||
         super.supportsInterface(interfaceID); 
     }
 
@@ -55,6 +59,15 @@ abstract contract PatchworkFragment is PatchworkNFT, IPatchworkAssignableNFT {
         updateOwnership(tokenId);
         delete _assignments[tokenId];
         emit Unlocked(tokenId);
+    }
+
+    /**
+    @dev See {IPatchworAssignable-allowAssignment}
+    */
+    function allowAssignment(uint256 ourTokenId, address /*target*/, uint256 /*targetTokenId*/, address targetOwner, address /*by*/, string memory /*scopeName*/) public view returns (bool) {
+        // By default only allow single assignments to be to the same owner as the target
+        // Warning - Changing this without changing the other ownership logic in this contract to reflect this will make ownership inconsistent
+        return targetOwner == ownerOf(ourTokenId);
     }
 
     /**

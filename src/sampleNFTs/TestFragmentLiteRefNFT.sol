@@ -9,7 +9,7 @@ pragma solidity ^0.8.13;
   Has metadata as defined in totem-metadata.json
 */
 
-import "../PatchworkFragment.sol";
+import "../PatchworkFragmentSingle.sol";
 import "../PatchworkLiteRef.sol";
 
 enum FragmentType {
@@ -26,7 +26,7 @@ struct TestFragmentLiteRefNFTMetadata {
     string name;
 }
 
-contract TestFragmentLiteRefNFT is PatchworkFragment, PatchworkLiteRef {
+contract TestFragmentLiteRefNFT is PatchworkFragmentSingle, PatchworkLiteRef {
 
     uint256 _nextTokenId;
     bool _testLockOverride;
@@ -39,9 +39,9 @@ contract TestFragmentLiteRefNFT is PatchworkFragment, PatchworkLiteRef {
     }
 
     // ERC-165
-    function supportsInterface(bytes4 interfaceID) public view virtual override(PatchworkFragment, PatchworkLiteRef) returns (bool) {
+    function supportsInterface(bytes4 interfaceID) public view virtual override(PatchworkFragmentSingle, PatchworkLiteRef) returns (bool) {
         return PatchworkLiteRef.supportsInterface(interfaceID) || 
-            PatchworkFragment.supportsInterface(interfaceID);             
+            PatchworkFragmentSingle.supportsInterface(interfaceID);             
     }
 
     function mint(address to) external returns (uint256 tokenId) {
@@ -235,5 +235,10 @@ contract TestFragmentLiteRefNFT is PatchworkFragment, PatchworkLiteRef {
             return (_getAssignedToOverride, 1);
         }
         return super.getAssignedTo(ourTokenId);
+    }
+
+    function setScopeName(string memory scopeName) public {
+        // For testing only
+        _scopeName = scopeName;
     }
 }
