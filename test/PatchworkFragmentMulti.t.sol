@@ -193,10 +193,4 @@ contract PatchworkFragmentMultiTest is Test {
         uint256 lr1 = _testFragmentLiteRefNFT.mint(_userAddress);
         _prot.assignNFT(address(multi), m1, address(_testFragmentLiteRefNFT), lr1);
     }
-
-    function testPatchworkCompatible() public {
-        TestMultiFragmentNFT multi = new TestMultiFragmentNFT(address(_prot));
-        multi.patchworkCompatible_();
-    }
-
 }

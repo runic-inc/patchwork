@@ -72,9 +72,4 @@ contract PatchworkPatchTest is Test {
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedOperation.selector));
         _testPatchLiteRefNFT.burn(patchTokenId);
     }
-
-    function testPatchworkCompatible() public {
-        bytes1 r1 = _testPatchLiteRefNFT.patchworkCompatible_();
-        assertEq(0, r1);
-    }
 }

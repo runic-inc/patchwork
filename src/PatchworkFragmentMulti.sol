@@ -133,9 +133,4 @@ abstract contract PatchworkFragmentMulti is PatchworkNFT, IPatchworkMultiAssigna
         // By default allow multi assignments public
         return true;
     }
-
-    /**
-    @dev See {IPatchworkNFT-patchworkCompatible_}
-    */
-    function patchworkCompatible_() external pure returns (bytes2) {}
 }

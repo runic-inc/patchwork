@@ -20,10 +20,4 @@ interface IPatchworkAccountPatch {
     @return tokenId ID of the newly minted token
     */
     function mintPatch(address owner, address originalAccountAddress) external returns (uint256 tokenId);
-
-    /**
-    @notice A deliberately incompatible function to block implementing both assignable and patch
-    @return bytes3 Always returns 0x00
-    */
-    function patchworkCompatible_() external pure returns (bytes3);
 }
