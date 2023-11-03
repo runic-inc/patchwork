@@ -7,6 +7,7 @@ import "forge-std/console.sol";
 import "../src/PatchworkProtocol.sol";
 import "../src/sampleNFTs/TestPatchLiteRefNFT.sol";
 import "../src/sampleNFTs/TestBaseNFT.sol";
+import "../src/sampleNFTs/TestPatchFragmentNFT.sol";
 
 contract PatchworkPatchTest is Test {
     PatchworkProtocol _prot;
@@ -71,5 +72,37 @@ contract PatchworkPatchTest is Test {
         uint256 patchTokenId = _prot.createPatch(address(_testBaseNFT), baseTokenId, address(_testPatchLiteRefNFT));
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedOperation.selector));
         _testPatchLiteRefNFT.burn(patchTokenId);
+    }
+
+    function testPatchFragment() public {
+        vm.startPrank(_scopeOwner);
+        uint256 baseTokenId = _testBaseNFT.mint(_userAddress);
+        uint256 baseTokenId2 = _testBaseNFT.mint(_user2Address);
+        uint256 baseTokenId3 = _testBaseNFT.mint(_userAddress);
+        TestPatchFragmentNFT testPatchFragmentNFT = new TestPatchFragmentNFT(address(_prot));
+        _testPatchLiteRefNFT.registerReferenceAddress(address(testPatchFragmentNFT));
+        uint256 liteRefId = _prot.createPatch(address(_testBaseNFT), baseTokenId, address(_testPatchLiteRefNFT));
+        uint256 liteRefId2 = _prot.createPatch(address(_testBaseNFT), baseTokenId2, address(_testPatchLiteRefNFT));
+        uint256 fragmentTokenId = _prot.createPatch(address(_testBaseNFT), baseTokenId3, address(testPatchFragmentNFT));
+        // cannot assign patch to a literef that this person does not own
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _scopeOwner));
+        _prot.assignNFT(address(testPatchFragmentNFT), fragmentTokenId, address(_testPatchLiteRefNFT), liteRefId2);
+        // can assign to same owner
+        _prot.assignNFT(address(testPatchFragmentNFT), fragmentTokenId, address(_testPatchLiteRefNFT), liteRefId);
+        // transfer the underlying patched nft and check ownership
+        vm.stopPrank();
+        assertEq(_userAddress, _testBaseNFT.ownerOf(baseTokenId));
+        assertEq(_userAddress, _testPatchLiteRefNFT.ownerOf(baseTokenId));
+        assertEq(_userAddress, testPatchFragmentNFT.ownerOf(fragmentTokenId));
+        vm.prank(_userAddress);
+        _testBaseNFT.transferFrom(_userAddress, _user2Address, baseTokenId);
+        assertEq(_user2Address, _testBaseNFT.ownerOf(baseTokenId));
+        assertEq(_user2Address, _testPatchLiteRefNFT.ownerOf(baseTokenId));
+        assertEq(_userAddress, testPatchFragmentNFT.ownerOf(fragmentTokenId));
+        vm.prank(_userAddress);
+        _testBaseNFT.transferFrom(_userAddress, _user2Address, baseTokenId3);
+        assertEq(_user2Address, testPatchFragmentNFT.ownerOf(fragmentTokenId));
+        _prot.updateOwnershipTree(address(testPatchFragmentNFT), fragmentTokenId);
+        assertEq(_user2Address, testPatchFragmentNFT.ownerOf(fragmentTokenId));
     }
 }
