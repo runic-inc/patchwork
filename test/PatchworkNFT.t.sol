@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
 import "../src/PatchworkProtocol.sol";
-import "../src/sampleNFTs/TestPatchworkNFT.sol";
+import "./nfts/TestPatchworkNFT.sol";
 
 contract PatchworkNFTTest is Test {
     PatchworkProtocol _prot;
