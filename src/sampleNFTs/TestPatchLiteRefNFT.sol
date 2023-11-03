@@ -170,15 +170,19 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
         // TODO bulk insert for fewer stores
     }
 
-    function mintPatch(address originalNFTOwner, address originalNFTAddress, uint originalNFTTokenId) external returns (uint256 tokenId){
+    function mintPatch(address owner, address originalNFTAddress, uint originalNFTTokenId) external returns (uint256 tokenId){
         if (msg.sender != _manager) {
+            revert();
+        }
+        // require inherited ownership
+        if (IERC721(originalNFTAddress).ownerOf(originalNFTTokenId) != owner) {
             revert();
         }
         // Just for testing
         tokenId = _nextTokenId;
         _nextTokenId++;
         _storePatch(tokenId, originalNFTAddress, originalNFTTokenId);
-        _safeMint(originalNFTOwner, tokenId);
+        _safeMint(owner, tokenId);
         _metadataStorage[tokenId] = new uint256[](3);
         return tokenId;
     }

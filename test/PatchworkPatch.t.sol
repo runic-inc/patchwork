@@ -59,7 +59,7 @@ contract PatchworkPatchTest is Test {
     function testLocks() public {
         uint256 baseTokenId = _testBaseNFT.mint(_userAddress);
         vm.prank(_scopeOwner);
-        uint256 patchTokenId = _prot.createPatch(address(_testBaseNFT), baseTokenId, address(_testPatchLiteRefNFT));
+        uint256 patchTokenId = _prot.createPatch(_userAddress, address(_testBaseNFT), baseTokenId, address(_testPatchLiteRefNFT));
         bool locked = _testPatchLiteRefNFT.locked(patchTokenId);
         assertFalse(locked);
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.CannotLockSoulboundPatch.selector, _testPatchLiteRefNFT));
@@ -69,7 +69,7 @@ contract PatchworkPatchTest is Test {
     function testBurn() public {
         uint256 baseTokenId = _testBaseNFT.mint(_userAddress);
         vm.prank(_scopeOwner);
-        uint256 patchTokenId = _prot.createPatch(address(_testBaseNFT), baseTokenId, address(_testPatchLiteRefNFT));
+        uint256 patchTokenId = _prot.createPatch(_userAddress, address(_testBaseNFT), baseTokenId, address(_testPatchLiteRefNFT));
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedOperation.selector));
         _testPatchLiteRefNFT.burn(patchTokenId);
     }
@@ -81,9 +81,9 @@ contract PatchworkPatchTest is Test {
         uint256 baseTokenId3 = _testBaseNFT.mint(_userAddress);
         TestPatchFragmentNFT testPatchFragmentNFT = new TestPatchFragmentNFT(address(_prot));
         _testPatchLiteRefNFT.registerReferenceAddress(address(testPatchFragmentNFT));
-        uint256 liteRefId = _prot.createPatch(address(_testBaseNFT), baseTokenId, address(_testPatchLiteRefNFT));
-        uint256 liteRefId2 = _prot.createPatch(address(_testBaseNFT), baseTokenId2, address(_testPatchLiteRefNFT));
-        uint256 fragmentTokenId = _prot.createPatch(address(_testBaseNFT), baseTokenId3, address(testPatchFragmentNFT));
+        uint256 liteRefId = _prot.createPatch(_userAddress, address(_testBaseNFT), baseTokenId, address(_testPatchLiteRefNFT));
+        uint256 liteRefId2 = _prot.createPatch(_user2Address, address(_testBaseNFT), baseTokenId2, address(_testPatchLiteRefNFT));
+        uint256 fragmentTokenId = _prot.createPatch(_userAddress, address(_testBaseNFT), baseTokenId3, address(testPatchFragmentNFT));
         // cannot assign patch to a literef that this person does not own
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _scopeOwner));
         _prot.assignNFT(address(testPatchFragmentNFT), fragmentTokenId, address(_testPatchLiteRefNFT), liteRefId2);
