@@ -9,8 +9,8 @@ pragma solidity ^0.8.13;
   Has metadata as defined in totem-metadata.json
 */
 
-import "../PatchworkPatch.sol";
-import "../PatchworkFragmentSingle.sol";
+import "../../src/PatchworkPatch.sol";
+import "../../src/PatchworkFragmentSingle.sol";
 
 struct TestPatchFragmentNFTMetadata {
     uint16 xp;

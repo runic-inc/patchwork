@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "../PatchworkFragmentMulti.sol";
-import "../PatchworkLiteRef.sol";
+import "../../src/PatchworkFragmentMulti.sol";
+import "../../src/PatchworkLiteRef.sol";
 
 struct TestMultiFragmentNFTMetadata {
     uint8 nothing;
