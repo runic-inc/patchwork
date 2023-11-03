@@ -74,6 +74,13 @@ contract PatchworkPatchTest is Test {
         _testPatchLiteRefNFT.burn(patchTokenId);
     }
 
+    function testOtherOwnerDisallowed() public {
+        uint256 baseTokenId = _testBaseNFT.mint(_userAddress);
+        vm.prank(_scopeOwner);
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _user2Address));
+        _prot.createPatch(_user2Address, address(_testBaseNFT), baseTokenId, address(_testPatchLiteRefNFT));
+    }
+
     function testPatchFragment() public {
         vm.startPrank(_scopeOwner);
         uint256 baseTokenId = _testBaseNFT.mint(_userAddress);

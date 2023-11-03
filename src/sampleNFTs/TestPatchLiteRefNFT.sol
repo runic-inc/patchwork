@@ -176,7 +176,7 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
         }
         // require inherited ownership
         if (IERC721(originalNFTAddress).ownerOf(originalNFTTokenId) != owner) {
-            revert();
+            revert IPatchworkProtocol.NotAuthorized(owner);
         }
         // Just for testing
         tokenId = _nextTokenId;
