@@ -96,9 +96,4 @@ abstract contract PatchworkPatch is PatchworkNFT, IPatchworkPatch {
     function _burn(uint256 /*tokenId*/) internal virtual override {
         revert IPatchworkProtocol.UnsupportedOperation();
     }
-
-    /**
-    @dev See {IPatchworkPatch-patchworkCompatible_}
-    */ 
-    function patchworkCompatible_() external pure returns (bytes1) {}
 }

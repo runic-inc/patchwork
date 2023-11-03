@@ -34,10 +34,4 @@ interface IPatchworkPatch {
     @return address Address of the owner
     */
     function unpatchedOwnerOf(uint256 tokenId) external returns (address);
-
-    /**
-    @notice A deliberately incompatible function to block implementing both assignable and patch
-    @return bytes1 Always returns 0x00
-    */
-    function patchworkCompatible_() external pure returns (bytes1);
 }

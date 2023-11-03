@@ -139,9 +139,4 @@ abstract contract PatchworkFragmentSingle is PatchworkNFT, IPatchworkSingleAssig
         require(_assignments[tokenId].tokenAddr == address(0), "cannot setLocked assigned fragment");
         super.setLocked(tokenId, locked_);
     }
-
-    /**
-    @dev See {IPatchworkNFT-patchworkCompatible_}
-    */
-    function patchworkCompatible_() external pure returns (bytes2) {}
 }

@@ -58,11 +58,6 @@ contract PatchworkFragmentSingleTest is Test {
         _testFragmentLiteRefNFT.onAssignedTransfer(address(0), address(1), 1);
     }
 
-    function testPatchworkCompatible() public {
-        bytes2 r2 = _testFragmentLiteRefNFT.patchworkCompatible_();
-        assertEq(0, r2);
-    }
-
     function testLiteref56bitlimit() public {
         vm.prank(_scopeOwner);
         uint8 r1 = _testFragmentLiteRefNFT.registerReferenceAddress(address(1));

@@ -99,8 +99,5 @@ contract PatchworkAccountPatchTest is Test {
         _prot.createAccountPatch(_userAddress, _user2Address, address(testAccountPatchNFT));
     }
 
-    function testPatchworkCompatible() public {
-        TestAccountPatchNFT testAccountPatchNFT = new TestAccountPatchNFT(address(_prot), false);
-        testAccountPatchNFT.patchworkCompatible_();
-    }
+
 }
