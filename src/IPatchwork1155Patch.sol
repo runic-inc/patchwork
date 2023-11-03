@@ -18,8 +18,8 @@ interface IPatchwork1155Patch {
     @param to Address of the owner of the patch token
     @param originalNFTAddress Address of the original NFT
     @param originalNFTTokenId ID of the original NFT token
-    @param owner Address of the 1155 owner
+    @param originalAccount Address of the original 1155 account
     @return tokenId ID of the newly minted token
     */
-    function mintPatch(address to, address originalNFTAddress, uint256 originalNFTTokenId, address owner) external returns (uint256 tokenId);
+    function mintPatch(address to, address originalNFTAddress, uint256 originalNFTTokenId, address originalAccount) external returns (uint256 tokenId);
 }

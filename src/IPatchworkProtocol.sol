@@ -466,11 +466,11 @@ interface IPatchworkProtocol {
     @notice Create a new 1155 patch
     @param originalNFTAddress Address of the original NFT
     @param originalNFTTokenId Token ID of the original NFT
-    @param originalOwner Address of the owner to patch
+    @param originalAccount Address of the account to patch
     @param patchAddress Address of the IPatchworkPatch to mint
     @return tokenId Token ID of the newly created patch
     */
-    function create1155Patch(address to, address originalNFTAddress, uint originalNFTTokenId, address originalOwner, address patchAddress) external returns (uint256 tokenId);
+    function create1155Patch(address to, address originalNFTAddress, uint originalNFTTokenId, address originalAccount, address patchAddress) external returns (uint256 tokenId);
     
     /**
     @notice Create a new account patch

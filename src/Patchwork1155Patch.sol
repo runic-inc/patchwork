@@ -14,7 +14,7 @@ abstract contract Patchwork1155Patch is PatchworkNFT, IPatchwork1155Patch {
     struct PatchCanonical {
         address addr;
         uint256 tokenId;
-        address owner;
+        address account;
     }
 
     /// @dev Mapping from token ID to the canonical address of the NFT that this patch is applied to.
@@ -40,17 +40,18 @@ abstract contract Patchwork1155Patch is PatchworkNFT, IPatchwork1155Patch {
     @dev See {IERC721-ownerOf}
     */
     function ownerOf(uint256 tokenId) public view virtual override(ERC721, IERC721) returns (address) {
-        return _patchedAddresses[tokenId].owner;
+        return _patchedAddresses[tokenId].account;
     }
 
     /**
     @notice stores a patch
     @param tokenId the tokenId of the patch
-    @param originalNFTAddress the address of the original ERC-721 we are patching
-    @param originalNFTTokenId the tokenId of the original ERC-721 we are patching
+    @param originalNFTAddress the address of the original ERC-1155 we are patching
+    @param originalNFTTokenId the tokenId of the original ERC-1155 we are patching
+    @param account the account of the ERC-1155 we are patching
     */
-    function _storePatch(uint256 tokenId, address originalNFTAddress, uint256 originalNFTTokenId, address owner) internal virtual {
-        _patchedAddresses[tokenId] = PatchCanonical(originalNFTAddress, originalNFTTokenId, owner);
+    function _storePatch(uint256 tokenId, address originalNFTAddress, uint256 originalNFTTokenId, address account) internal virtual {
+        _patchedAddresses[tokenId] = PatchCanonical(originalNFTAddress, originalNFTTokenId, account);
     }
 
     /**
