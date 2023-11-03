@@ -6,6 +6,7 @@ import "./IPatchworkSingleAssignableNFT.sol";
 import "./IPatchworkMultiAssignableNFT.sol";
 import "./IPatchworkLiteRef.sol";
 import "./IPatchworkPatch.sol";
+import "./IPatchwork1155Patch.sol";
 import "./IPatchworkAccountPatch.sol";
 import "./IPatchworkProtocol.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -144,7 +145,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
     }
 
     /**
-    @dev See {IPatchworkProtocol-createAccountPatch}
+    @dev See {IPatchworkProtocol-createPatch}
     */
     function createPatch(address originalNFTAddress, uint originalNFTTokenId, address patchAddress) public returns (uint256 tokenId) {
         IPatchworkPatch patch = IPatchworkPatch(patchAddress);
@@ -171,6 +172,34 @@ contract PatchworkProtocol is IPatchworkProtocol {
         return tokenId;
     }
 
+   /**
+    @dev See {IPatchworkProtocol-create1155Patch}
+    */
+    function create1155Patch(address to, address originalNFTAddress, uint originalNFTTokenId, address originalOwner, address patchAddress) public returns (uint256 tokenId) {
+        IPatchwork1155Patch patch = IPatchwork1155Patch(patchAddress);
+        string memory scopeName = patch.getScopeName();
+        // mint a Patch that is soulbound to the originalNFT using the contract address at patchAddress which must support Patchwork metadata
+        Scope storage scope = _mustHaveScope(scopeName);
+        _mustBeWhitelisted(scopeName, scope, patchAddress);
+        if (scope.owner == msg.sender || scope.operators[msg.sender]) {
+            // continue
+        } else if (scope.allowUserPatch) {
+            // continue
+        } else {
+            revert NotAuthorized(msg.sender);
+        }
+        // limit this to one unique patch (originalNFTAddress+TokenID+patchAddress)
+        bytes32 _hash = keccak256(abi.encodePacked(originalNFTAddress, originalNFTTokenId, originalOwner, patchAddress));
+        if (scope.uniquePatches[_hash]) {
+            // TODO add owner to already patched
+            revert AlreadyPatched(originalNFTAddress, originalNFTTokenId, patchAddress);
+        }
+        scope.uniquePatches[_hash] = true;
+        tokenId = patch.mintPatch(to, originalNFTAddress, originalNFTTokenId, originalOwner);
+        // TODO emit 1155Patch
+        // emit Patch(tokenOwner, originalNFTAddress, originalNFTTokenId, patchAddress, tokenId);
+        return tokenId;
+    }
     /**
     @dev See {IPatchworkProtocol-createAccountPatch}
     */
