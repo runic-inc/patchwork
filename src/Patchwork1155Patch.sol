@@ -36,14 +36,6 @@ abstract contract Patchwork1155Patch is PatchworkNFT, IPatchwork1155Patch {
     }
 
     /**
-    @dev will return the 1155 bucket owner
-    @dev See {IERC721-ownerOf}
-    */
-    function ownerOf(uint256 tokenId) public view virtual override(ERC721, IERC721) returns (address) {
-        return _patchedAddresses[tokenId].account;
-    }
-
-    /**
     @notice stores a patch
     @param tokenId the tokenId of the patch
     @param originalNFTAddress the address of the original ERC-1155 we are patching

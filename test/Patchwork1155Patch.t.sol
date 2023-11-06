@@ -108,4 +108,13 @@ contract Patchwork1155PatchTest is Test {
         // user can mint
         _prot.create1155Patch(_userAddress, address(base1155), b, _userAddress, address(test1155PatchNFT));
     }
+
+    function testBurn() public {
+        vm.startPrank(_scopeOwner);
+        Test1155PatchNFT test1155PatchNFT = new Test1155PatchNFT(address(_prot));
+        TestBase1155 base1155 = new TestBase1155();
+        uint256 b = base1155.mint(_userAddress, 1, 5);
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedOperation.selector));
+        test1155PatchNFT.burn(b);
+    }
 }

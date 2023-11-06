@@ -41,4 +41,8 @@ contract Test1155PatchNFT is Patchwork1155Patch {
         return tokenId;
     }
 
+    function burn(uint256 tokenId) external {
+        _burn(tokenId);
+    }
+
 }
