@@ -175,7 +175,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
    /**
     @dev See {IPatchworkProtocol-create1155Patch}
     */
-    function create1155Patch(address to, address originalNFTAddress, uint originalNFTTokenId, address originalOwner, address patchAddress) public returns (uint256 tokenId) {
+    function create1155Patch(address to, address originalNFTAddress, uint originalNFTTokenId, address originalAccount, address patchAddress) public returns (uint256 tokenId) {
         IPatchwork1155Patch patch = IPatchwork1155Patch(patchAddress);
         string memory scopeName = patch.getScopeName();
         // mint a Patch that is soulbound to the originalNFT using the contract address at patchAddress which must support Patchwork metadata
@@ -189,15 +189,13 @@ contract PatchworkProtocol is IPatchworkProtocol {
             revert NotAuthorized(msg.sender);
         }
         // limit this to one unique patch (originalNFTAddress+TokenID+patchAddress)
-        bytes32 _hash = keccak256(abi.encodePacked(originalNFTAddress, originalNFTTokenId, originalOwner, patchAddress));
+        bytes32 _hash = keccak256(abi.encodePacked(originalNFTAddress, originalNFTTokenId, originalAccount, patchAddress));
         if (scope.uniquePatches[_hash]) {
-            // TODO add owner to already patched
-            revert AlreadyPatched(originalNFTAddress, originalNFTTokenId, patchAddress);
+            revert ERC1155AlreadyPatched(originalNFTAddress, originalNFTTokenId, originalAccount, patchAddress);
         }
         scope.uniquePatches[_hash] = true;
-        tokenId = patch.mintPatch(to, originalNFTAddress, originalNFTTokenId, originalOwner);
-        // TODO emit 1155Patch
-        // emit Patch(tokenOwner, originalNFTAddress, originalNFTTokenId, patchAddress, tokenId);
+        tokenId = patch.mintPatch(to, originalNFTAddress, originalNFTTokenId, originalAccount);
+        emit ERC1155Patch(to, originalNFTAddress, originalNFTTokenId, originalAccount, patchAddress, tokenId);
         return tokenId;
     }
     /**

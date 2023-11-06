@@ -58,7 +58,54 @@ contract Patchwork1155PatchTest is Test {
         vm.startPrank(_scopeOwner);
         Test1155PatchNFT test1155PatchNFT = new Test1155PatchNFT(address(_prot));
         TestBase1155 base1155 = new TestBase1155();
-        uint256 b = base1155.mint(_userAddress, 5);
-        uint256 patchTokenId = _prot.create1155Patch(_userAddress, address(base1155), b, _userAddress, address(test1155PatchNFT));
+        uint256 b = base1155.mint(_userAddress, 1, 5);
+        vm.stopPrank();
+        vm.startPrank(address(_prot));
+        // basic mints should work
+        test1155PatchNFT.mintPatch(_userAddress, address(base1155), b, _userAddress);
+        // global
+        test1155PatchNFT.mintPatch(_userAddress, address(base1155), b, address(0));
+        vm.stopPrank();      
+        // no auth
+        vm.expectRevert();  
+        test1155PatchNFT.mintPatch(_userAddress, address(base1155), b, _userAddress);
+        // global
+        vm.expectRevert();  
+        test1155PatchNFT.mintPatch(_userAddress, address(base1155), b, address(0));
+    }
+    
+    function test1155PatchProto() public {
+        vm.startPrank(_scopeOwner);
+        Test1155PatchNFT test1155PatchNFT = new Test1155PatchNFT(address(_prot));
+        TestBase1155 base1155 = new TestBase1155();
+        uint256 b = base1155.mint(_userAddress, 1, 5);
+
+        // Account patch
+        _prot.create1155Patch(_userAddress, address(base1155), b, _userAddress, address(test1155PatchNFT));
+        
+        // Account patch can't have duplicate
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.ERC1155AlreadyPatched.selector, address(base1155), b, _userAddress, address(test1155PatchNFT)));
+        _prot.create1155Patch(_userAddress, address(base1155), b, _userAddress, address(test1155PatchNFT));
+        // Global patch
+        _prot.create1155Patch(_scopeOwner, address(base1155), b, address(0), address(test1155PatchNFT));
+        // Global patch can't have duplicate
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.ERC1155AlreadyPatched.selector, address(base1155), b, address(0), address(test1155PatchNFT)));
+        _prot.create1155Patch(_scopeOwner, address(base1155), b, address(0), address(test1155PatchNFT));    
+        // no user patching allowed
+        vm.stopPrank();
+        vm.startPrank(_userAddress);
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _userAddress));
+        _prot.create1155Patch(_scopeOwner, address(base1155), b, address(1), address(test1155PatchNFT));  
+    }
+
+    function test1155PatchUserPatch() public {
+        vm.prank(_scopeOwner);
+        _prot.setScopeRules(_scopeName, true, false, false);
+        // Not same owner model, yes transferrable
+        Test1155PatchNFT test1155PatchNFT = new Test1155PatchNFT(address(_prot));
+        TestBase1155 base1155 = new TestBase1155();
+        uint256 b = base1155.mint(_userAddress, 1, 5);
+        // user can mint
+        _prot.create1155Patch(_userAddress, address(base1155), b, _userAddress, address(test1155PatchNFT));
     }
 }

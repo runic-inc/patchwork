@@ -5,15 +5,12 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 
 
 contract TestBase1155 is ERC1155 {
-    uint256 public tokenId;
 
     constructor() ERC1155("http://myurl/") {
     }
 
-    function mint(address to, uint256 quantity) public returns (uint256) {
-        uint256 newTokenId = tokenId;
-        tokenId++;
-        _mint(to, newTokenId, quantity, "");
-        return newTokenId;
+    function mint(address to, uint256 tokenId, uint256 amount) public returns (uint256) {
+        _mint(to, tokenId, amount, "");
+        return tokenId;
     }
 }

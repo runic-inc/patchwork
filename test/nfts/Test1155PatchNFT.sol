@@ -28,14 +28,14 @@ contract Test1155PatchNFT is Patchwork1155Patch {
         return MetadataSchema(1, entries);
     }
 
-    function mintPatch(address to, address originalNFTAddress, uint originalNFTTokenId, address owner) external returns (uint256 tokenId){
+    function mintPatch(address to, address originalNFTAddress, uint originalNFTTokenId, address account) external returns (uint256 tokenId){
         if (msg.sender != _manager) {
             revert();
         }
         // Just for testing
         tokenId = _nextTokenId;
         _nextTokenId++;
-        _storePatch(tokenId, originalNFTAddress, originalNFTTokenId, owner);
+        _storePatch(tokenId, originalNFTAddress, originalNFTTokenId, account);
         _safeMint(to, tokenId);
         _metadataStorage[tokenId] = new uint256[](1);
         return tokenId;
