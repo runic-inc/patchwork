@@ -38,6 +38,7 @@ abstract contract PatchworkPatch is PatchworkNFT, IPatchworkPatch {
     @dev See {IERC721-ownerOf}
     */
     function ownerOf(uint256 tokenId) public view virtual override(ERC721, IERC721) returns (address) {
+        // Default is inherited ownership
         return IERC721(_patchedAddresses[tokenId]).ownerOf(_patchedTokenIds[tokenId]);
     }
 

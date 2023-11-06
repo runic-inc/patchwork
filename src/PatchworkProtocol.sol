@@ -146,16 +146,15 @@ contract PatchworkProtocol is IPatchworkProtocol {
     /**
     @dev See {IPatchworkProtocol-createAccountPatch}
     */
-    function createPatch(address originalNFTAddress, uint originalNFTTokenId, address patchAddress) public returns (uint256 tokenId) {
+    function createPatch(address owner, address originalNFTAddress, uint originalNFTTokenId, address patchAddress) public returns (uint256 tokenId) {
         IPatchworkPatch patch = IPatchworkPatch(patchAddress);
         string memory scopeName = patch.getScopeName();
         // mint a Patch that is soulbound to the originalNFT using the contract address at patchAddress which must support Patchwork metadata
         Scope storage scope = _mustHaveScope(scopeName);
         _mustBeWhitelisted(scopeName, scope, patchAddress);
-        address tokenOwner = IERC721(originalNFTAddress).ownerOf(originalNFTTokenId);
         if (scope.owner == msg.sender || scope.operators[msg.sender]) {
             // continue
-        } else if (scope.allowUserPatch && msg.sender == tokenOwner) {
+        } else if (scope.allowUserPatch) {
             // continue
         } else {
             revert NotAuthorized(msg.sender);
@@ -166,8 +165,8 @@ contract PatchworkProtocol is IPatchworkProtocol {
             revert AlreadyPatched(originalNFTAddress, originalNFTTokenId, patchAddress);
         }
         scope.uniquePatches[_hash] = true;
-        tokenId = patch.mintPatch(tokenOwner, originalNFTAddress, originalNFTTokenId);
-        emit Patch(tokenOwner, originalNFTAddress, originalNFTTokenId, patchAddress, tokenId);
+        tokenId = patch.mintPatch(owner, originalNFTAddress, originalNFTTokenId);
+        emit Patch(owner, originalNFTAddress, originalNFTTokenId, patchAddress, tokenId);
         return tokenId;
     }
 

@@ -68,12 +68,12 @@ contract PatchworkNFTCombinedTest is Test {
         assertEq(_userAddress, _testFragmentLiteRefNFT.ownerOf(fragmentTokenId)); // TODO why doesn't this cover the branch != address(0)
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _user2Address));
         vm.prank(_user2Address);
-        uint256 patchTokenId = _prot.createPatch(address(_testBaseNFT), baseTokenId, address(_testPatchLiteRefNFT));
+        uint256 patchTokenId = _prot.createPatch(_userAddress, address(_testBaseNFT), baseTokenId, address(_testPatchLiteRefNFT));
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _userAddress));
         vm.prank(_userAddress); // must have user patch enabled
-        patchTokenId = _prot.createPatch(address(_testBaseNFT), baseTokenId, address(_testPatchLiteRefNFT));
+        patchTokenId = _prot.createPatch(_userAddress, address(_testBaseNFT), baseTokenId, address(_testPatchLiteRefNFT));
         vm.prank(_scopeOwner);
-        patchTokenId = _prot.createPatch(address(_testBaseNFT), baseTokenId, address(_testPatchLiteRefNFT));
+        patchTokenId = _prot.createPatch(_userAddress, address(_testBaseNFT), baseTokenId, address(_testPatchLiteRefNFT));
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _userAddress));
         vm.prank(_userAddress); // can't call directly
         _testFragmentLiteRefNFT.assign(fragmentTokenId, address(_testPatchLiteRefNFT), patchTokenId);
