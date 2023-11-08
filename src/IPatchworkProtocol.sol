@@ -61,11 +61,20 @@ interface IPatchworkProtocol {
 
     /**
     @notice The token at the given address has already been patched
-    @param addr Address of the token owner
+    @param addr Address of the original 721
     @param tokenId ID of the patched token
     @param patchAddress Address of the patch applied
     */
     error AlreadyPatched(address addr, uint256 tokenId, address patchAddress);
+
+    /**
+    @notice The ERC1155 path has already been patched
+    @param addr Address of the 1155
+    @param tokenId ID of the patched token
+    @param account The account patched
+    @param patchAddress Address of the patch applied
+    */
+    error ERC1155AlreadyPatched(address addr, uint256 tokenId, address account, address patchAddress);
 
     /**
     @notice The provided input lengths are not compatible or valid
@@ -295,6 +304,18 @@ interface IPatchworkProtocol {
     event Patch(address indexed owner, address originalAddress, uint256 originalTokenId, address indexed patchAddress, uint256 indexed patchTokenId);
 
     /**
+    @notice Emitted when a patch is minted
+    @param owner The owner of the patch
+    @param originalAddress The address of the original NFT's contract
+    @param originalTokenId The tokenId of the original NFT
+    @param originalAccount The address of the original 1155's account
+    @param patchAddress The address of the patch's contract
+    @param patchTokenId The tokenId of the patch
+    */
+    event ERC1155Patch(address indexed owner, address originalAddress, uint256 originalTokenId, address originalAccount, address indexed patchAddress, uint256 indexed patchTokenId);
+
+
+    /**
     @notice Emitted when an account patch is minted
     @param owner The owner of the patch
     @param originalAddress The address of the original NFT's contract
@@ -463,6 +484,16 @@ interface IPatchworkProtocol {
     */
     function createPatch(address owner, address originalNFTAddress, uint originalNFTTokenId, address patchAddress) external returns (uint256 tokenId);
 
+    /**
+    @notice Create a new 1155 patch
+    @param originalNFTAddress Address of the original NFT
+    @param originalNFTTokenId Token ID of the original NFT
+    @param originalAccount Address of the account to patch
+    @param patchAddress Address of the IPatchworkPatch to mint
+    @return tokenId Token ID of the newly created patch
+    */
+    function create1155Patch(address to, address originalNFTAddress, uint originalNFTTokenId, address originalAccount, address patchAddress) external returns (uint256 tokenId);
+    
     /**
     @notice Create a new account patch
     @param owner The owner of the patch
