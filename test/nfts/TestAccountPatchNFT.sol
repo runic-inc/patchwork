@@ -26,7 +26,7 @@ contract TestAccountPatchNFT is PatchworkAccountPatch {
 
     function schema() pure external returns (MetadataSchema memory) {
         MetadataSchemaEntry[] memory entries = new MetadataSchemaEntry[](1);
-        entries[0] = MetadataSchemaEntry(1, 0, FieldType.UINT256, 0, FieldVisibility.PUBLIC, 2, 0, "thing");
+        entries[0] = MetadataSchemaEntry(1, 0, FieldType.UINT256, 1, FieldVisibility.PUBLIC, 2, 0, "thing");
         return MetadataSchema(1, entries);
     }
 

@@ -40,7 +40,7 @@ contract TestMultiFragmentNFT is PatchworkFragmentMulti {
     */
     function schema() pure external returns (MetadataSchema memory) {
         MetadataSchemaEntry[] memory entries = new MetadataSchemaEntry[](8);
-        entries[0] = MetadataSchemaEntry(0, 0, FieldType.UINT8, 0, FieldVisibility.PUBLIC, 0, 0, "nothing");
+        entries[0] = MetadataSchemaEntry(0, 0, FieldType.UINT8, 1, FieldVisibility.PUBLIC, 0, 0, "nothing");
         return MetadataSchema(1, entries);
     }
 

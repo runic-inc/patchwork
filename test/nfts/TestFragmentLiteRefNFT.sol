@@ -69,9 +69,9 @@ contract TestFragmentLiteRefNFT is PatchworkFragmentSingle, PatchworkLiteRef {
     function schema() pure external returns (MetadataSchema memory) {
         MetadataSchemaEntry[] memory entries = new MetadataSchemaEntry[](8);
         entries[0] = MetadataSchemaEntry(0, 0, FieldType.UINT64, 8, FieldVisibility.PUBLIC, 0, 0, "artifactIDs");
-        entries[1] = MetadataSchemaEntry(1, 0, FieldType.UINT8, 0, FieldVisibility.PUBLIC, 2, 0, "fragmentType");
-        entries[2] = MetadataSchemaEntry(2, 0, FieldType.UINT16, 0, FieldVisibility.PUBLIC, 2, 8, "rarity");
-        entries[3] = MetadataSchemaEntry(3, 0, FieldType.CHAR16, 0, FieldVisibility.PUBLIC, 2, 16, "name");
+        entries[1] = MetadataSchemaEntry(1, 0, FieldType.UINT8, 1, FieldVisibility.PUBLIC, 2, 0, "fragmentType");
+        entries[2] = MetadataSchemaEntry(2, 0, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 2, 8, "rarity");
+        entries[3] = MetadataSchemaEntry(3, 0, FieldType.CHAR16, 1, FieldVisibility.PUBLIC, 2, 16, "name");
         return MetadataSchema(1, entries);
     }
 
