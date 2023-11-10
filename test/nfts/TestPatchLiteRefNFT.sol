@@ -213,8 +213,8 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
         }
     }
 
-    function loadReferenceAddressAndTokenId(uint256 idx) public view returns (address addr, uint256 tokenId) {
-        uint256[] storage slots = _metadataStorage[tokenId];
+    function loadReferenceAddressAndTokenId(uint256 ourTokenId, uint256 idx) public view returns (address addr, uint256 tokenId) {
+        uint256[] storage slots = _metadataStorage[ourTokenId];
         uint slotNumber = idx / 4;
         uint shift = (idx % 4) * 64; 
         uint64 attributeId = uint64(slots[slotNumber] >> shift);

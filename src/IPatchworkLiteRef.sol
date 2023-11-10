@@ -104,11 +104,12 @@ interface IPatchworkLiteRef {
 
     /**
     @notice Loads a reference address and token ID at a given index
+    @param ourTokenId ID of the token
     @param idx Index to load from
     @return addr Address
     @return tokenId Token ID
     */
-    function loadReferenceAddressAndTokenId(uint256 idx) external view returns (address addr, uint256 tokenId);
+    function loadReferenceAddressAndTokenId(uint256 ourTokenId, uint256 idx) external view returns (address addr, uint256 tokenId);
 
     /**
     @notice Loads all references for a given token ID
