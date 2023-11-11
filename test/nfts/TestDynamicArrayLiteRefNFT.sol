@@ -11,6 +11,7 @@ pragma solidity ^0.8.13;
 
 import "../../src/PatchworkNFT.sol";
 import "../../src/PatchworkLiteRef.sol";
+import "forge-std/console.sol";
 
 struct TestDynamicArrayLiteRefNFTMetadata {
     uint16 xp;
@@ -22,9 +23,16 @@ struct TestDynamicArrayLiteRefNFTMetadata {
     string nickname;
 }
 
+struct DynamicLiteRefs {
+    uint256[] slots; // 4 per
+    mapping(uint64 => uint256) idx;
+}
+
 contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef {
 
     uint256 _nextTokenId;
+
+    mapping(uint256 => DynamicLiteRefs) internal _dynamicLiterefStorage; // tokenId => indexed slots
 
     constructor(address manager_) PatchworkNFT("testscope", "TestPatchLiteRef", "TPLR", msg.sender, manager_) PatchworkLiteRef() {
     }
@@ -32,7 +40,7 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef {
     // ERC-165
     function supportsInterface(bytes4 interfaceID) public view virtual override(PatchworkNFT, PatchworkLiteRef) returns (bool) {
         return PatchworkNFT.supportsInterface(interfaceID) ||
-            PatchworkLiteRef.supportsInterface(interfaceID);        
+            PatchworkLiteRef.supportsInterface(interfaceID);
     }
 
     function schemaURI() pure external override returns (string memory) {
@@ -45,6 +53,14 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef {
         require(_checkWriteAuth());
         _manager = manager_;
     }
+
+    function mint(address to) external returns (uint256 tokenId) {
+        tokenId = _nextTokenId;
+        _nextTokenId++;
+        _safeMint(to, tokenId);
+        _metadataStorage[tokenId] = new uint256[](1);
+        _dynamicLiterefStorage[tokenId].slots = new uint256[](0);
+    } 
 
     /*
     Hard coded prototype schema is:
@@ -130,7 +146,33 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef {
 
     function addReference(uint256 ourTokenId, uint64 referenceAddress) public override {
         require(_checkTokenWriteAuth(ourTokenId), "not authorized");
-        // TODO
+        // to append: find last slot, if it's not full, add, otherwise start a new slot.
+        DynamicLiteRefs storage store = _dynamicLiterefStorage[ourTokenId];
+        uint256 slotsLen = store.slots.length;
+        if (slotsLen == 0) {
+            store.slots.push(uint256(referenceAddress));
+            store.idx[referenceAddress] = 0;
+        } else {
+            uint256 slot = store.slots[slotsLen-1];
+            if (slot >= (1 << 192)) {
+                // new slot (pos 1)
+                store.slots.push(uint256(referenceAddress));
+                store.idx[referenceAddress] = slotsLen;
+            } else {
+                store.idx[referenceAddress] = slotsLen-1;
+                // Reverse search for the next empty subslot
+                if (slot >= (1 << 128)) {
+                    // pos 4
+                    store.slots[slotsLen-1] = slot | uint256(referenceAddress) << 192;
+                } else if (slot >= (1 << 64)) {
+                    // pos 3
+                    store.slots[slotsLen-1] = slot | uint256(referenceAddress) << 128;
+                } else {
+                    // pos 2
+                    store.slots[slotsLen-1] = slot | uint256(referenceAddress) << 64;
+                }
+            }
+        }
     }
 
     function batchAddReferences(uint256 ourTokenId, uint64[] calldata /*_referenceAddresses*/) public view override {
@@ -140,7 +182,77 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef {
 
     function removeReference(uint256 ourTokenId, uint64 referenceAddress) public override {
         require(_checkTokenWriteAuth(ourTokenId), "not authorized");
-        // TODO
+        DynamicLiteRefs storage store = _dynamicLiterefStorage[ourTokenId];
+        uint256 slotsLen = store.slots.length;
+        if (slotsLen == 0) {
+            // TODO custom exception
+            revert("not found");
+        }
+
+        console.log("removing");
+        console.logBytes8(bytes8(referenceAddress));
+        for (uint256 i = 0; i < store.slots.length; i++) {
+            console.logBytes32(bytes32(store.slots[i]));
+        }
+        uint256 count = getReferenceCount(ourTokenId);
+        if (count == 1) {
+            if (store.slots[0] == referenceAddress) {
+                store.slots.pop();
+                delete store.idx[referenceAddress];
+            } else {
+                // TODO custom exception
+                revert("not found");
+            }
+        } else {
+            // remember and remove the last ref
+            uint256 lastIdx = slotsLen-1;
+            uint256 slot = store.slots[lastIdx];
+            uint64 lastRef;
+            if (slot >= (1 << 192)) {
+                // pos 4
+                lastRef = uint64(slot >> 192);
+                store.slots[lastIdx] = slot & 0x0000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+            } else if (slot >= (1 << 128)) {
+                // pos 3
+                lastRef = uint64(slot >> 128);
+                store.slots[lastIdx] = slot & 0x00000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+            } else if (slot >= (1 << 64)) {
+                // pos 2
+                lastRef = uint64(slot >> 64);
+                store.slots[lastIdx] = slot & 0x000000000000000000000000000000000000000000000000FFFFFFFFFFFFFFFF;
+            } else {
+                // pos 1
+                lastRef = uint64(slot);
+                store.slots.pop();
+            }
+            if (lastRef == referenceAddress) {
+                // it was the last ref. No need to replace anything. It's already cleared so just clear the index
+                delete store.idx[referenceAddress];
+            } else {
+                // Find the ref and replace it with lastRef then update indexes
+                uint256 refSlotIdx = store.idx[referenceAddress];
+                slot = store.slots[refSlotIdx];
+                if (uint64(slot >> 192) == referenceAddress) {
+                    slot = slot & 0x0000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+                    slot = slot | (uint256(lastRef) << 192);
+                } else if (uint64(slot >> 128) == referenceAddress) {
+                    slot = slot & 0xFFFFFFFFFFFFFFFF0000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+                    slot = slot | (uint256(lastRef) << 128);
+                } else if (uint64(slot >> 64) == referenceAddress) {
+                    slot = slot & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000000000000000FFFFFFFFFFFFFFFF;
+                    slot = slot | (uint256(lastRef) << 64);
+                } else if (uint64(slot) == referenceAddress) {
+                    slot = slot & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000000000000000;
+                    slot = slot | uint256(lastRef);
+                } else {
+                    // WTF error
+                    revert("wtf");
+                }
+                store.slots[refSlotIdx] = slot;
+                store.idx[lastRef] = refSlotIdx;
+                delete store.idx[referenceAddress];
+            }
+        }
     }
 
     function loadReferenceAddressAndTokenId(uint256 ourTokenId, uint256 idx) public view returns (address addr, uint256 tokenId) {
@@ -149,7 +261,28 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef {
     }
 
     function getReferenceCount(uint256 tokenId) public view returns (uint256 count) {
-        // TODO
+        DynamicLiteRefs storage store = _dynamicLiterefStorage[tokenId];
+        uint256 slotsLen = store.slots.length;
+        if (slotsLen == 0) {
+            return 0;
+        } else {
+            uint256 slot = store.slots[slotsLen-1];
+            if (slot >= (1 << 192)) {
+                return slotsLen * 4;
+            } else {
+                // Reverse search for the next empty subslot
+                if (slot >= (1 << 128)) {
+                    // pos 4
+                    return (slotsLen-1) * 4 + 3;
+                } else if (slot >= (1 << 64)) {
+                    // pos 3
+                    return (slotsLen-1) * 4 + 2;
+                } else {
+                    // pos 2
+                    return (slotsLen-1) * 4 + 1;
+                }
+            }
+        }
     }
 
     function loadReferencePage(uint256 tokenId, uint256 offset, uint256 count) public view returns (address[] memory addresses, uint256[] memory tokenIds) {
