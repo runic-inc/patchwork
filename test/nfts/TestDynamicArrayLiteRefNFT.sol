@@ -256,8 +256,11 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef {
     }
 
     function loadReferenceAddressAndTokenId(uint256 ourTokenId, uint256 idx) public view returns (address addr, uint256 tokenId) {
-        // TODO
-        // return getReferenceAddressAndTokenId(attributeId);
+        uint256[] storage slots = _dynamicLiterefStorage[ourTokenId].slots;
+        uint slotNumber = idx / 4; // integer division will get the correct slot number
+        uint shift = (idx % 4) * 64; // the remainder will give the correct shift
+        uint64 ref = uint64(slots[slotNumber] >> shift);
+        (addr, tokenId) = getReferenceAddressAndTokenId(ref);
     }
 
     function getReferenceCount(uint256 tokenId) public view returns (uint256 count) {
@@ -267,6 +270,7 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef {
             return 0;
         } else {
             uint256 slot = store.slots[slotsLen-1];
+            // You could get rid of this conditional stuff if you had a log function
             if (slot >= (1 << 192)) {
                 return slotsLen * 4;
             } else {
@@ -286,24 +290,33 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef {
     }
 
     function loadReferencePage(uint256 tokenId, uint256 offset, uint256 count) public view returns (address[] memory addresses, uint256[] memory tokenIds) {
-        // TODO
-    }
-
-    function loadAllReferences(uint256 tokenId) public view returns (address[] memory addresses, uint256[] memory tokenIds) {
-        uint256[] storage slots = _metadataStorage[tokenId];
-        addresses = new address[](8);
-        tokenIds = new uint256[](8);
-        for (uint i = 0; i < 8; i++) {
-            uint slotNumber = i / 4; // integer division will get the correct slot number
-            uint shift = (i % 4) * 64; // the remainder will give the correct shift
-            uint64 attributeId = uint64(slots[slotNumber] >> shift);
-            (address attributeAddress, uint256 attributeTokenId) = getReferenceAddressAndTokenId(attributeId);
+        uint256 refCount = getReferenceCount(tokenId);
+        if (offset >= refCount) {
+            return (new address[](0), new uint256[](0));
+        }
+        uint256 realCount = refCount - offset;
+        if (realCount > count) {
+            realCount = count;
+        }
+        addresses = new address[](realCount);
+        tokenIds = new uint256[](realCount);
+        uint256[] storage slots = _dynamicLiterefStorage[tokenId].slots;
+        // start at offset
+        for (uint256 i = 0; i < realCount; i++) {
+            uint256 idx = offset + i;
+            uint slotNumber = idx / 4; // integer division will get the correct slot number
+            uint shift = (idx % 4) * 64; // the remainder will give the correct shift
+            uint64 ref = uint64(slots[slotNumber] >> shift);
+            (address attributeAddress, uint256 attributeTokenId) = getReferenceAddressAndTokenId(ref);
             addresses[i] = attributeAddress;
             tokenIds[i] = attributeTokenId;
         }
-        return (addresses, tokenIds);
     }
     
+    function loadAllReferences(uint256 tokenId) external view returns (address[] memory addresses, uint256[] memory tokenIds) {
+        // TODO change API so that this is for a different type of ref for assigned transfer
+    }
+
     function _checkWriteAuth() internal override(PatchworkNFT, PatchworkLiteRef) view returns (bool allow) {
         return PatchworkNFT._checkWriteAuth();
     }
