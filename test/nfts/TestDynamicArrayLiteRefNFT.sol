@@ -175,9 +175,32 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef {
         }
     }
 
-    function batchAddReferences(uint256 ourTokenId, uint64[] calldata /*_referenceAddresses*/) public view override {
+    function batchAddReferences(uint256 ourTokenId, uint64[] calldata _referenceAddresses) public override {
         require(_checkTokenWriteAuth(ourTokenId), "not authorized");
-        // TODO bulk insert for fewer stores
+        // do in batches of 4 with 1 remainder pass
+        DynamicLiteRefs storage store = _dynamicLiterefStorage[ourTokenId];
+        uint256 slotsLen = store.slots.length;
+        if (slotsLen > 0) {
+            revert("already loaded");
+        }
+        uint256 fullBatchCount = _referenceAddresses.length / 4;
+        uint256 remainder = _referenceAddresses.length % 4;
+        for (uint256 batch = 0; batch < fullBatchCount; batch++) {
+            uint256 refIdx = batch * 4;
+            uint256 slot = uint256(_referenceAddresses[refIdx]) | (uint256(_referenceAddresses[refIdx+1]) << 64) | (uint256(_referenceAddresses[refIdx+2]) << 128) | (uint256(_referenceAddresses[refIdx+3]) << 192);
+            store.slots.push(slot);
+            store.idx[_referenceAddresses[refIdx]] = batch;
+            store.idx[_referenceAddresses[refIdx + 1]] = batch;
+            store.idx[_referenceAddresses[refIdx + 2]] = batch;
+            store.idx[_referenceAddresses[refIdx + 3]] = batch;
+        }
+        uint256 rSlot;
+        for (uint256 i = 0; i < remainder; i++) {
+            uint256 idx = (fullBatchCount * 4) + i;
+            rSlot = rSlot | (uint256(_referenceAddresses[idx]) << (i * 64));
+            store.idx[_referenceAddresses[idx]] = fullBatchCount;
+        }
+        store.slots.push(rSlot);
     }
 
     function removeReference(uint256 ourTokenId, uint64 referenceAddress) public override {
