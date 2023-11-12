@@ -128,9 +128,9 @@ abstract contract PatchworkLiteRef is IPatchworkLiteRef, ERC165 {
     function getDynamicReferenceCount(uint256 tokenId) public virtual view returns (uint256 count) {}
 
     /**
-    @dev See {IPatchworkLiteRef-getDynamicReferenceCount}
+    @dev See {IPatchworkLiteRef-loadDynamicReferencePage}
     */
-    function getDynamicReferenceCount(uint256 tokenId, uint256 offset, uint256 count) public virtual view returns (address[] memory addresses, uint256[] memory tokenIds) {}
+    function loadDynamicReferencePage(uint256 tokenId, uint256 offset, uint256 count) public virtual view returns (address[] memory addresses, uint256[] memory tokenIds) {}
 
     modifier _mustHaveWriteAuth {
         if (!_checkWriteAuth()) {
