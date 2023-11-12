@@ -221,7 +221,7 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
         return getReferenceAddressAndTokenId(attributeId);
     }
 
-    function loadAllReferences(uint256 tokenId) public view returns (address[] memory addresses, uint256[] memory tokenIds) {
+    function loadAllStaticReferences(uint256 tokenId) public view override returns (address[] memory addresses, uint256[] memory tokenIds) {
         uint256[] storage slots = _metadataStorage[tokenId];
         addresses = new address[](8);
         tokenIds = new uint256[](8);

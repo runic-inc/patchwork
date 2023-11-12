@@ -40,33 +40,33 @@ contract PatchworkAccountPatchTest is Test {
         TestDynamicArrayLiteRefNFT nft = new TestDynamicArrayLiteRefNFT(address(_prot));
         nft.registerReferenceAddress(address(0x55));
         uint256 m = nft.mint(_userAddress);
-        assertEq(0, nft.getReferenceCount(m));
+        assertEq(0, nft.getDynamicReferenceCount(m));
         for (uint256 i = 0; i < 9; i++) {
             (uint64 ref,) = nft.getLiteReference(address(0x55), i);
             nft.addReference(m, ref);
-            assertEq(i+1, nft.getReferenceCount(m));
+            assertEq(i+1, nft.getDynamicReferenceCount(m));
         }
 
-        (, uint256[] memory tokenIds) = nft.loadReferencePage(m, 0, 3);
+        (, uint256[] memory tokenIds) = nft.loadDynamicReferencePage(m, 0, 3);
         assertEq(tokenIds[0], 0);
         assertEq(tokenIds[1], 1);
         assertEq(tokenIds[2], 2);
-        (, tokenIds) = nft.loadReferencePage(m, 3, 3);
+        (, tokenIds) = nft.loadDynamicReferencePage(m, 3, 3);
         assertEq(tokenIds[0], 3);
         assertEq(tokenIds[1], 4);
         assertEq(tokenIds[2], 5);
-        (, tokenIds) = nft.loadReferencePage(m, 6, 4);
+        (, tokenIds) = nft.loadDynamicReferencePage(m, 6, 4);
         assertEq(tokenIds[0], 6);
         assertEq(tokenIds[1], 7);
         assertEq(tokenIds[2], 8);
-        (, tokenIds) = nft.loadReferencePage(m, 9, 4);
+        (, tokenIds) = nft.loadDynamicReferencePage(m, 9, 4);
         assertEq(tokenIds.length, 0);
-        (, tokenIds) = nft.loadReferencePage(m, 10, 4);
+        (, tokenIds) = nft.loadDynamicReferencePage(m, 10, 4);
         assertEq(tokenIds.length, 0);
         for (uint256 i = 0; i < 9; i++) {
             (uint64 ref,) = nft.getLiteReference(address(0x55), i);
             nft.removeReference(m, ref);
-            assertEq(8-i, nft.getReferenceCount(m));
+            assertEq(8-i, nft.getDynamicReferenceCount(m));
         }
     }
 
@@ -74,37 +74,37 @@ contract PatchworkAccountPatchTest is Test {
         TestDynamicArrayLiteRefNFT nft = new TestDynamicArrayLiteRefNFT(address(_prot));
         nft.registerReferenceAddress(address(0x55));
         uint256 m = nft.mint(_userAddress);
-        assertEq(0, nft.getReferenceCount(m));
+        assertEq(0, nft.getDynamicReferenceCount(m));
         uint64[] memory refs = new uint64[](11);
         for (uint256 i = 0; i < 11; i++) {
             (uint64 ref,) = nft.getLiteReference(address(0x55), i);
             refs[i] = ref;
         }
         nft.batchAddReferences(m, refs);
-        assertEq(11, nft.getReferenceCount(m));
+        assertEq(11, nft.getDynamicReferenceCount(m));
 
-        (, uint256[] memory tokenIds) = nft.loadReferencePage(m, 0, 3);
+        (, uint256[] memory tokenIds) = nft.loadDynamicReferencePage(m, 0, 3);
         assertEq(tokenIds[0], 0);
         assertEq(tokenIds[1], 1);
         assertEq(tokenIds[2], 2);
-        (, tokenIds) = nft.loadReferencePage(m, 3, 3);
+        (, tokenIds) = nft.loadDynamicReferencePage(m, 3, 3);
         assertEq(tokenIds[0], 3);
         assertEq(tokenIds[1], 4);
         assertEq(tokenIds[2], 5);
-        (, tokenIds) = nft.loadReferencePage(m, 6, 5);
+        (, tokenIds) = nft.loadDynamicReferencePage(m, 6, 5);
         assertEq(tokenIds[0], 6);
         assertEq(tokenIds[1], 7);
         assertEq(tokenIds[2], 8);
         assertEq(tokenIds[3], 9);
         assertEq(tokenIds[4], 10);
-        (, tokenIds) = nft.loadReferencePage(m, 11, 4);
+        (, tokenIds) = nft.loadDynamicReferencePage(m, 11, 4);
         assertEq(tokenIds.length, 0);
-        (, tokenIds) = nft.loadReferencePage(m, 13, 4);
+        (, tokenIds) = nft.loadDynamicReferencePage(m, 13, 4);
         assertEq(tokenIds.length, 0);
         for (uint256 i = 0; i < 11; i++) {
             (uint64 ref,) = nft.getLiteReference(address(0x55), i);
             nft.removeReference(m, ref);
-            assertEq(10-i, nft.getReferenceCount(m));
+            assertEq(10-i, nft.getDynamicReferenceCount(m));
         }
     }
 

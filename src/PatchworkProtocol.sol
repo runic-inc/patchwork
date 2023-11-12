@@ -416,7 +416,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
         }
         if (IERC165(nft).supportsInterface(type(IPatchworkLiteRef).interfaceId)) {
             IPatchworkLiteRef liteRefNFT = IPatchworkLiteRef(nft);
-            (address[] memory addresses, uint256[] memory tokenIds) = liteRefNFT.loadAllReferences(tokenId);
+            (address[] memory addresses, uint256[] memory tokenIds) = liteRefNFT.loadAllStaticReferences(tokenId);
             for (uint i = 0; i < addresses.length; i++) {
                 if (addresses[i] != address(0)) {
                     _applyAssignedTransfer(addresses[i], from, to, tokenIds[i], nft, tokenId);
@@ -438,7 +438,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
         if (IERC165(nft).supportsInterface(type(IPatchworkLiteRef).interfaceId)) {
             address nft_ = nft; // local variable prevents optimizer stack issue in v0.8.18
             IPatchworkLiteRef liteRefNFT = IPatchworkLiteRef(nft);
-            (address[] memory addresses, uint256[] memory tokenIds) = liteRefNFT.loadAllReferences(tokenId);
+            (address[] memory addresses, uint256[] memory tokenIds) = liteRefNFT.loadAllStaticReferences(tokenId);
             for (uint i = 0; i < addresses.length; i++) {
                 if (addresses[i] != address(0)) {
                     _applyAssignedTransfer(addresses[i], from, to, tokenIds[i], nft_, tokenId);
@@ -453,7 +453,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
     function updateOwnershipTree(address nft, uint256 tokenId) public {
         if (IERC165(nft).supportsInterface(type(IPatchworkLiteRef).interfaceId)) {
             IPatchworkLiteRef liteRefNFT = IPatchworkLiteRef(nft);
-            (address[] memory addresses, uint256[] memory tokenIds) = liteRefNFT.loadAllReferences(tokenId);
+            (address[] memory addresses, uint256[] memory tokenIds) = liteRefNFT.loadAllStaticReferences(tokenId);
             for (uint i = 0; i < addresses.length; i++) {
                 if (addresses[i] != address(0)) {
                     updateOwnershipTree(addresses[i], tokenIds[i]);

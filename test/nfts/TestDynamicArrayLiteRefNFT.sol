@@ -217,7 +217,7 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef {
         for (uint256 i = 0; i < store.slots.length; i++) {
             console.logBytes32(bytes32(store.slots[i]));
         }
-        uint256 count = getReferenceCount(ourTokenId);
+        uint256 count = getDynamicReferenceCount(ourTokenId);
         if (count == 1) {
             if (store.slots[0] == referenceAddress) {
                 store.slots.pop();
@@ -286,7 +286,7 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef {
         (addr, tokenId) = getReferenceAddressAndTokenId(ref);
     }
 
-    function getReferenceCount(uint256 tokenId) public view returns (uint256 count) {
+    function getDynamicReferenceCount(uint256 tokenId) public view override returns (uint256 count) {
         DynamicLiteRefs storage store = _dynamicLiterefStorage[tokenId];
         uint256 slotsLen = store.slots.length;
         if (slotsLen == 0) {
@@ -312,8 +312,8 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef {
         }
     }
 
-    function loadReferencePage(uint256 tokenId, uint256 offset, uint256 count) public view returns (address[] memory addresses, uint256[] memory tokenIds) {
-        uint256 refCount = getReferenceCount(tokenId);
+    function loadDynamicReferencePage(uint256 tokenId, uint256 offset, uint256 count) public view override returns (address[] memory addresses, uint256[] memory tokenIds) {
+        uint256 refCount = getDynamicReferenceCount(tokenId);
         if (offset >= refCount) {
             return (new address[](0), new uint256[](0));
         }
@@ -334,10 +334,6 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef {
             addresses[i] = attributeAddress;
             tokenIds[i] = attributeTokenId;
         }
-    }
-    
-    function loadAllReferences(uint256 tokenId) external view returns (address[] memory addresses, uint256[] memory tokenIds) {
-        // TODO change API so that this is for a different type of ref for assigned transfer
     }
 
     function _checkWriteAuth() internal override(PatchworkNFT, PatchworkLiteRef) view returns (bool allow) {
