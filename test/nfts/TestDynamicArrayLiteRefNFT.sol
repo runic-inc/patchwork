@@ -208,7 +208,6 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef {
         DynamicLiteRefs storage store = _dynamicLiterefStorage[ourTokenId];
         uint256 slotsLen = store.slots.length;
         if (slotsLen == 0) {
-            // TODO custom exception
             revert("not found");
         }
 
@@ -223,7 +222,6 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef {
                 store.slots.pop();
                 delete store.idx[referenceAddress];
             } else {
-                // TODO custom exception
                 revert("not found");
             }
         } else {
@@ -268,8 +266,7 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef {
                     slot = slot & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000000000000000;
                     slot = slot | uint256(lastRef);
                 } else {
-                    // WTF error
-                    revert("wtf");
+                    revert("storage integrity error");
                 }
                 store.slots[refSlotIdx] = slot;
                 store.idx[lastRef] = refSlotIdx;
