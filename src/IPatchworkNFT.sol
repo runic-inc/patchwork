@@ -52,7 +52,7 @@ interface PatchworkNFTInterfaceMeta {
         uint256 id;                        ///< Index or unique identifier of the entry.
         uint256 permissionId;              ///< Permission identifier associated with the entry.
         FieldType fieldType;               ///< Type of field data (from the FieldType enum).
-        uint256 arrayLength;               ///< Length of array for the field (0 means it's a single field).
+        uint256 fieldCount;                ///< Number of elements of this field (0 = Dynamic Array, 1 = Single, >1 = Static Array)
         FieldVisibility visibility;        ///< Visibility level of the field.
         uint256 slot;                      ///< Starting storage slot, may span multiple slots based on width.
         uint256 offset;                    ///< Offset in bits within the storage slot.

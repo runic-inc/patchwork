@@ -104,17 +104,35 @@ interface IPatchworkLiteRef {
 
     /**
     @notice Loads a reference address and token ID at a given index
+    @param ourTokenId ID of the token
     @param idx Index to load from
     @return addr Address
     @return tokenId Token ID
     */
-    function loadReferenceAddressAndTokenId(uint256 idx) external view returns (address addr, uint256 tokenId);
+    function loadReferenceAddressAndTokenId(uint256 ourTokenId, uint256 idx) external view returns (address addr, uint256 tokenId);
 
     /**
-    @notice Loads all references for a given token ID
+    @notice Loads all static references for a given token ID
     @param tokenId ID of the token
     @return addresses Array of addresses
     @return tokenIds Array of token IDs
     */
-    function loadAllReferences(uint256 tokenId) external view returns (address[] memory addresses, uint256[] memory tokenIds);
+    function loadAllStaticReferences(uint256 tokenId) external view returns (address[] memory addresses, uint256[] memory tokenIds);
+
+    /**
+    @notice Count all dynamic references for a given token ID
+    @param tokenId ID of the token
+    @return count the number of dynamic references
+    */
+    function getDynamicReferenceCount(uint256 tokenId) external view returns (uint256 count);
+
+    /**
+    @notice Load a page of dynamic references for a given token ID
+    @param tokenId ID of the token
+    @param offset The starting offset 0-indexed
+    @param count The maximum number of references to return
+    @return addresses An array of reference addresses
+    @return tokenIds An array of reference token IDs
+    */
+    function loadDynamicReferencePage(uint256 tokenId, uint256 offset, uint256 count) external view returns (address[] memory addresses, uint256[] memory tokenIds);
 }

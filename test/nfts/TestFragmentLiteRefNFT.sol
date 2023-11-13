@@ -69,9 +69,9 @@ contract TestFragmentLiteRefNFT is PatchworkFragmentSingle, PatchworkLiteRef {
     function schema() pure external returns (MetadataSchema memory) {
         MetadataSchemaEntry[] memory entries = new MetadataSchemaEntry[](8);
         entries[0] = MetadataSchemaEntry(0, 0, FieldType.UINT64, 8, FieldVisibility.PUBLIC, 0, 0, "artifactIDs");
-        entries[1] = MetadataSchemaEntry(1, 0, FieldType.UINT8, 0, FieldVisibility.PUBLIC, 2, 0, "fragmentType");
-        entries[2] = MetadataSchemaEntry(2, 0, FieldType.UINT16, 0, FieldVisibility.PUBLIC, 2, 8, "rarity");
-        entries[3] = MetadataSchemaEntry(3, 0, FieldType.CHAR16, 0, FieldVisibility.PUBLIC, 2, 16, "name");
+        entries[1] = MetadataSchemaEntry(1, 0, FieldType.UINT8, 1, FieldVisibility.PUBLIC, 2, 0, "fragmentType");
+        entries[2] = MetadataSchemaEntry(2, 0, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 2, 8, "rarity");
+        entries[3] = MetadataSchemaEntry(3, 0, FieldType.CHAR16, 1, FieldVisibility.PUBLIC, 2, 16, "name");
         return MetadataSchema(1, entries);
     }
 
@@ -170,15 +170,15 @@ contract TestFragmentLiteRefNFT is PatchworkFragmentSingle, PatchworkLiteRef {
         }
     }
 
-    function loadReferenceAddressAndTokenId(uint256 idx) public view returns (address addr, uint256 tokenId) {
-        uint256[] storage slots = _metadataStorage[tokenId];
+    function loadReferenceAddressAndTokenId(uint256 ourTokenId, uint256 idx) public view returns (address addr, uint256 tokenId) {
+        uint256[] storage slots = _metadataStorage[ourTokenId];
         uint slotNumber = idx / 4;
         uint shift = (idx % 4) * 64; 
         uint64 attributeId = uint64(slots[slotNumber] >> shift);
         return getReferenceAddressAndTokenId(attributeId);
     }
 
-    function loadAllReferences(uint256 tokenId) public view returns (address[] memory addresses, uint256[] memory tokenIds) {
+    function loadAllStaticReferences(uint256 tokenId) public view override returns (address[] memory addresses, uint256[] memory tokenIds) {
         uint256[] storage slots = _metadataStorage[tokenId];
         addresses = new address[](8);
         tokenIds = new uint256[](8);

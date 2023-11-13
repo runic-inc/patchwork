@@ -61,13 +61,13 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
     function schema() pure external override returns (MetadataSchema memory) {
         MetadataSchemaEntry[] memory entries = new MetadataSchemaEntry[](8);
         entries[0] = MetadataSchemaEntry(0, 0, FieldType.UINT64, 8, FieldVisibility.PUBLIC, 0, 0, "artifactIDs");
-        entries[1] = MetadataSchemaEntry(1, 1, FieldType.UINT16, 0, FieldVisibility.PUBLIC, 2, 0, "xp");
-        entries[2] = MetadataSchemaEntry(2, 2, FieldType.UINT8, 0, FieldVisibility.PUBLIC, 2, 16, "level");
-        entries[3] = MetadataSchemaEntry(3, 0, FieldType.UINT16, 0, FieldVisibility.PUBLIC, 2, 24, "xpLost");
-        entries[4] = MetadataSchemaEntry(4, 0, FieldType.UINT16, 0, FieldVisibility.PUBLIC, 2, 40, "stakedMade");
-        entries[5] = MetadataSchemaEntry(5, 0, FieldType.UINT16, 0, FieldVisibility.PUBLIC, 2, 56, "stakedCorrect");
-        entries[6] = MetadataSchemaEntry(6, 0, FieldType.UINT8, 0, FieldVisibility.PUBLIC, 2, 72, "evolution");
-        entries[7] = MetadataSchemaEntry(7, 0, FieldType.CHAR16, 0, FieldVisibility.PUBLIC, 2, 80, "nickname");
+        entries[1] = MetadataSchemaEntry(1, 1, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 2, 0, "xp");
+        entries[2] = MetadataSchemaEntry(2, 2, FieldType.UINT8, 1, FieldVisibility.PUBLIC, 2, 16, "level");
+        entries[3] = MetadataSchemaEntry(3, 0, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 2, 24, "xpLost");
+        entries[4] = MetadataSchemaEntry(4, 0, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 2, 40, "stakedMade");
+        entries[5] = MetadataSchemaEntry(5, 0, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 2, 56, "stakedCorrect");
+        entries[6] = MetadataSchemaEntry(6, 0, FieldType.UINT8, 1, FieldVisibility.PUBLIC, 2, 72, "evolution");
+        entries[7] = MetadataSchemaEntry(7, 0, FieldType.CHAR16, 1, FieldVisibility.PUBLIC, 2, 80, "nickname");
         return MetadataSchema(1, entries);
     }
 
@@ -213,15 +213,15 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
         }
     }
 
-    function loadReferenceAddressAndTokenId(uint256 idx) public view returns (address addr, uint256 tokenId) {
-        uint256[] storage slots = _metadataStorage[tokenId];
+    function loadReferenceAddressAndTokenId(uint256 ourTokenId, uint256 idx) public view returns (address addr, uint256 tokenId) {
+        uint256[] storage slots = _metadataStorage[ourTokenId];
         uint slotNumber = idx / 4;
         uint shift = (idx % 4) * 64; 
         uint64 attributeId = uint64(slots[slotNumber] >> shift);
         return getReferenceAddressAndTokenId(attributeId);
     }
 
-    function loadAllReferences(uint256 tokenId) public view returns (address[] memory addresses, uint256[] memory tokenIds) {
+    function loadAllStaticReferences(uint256 tokenId) public view override returns (address[] memory addresses, uint256[] memory tokenIds) {
         uint256[] storage slots = _metadataStorage[tokenId];
         addresses = new address[](8);
         tokenIds = new uint256[](8);
