@@ -213,6 +213,28 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
         }
     }
 
+    function addReferenceDirect(uint256 tokenId, uint64 referenceAddress, uint256 targetMetadataId) public override {
+        if (targetMetadataId != 0) {
+            revert("Unsupported metadata ID");
+        }
+        addReference(tokenId, referenceAddress);
+    }
+
+
+    function removeReferenceDirect(uint256 tokenId, uint64 liteRef, uint256 targetMetadataId) public override {
+        if (targetMetadataId != 0) {
+            revert("Unsupported metadata ID");
+        }
+        removeReference(tokenId, liteRef);
+    }
+
+    function batchAddReferencesDirect(uint256 tokenId, uint64[] calldata liteRefs, uint256 targetMetadataId) public view override {
+        if (targetMetadataId != 0) {
+            revert("Unsupported metadata ID");
+        }
+        batchAddReferences(tokenId, liteRefs);
+    }
+    
     function loadReferenceAddressAndTokenId(uint256 ourTokenId, uint256 idx) public view returns (address addr, uint256 tokenId) {
         uint256[] storage slots = _metadataStorage[ourTokenId];
         uint slotNumber = idx / 4;

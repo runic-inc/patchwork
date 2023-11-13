@@ -513,6 +513,16 @@ interface IPatchworkProtocol {
     function assignNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) external;
 
     /**
+    @notice Assigns an NFT relation to have an IPatchworkLiteRef form a LiteRef to a IPatchworkAssignableNFT
+    @param fragment The IPatchworkAssignableNFT address to assign
+    @param fragmentTokenId The IPatchworkAssignableNFT Token ID to assign
+    @param target The IPatchworkLiteRef address to hold the reference to the fragment
+    @param targetTokenId The IPatchworkLiteRef Token ID to hold the reference to the fragment
+    @param targetMetadataId The metadata ID on the target NFT to store the reference in
+    */
+    function assignNFTDirect(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) external;
+
+    /**
     @notice Assign multiple NFT fragments to a target NFT in batch
     @param fragments The array of addresses of the fragment IPatchworkAssignableNFTs
     @param tokenIds The array of token IDs of the fragment IPatchworkAssignableNFTs
@@ -520,6 +530,16 @@ interface IPatchworkProtocol {
     @param targetTokenId The token ID of the target IPatchworkLiteRef NFT
     */
     function batchAssignNFT(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId) external;
+
+    /**
+    @notice Assign multiple NFT fragments to a target NFT in batch
+    @param fragments The array of addresses of the fragment IPatchworkAssignableNFTs
+    @param tokenIds The array of token IDs of the fragment IPatchworkAssignableNFTs
+    @param target The address of the target IPatchworkLiteRef NFT
+    @param targetTokenId The token ID of the target IPatchworkLiteRef NFT
+    @param targetMetadataId The metadata ID on the target NFT to store the references in
+    */
+    function batchAssignNFTDirect(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId, uint256 targetMetadataId) external;
 
     /**
     @notice Unassign a NFT fragment from a target NFT
@@ -547,6 +567,36 @@ interface IPatchworkProtocol {
     @param targetTokenId The IPatchworkLiteRef Token ID which holds a reference to the fragment
     */
     function unassignNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) external;
+
+    /**
+    @notice Unassign a NFT fragment from a target NFT
+    @param fragment The IPatchworkSingleAssignableNFT address of the fragment NFT
+    @param fragmentTokenId The IPatchworkSingleAssignableNFT token ID of the fragment NFT
+    @param targetMetadataId The metadata ID on the target NFT to unassign from
+    @dev reverts if fragment is not an IPatchworkSingleAssignableNFT
+    */
+    function unassignSingleNFTDirect(address fragment, uint fragmentTokenId, uint256 targetMetadataId) external;
+
+    /**
+    @notice Unassigns a multi NFT relation
+    @param fragment The IPatchworMultiAssignableNFT address to unassign
+    @param fragmentTokenId The IPatchworkMultiAssignableNFT Token ID to unassign
+    @param target The IPatchworkLiteRef address which holds a reference to the fragment
+    @param targetTokenId The IPatchworkLiteRef Token ID which holds a reference to the fragment
+    @param targetMetadataId The metadata ID on the target NFT to unassign from
+    @dev reverts if fragment is not an IPatchworkMultiAssignableNFT
+    */
+    function unassignMultiNFTDirect(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) external;
+
+    /**
+    @notice Unassigns an NFT relation (single or multi)
+    @param fragment The IPatchworkAssignableNFT address to unassign
+    @param fragmentTokenId The IPatchworkAssignableNFT Token ID to unassign
+    @param target The IPatchworkLiteRef address which holds a reference to the fragment
+    @param targetTokenId The IPatchworkLiteRef Token ID which holds a reference to the fragment
+    @param targetMetadataId The metadata ID on the target NFT to unassign from
+    */
+    function unassignNFTDirect(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) external;
 
     /**
     @notice Apply transfer rules and actions of a specific token from one address to another

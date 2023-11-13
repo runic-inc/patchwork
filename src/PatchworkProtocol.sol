@@ -230,25 +230,49 @@ contract PatchworkProtocol is IPatchworkProtocol {
     function assignNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) public mustNotBeFrozen(target, targetTokenId) {
         address targetOwner = IERC721(target).ownerOf(targetTokenId);
         uint64 ref = _doAssign(fragment, fragmentTokenId, target, targetTokenId, targetOwner);
-        // call addReference on the target
         IPatchworkLiteRef(target).addReference(targetTokenId, ref);
+    }
+
+    /**
+    @dev See {IPatchworkProtocol-assignNFTDirect}
+    */
+    function assignNFTDirect(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) public mustNotBeFrozen(target, targetTokenId) {
+        address targetOwner = IERC721(target).ownerOf(targetTokenId);
+        uint64 ref = _doAssign(fragment, fragmentTokenId, target, targetTokenId, targetOwner);
+        IPatchworkLiteRef(target).addReferenceDirect(targetTokenId, ref, targetMetadataId);
     }
 
     /**
     @dev See {IPatchworkProtocol-batchAssignNFT}
     */
     function batchAssignNFT(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId) public mustNotBeFrozen(target, targetTokenId) {
+        (uint64[] memory refs, ) = _batchAssignCommon(fragments, tokenIds, target, targetTokenId);
+        IPatchworkLiteRef(target).batchAddReferences(targetTokenId, refs);
+    }
+
+    /**
+    @dev See {IPatchworkProtocol-batchAssignNFTDirect}
+    */
+    function batchAssignNFTDirect(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId, uint256 targetMetadataId) public mustNotBeFrozen(target, targetTokenId) {
+        (uint64[] memory refs, ) = _batchAssignCommon(fragments, tokenIds, target, targetTokenId);
+        IPatchworkLiteRef(target).batchAddReferencesDirect(targetTokenId, refs, targetMetadataId);
+    }
+
+    /**
+    @dev Common function to handle the batch assignment of NFTs.
+    */
+    function _batchAssignCommon(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId) private returns (uint64[] memory refs, address targetOwner) {
         if (fragments.length != tokenIds.length) {
             revert BadInputLengths();
         }
-        address targetOwner = IERC721(target).ownerOf(targetTokenId);
-        uint64[] memory refs = new uint64[](fragments.length);
+        targetOwner = IERC721(target).ownerOf(targetTokenId);
+        refs = new uint64[](fragments.length);
         for (uint i = 0; i < fragments.length; i++) {
             address fragment = fragments[i];
             uint256 fragmentTokenId = tokenIds[i];
             refs[i] = _doAssign(fragment, fragmentTokenId, target, targetTokenId, targetOwner);
         }
-        IPatchworkLiteRef(target).batchAddReferences(targetTokenId, refs);
+        return (refs, targetOwner);
     }
 
     /**
@@ -320,15 +344,37 @@ contract PatchworkProtocol is IPatchworkProtocol {
     /**
     @dev See {IPatchworkProtocol-unassignNFT}
     */
-    function unassignNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) public {
+    function unassignNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) public mustNotBeFrozen(target, targetTokenId) {
+        _unassignNFT(fragment, fragmentTokenId, target, targetTokenId, false, 0);
+    }
+
+    /**
+    @dev See {IPatchworkProtocol-unassignNFTDirect}
+    */
+    function unassignNFTDirect(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) public mustNotBeFrozen(target, targetTokenId) {
+        _unassignNFT(fragment, fragmentTokenId, target, targetTokenId, true, targetMetadataId);
+    }
+
+    /**
+    @dev Common function to handle the unassignment of NFTs.
+    */
+    function _unassignNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, bool isDirect, uint256 targetMetadataId) private {
         if (IERC165(fragment).supportsInterface(type(IPatchworkMultiAssignableNFT).interfaceId)) {
-            unassignMultiNFT(fragment, fragmentTokenId, target, targetTokenId);
+            if (isDirect) {
+                unassignMultiNFTDirect(fragment, fragmentTokenId, target, targetTokenId, targetMetadataId);
+            } else {
+                unassignMultiNFT(fragment, fragmentTokenId, target, targetTokenId);
+            }
         } else if (IERC165(fragment).supportsInterface(type(IPatchworkSingleAssignableNFT).interfaceId)) {
             (address _target, uint256 _targetTokenId) = IPatchworkSingleAssignableNFT(fragment).getAssignedTo(fragmentTokenId);
             if (target != _target || _targetTokenId != targetTokenId) {
                 revert FragmentNotAssignedToTarget(fragment, fragmentTokenId, target, targetTokenId);
             }
-            unassignSingleNFT(fragment, fragmentTokenId);
+            if (isDirect) {
+                unassignSingleNFTDirect(fragment, fragmentTokenId, targetMetadataId);
+            } else {
+                unassignSingleNFT(fragment, fragmentTokenId);
+            }
         } else {
             revert UnsupportedContract();
         }
@@ -338,26 +384,54 @@ contract PatchworkProtocol is IPatchworkProtocol {
     @dev See {IPatchworkProtocol-unassignMultiNFT}
     */
     function unassignMultiNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) public mustNotBeFrozen(target, targetTokenId) {
+        _unassignMultiCommon(fragment, fragmentTokenId, target, targetTokenId, false, 0);
+    }
+
+    /**
+    @dev See {IPatchworkProtocol-unassignMultiNFTDirect}
+    */
+    function unassignMultiNFTDirect(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) public mustNotBeFrozen(target, targetTokenId) {
+        _unassignMultiCommon(fragment, fragmentTokenId, target, targetTokenId, true, targetMetadataId);
+    }
+
+    /**
+    @dev Common function to handle the unassignment of multi NFTs.
+    */
+    function _unassignMultiCommon(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, bool isDirect, uint256 targetMetadataId) private {
         IPatchworkMultiAssignableNFT assignable = IPatchworkMultiAssignableNFT(fragment);
         string memory scopeName = assignable.getScopeName();
         if (!assignable.isAssignedTo(fragmentTokenId, target, targetTokenId)) {
             revert FragmentNotAssignedToTarget(fragment, fragmentTokenId, target, targetTokenId);
         }
-        _doUnassign(fragment, fragmentTokenId, target, targetTokenId, scopeName);
+        _doUnassign(fragment, fragmentTokenId, target, targetTokenId, isDirect, targetMetadataId, scopeName);
         assignable.unassign(fragmentTokenId, target, targetTokenId);
     }
 
     /**
-    @dev See {IPatchworkProtocol-unassignNFT}
+    @dev See {IPatchworkProtocol-unassignSingleNFT}
     */
     function unassignSingleNFT(address fragment, uint fragmentTokenId) public mustNotBeFrozen(fragment, fragmentTokenId) {
+        _unassignSingleCommon(fragment, fragmentTokenId, false, 0);
+    }
+
+    /**
+    @dev See {IPatchworkProtocol-unassignSingleNFTDirect}
+    */
+    function unassignSingleNFTDirect(address fragment, uint fragmentTokenId, uint256 targetMetadataId) public mustNotBeFrozen(fragment, fragmentTokenId) {
+        _unassignSingleCommon(fragment, fragmentTokenId, true, targetMetadataId);
+    }
+
+    /**
+    @dev Common function to handle the unassignment of single NFTs.
+    */
+    function _unassignSingleCommon(address fragment, uint fragmentTokenId, bool isDirect, uint256 targetMetadataId) private {
         IPatchworkSingleAssignableNFT assignableNFT = IPatchworkSingleAssignableNFT(fragment);
         string memory scopeName = assignableNFT.getScopeName();
         (address target, uint256 targetTokenId) = assignableNFT.getAssignedTo(fragmentTokenId);
         if (target == address(0)) {
             revert FragmentNotAssigned(fragment, fragmentTokenId);
         }
-        _doUnassign(fragment, fragmentTokenId, target, targetTokenId, scopeName);
+        _doUnassign(fragment, fragmentTokenId, target, targetTokenId, isDirect, targetMetadataId, scopeName);
         assignableNFT.unassign(fragmentTokenId);
     }
 
@@ -369,7 +443,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
     @param targetTokenId the IPatchworkLiteRef target's tokenId
     @param scopeName the name of the assignable's scope
     */
-    function _doUnassign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, string memory scopeName) private {
+    function _doUnassign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, bool direct, uint256 targetMetadataId, string memory scopeName) private {
         Scope storage scope = _mustHaveScope(scopeName);
         if (scope.owner == msg.sender || scope.operators[msg.sender]) {
             // continue
@@ -390,7 +464,12 @@ contract PatchworkProtocol is IPatchworkProtocol {
             revert RefNotFound(target, fragment, fragmentTokenId);
         }
         delete _liteRefs[targetRef];
-        IPatchworkLiteRef(target).removeReference(targetTokenId, ref);
+        if (direct) {
+            IPatchworkLiteRef(target).removeReferenceDirect(targetTokenId, ref, targetMetadataId);
+        } else {
+            IPatchworkLiteRef(target).removeReference(targetTokenId, ref);
+        }
+
         emit Unassign(IERC721(target).ownerOf(targetTokenId), fragment, fragmentTokenId, target, targetTokenId);
     }
 
