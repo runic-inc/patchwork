@@ -103,6 +103,30 @@ interface IPatchworkLiteRef {
     function removeReference(uint256 tokenId, uint64 liteRef) external;
 
     /**
+    @notice Adds a reference to a token
+    @param tokenId ID of the token
+    @param referenceAddress Reference address to add
+    @param targetMetadataId The metadata ID on the target NFT to unassign from
+    */
+    function addReferenceDirect(uint256 tokenId, uint64 referenceAddress, uint256 targetMetadataId) external;
+
+    /**
+    @notice Adds multiple references to a token
+    @param tokenId ID of the token
+    @param liteRefs Array of lite references to add
+    @param targetMetadataId The metadata ID on the target NFT to unassign from
+    */
+    function batchAddReferencesDirect(uint256 tokenId, uint64[] calldata liteRefs, uint256 targetMetadataId) external;
+
+    /**
+    @notice Removes a reference from a token
+    @param tokenId ID of the token
+    @param liteRef Lite reference to remove
+    @param targetMetadataId The metadata ID on the target NFT to unassign from
+    */
+    function removeReferenceDirect(uint256 tokenId, uint64 liteRef, uint256 targetMetadataId) external;
+
+    /**
     @notice Loads a reference address and token ID at a given index
     @param ourTokenId ID of the token
     @param idx Index to load from

@@ -139,6 +139,28 @@ contract TestFragmentLiteRefNFT is PatchworkFragmentSingle, PatchworkLiteRef {
         }
     }
 
+    function addReferenceDirect(uint256 tokenId, uint64 referenceAddress, uint256 targetMetadataId) public override {
+        if (targetMetadataId != 0) {
+            revert("Unsupported metadata ID");
+        }
+        addReference(tokenId, referenceAddress);
+    }
+
+
+    function removeReferenceDirect(uint256 tokenId, uint64 liteRef, uint256 targetMetadataId) public override {
+        if (targetMetadataId != 0) {
+            revert("Unsupported metadata ID");
+        }
+        removeReference(tokenId, liteRef);
+    }
+
+    function batchAddReferencesDirect(uint256 tokenId, uint64[] calldata liteRefs, uint256 targetMetadataId) public view override {
+        if (targetMetadataId != 0) {
+            revert("Unsupported metadata ID");
+        }
+        batchAddReferences(tokenId, liteRefs);
+    }
+
     function batchAddReferences(uint256 ourTokenId, uint64[] calldata /*_referenceAddresses*/) public view override {
         require(_checkTokenWriteAuth(ourTokenId), "not authorized");
         // TODO bulk insert for fewer stores

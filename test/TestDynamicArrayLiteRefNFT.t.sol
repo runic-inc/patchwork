@@ -108,5 +108,10 @@ contract PatchworkAccountPatchTest is Test {
         }
     }
 
+    function testUnusedFuncs() public {
+        TestDynamicArrayLiteRefNFT nft = new TestDynamicArrayLiteRefNFT(address(_prot));
+        nft.loadAllStaticReferences(0);
+    }
+
 
 }
