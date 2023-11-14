@@ -224,10 +224,10 @@ contract PatchworkProtocolTest is Test {
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _userAddress));
         vm.prank(_userAddress);
         // cover called from non-owner/op with no allowUserAssign
-        _prot.assignNFT(address(_testFragmentLiteRefNFT), fragmentTokenId, address(_testPatchLiteRefNFT), patchTokenId);
+        _prot.assignNFTDirect(address(_testFragmentLiteRefNFT), fragmentTokenId, address(_testPatchLiteRefNFT), patchTokenId, 0);
         
         vm.startPrank(_scopeOwner);
-        _prot.assignNFT(address(_testFragmentLiteRefNFT), fragmentTokenId, address(_testPatchLiteRefNFT), patchTokenId);
+        _prot.assignNFTDirect(address(_testFragmentLiteRefNFT), fragmentTokenId, address(_testPatchLiteRefNFT), patchTokenId, 0);
         (address addr, uint256 tokenId) = _testFragmentLiteRefNFT.getAssignedTo(fragmentTokenId);
         assertEq(addr, address(_testPatchLiteRefNFT));
         assertEq(tokenId, patchTokenId);
@@ -275,7 +275,7 @@ contract PatchworkProtocolTest is Test {
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.ScopeDoesNotExist.selector, "foo"));
         _prot.unassignNFT(address(_testFragmentLiteRefNFT), fragmentTokenId1, address(_testFragmentLiteRefNFT), fragmentTokenId2);
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.ScopeDoesNotExist.selector, "foo"));
-        _prot.unassignNFT(address(_testMultiFragmentNFT), multi1, address(_testFragmentLiteRefNFT), fragmentTokenId2);
+        _prot.unassignNFTDirect(address(_testMultiFragmentNFT), multi1, address(_testFragmentLiteRefNFT), fragmentTokenId2, 0);
     }
 
     function testUnsupportedNFTUnassign() public {
@@ -344,7 +344,7 @@ contract PatchworkProtocolTest is Test {
         vm.prank(_user2Address);
         _prot.unassignSingleNFT(address(_testFragmentLiteRefNFT), fragmentTokenId);
         vm.startPrank(_userAddress);
-        _prot.unassignSingleNFT(address(_testFragmentLiteRefNFT), fragmentTokenId);
+        _prot.unassignSingleNFTDirect(address(_testFragmentLiteRefNFT), fragmentTokenId, 0);
         // not currently assigned
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentNotAssigned.selector, address(_testFragmentLiteRefNFT), fragmentTokenId));
         _prot.unassignSingleNFT(address(_testFragmentLiteRefNFT), fragmentTokenId);
@@ -394,7 +394,7 @@ contract PatchworkProtocolTest is Test {
         vm.startPrank(_scopeOwner);
         _prot.unassignSingleNFT(address(_testFragmentLiteRefNFT), fragment2);
         // Now Id1 -> Id, unassign Id1 from Id
-        _prot.unassignSingleNFT(address(_testFragmentLiteRefNFT), fragment1);
+        _prot.unassignNFTDirect(address(_testFragmentLiteRefNFT), fragment1, address(_testPatchLiteRefNFT), patchTokenId, 0);
         // Assign Id1 -> Id
         _prot.assignNFT(address(_testFragmentLiteRefNFT), fragment1, address(_testPatchLiteRefNFT), patchTokenId);
         // Assign Id2 -> Id1
@@ -441,6 +441,8 @@ contract PatchworkProtocolTest is Test {
         vm.expectRevert(); // not unassignable
         _prot.unassignMultiNFT(address(1), 1, address(1), 1);
 
+        vm.expectRevert(); // not unassignable
+        _prot.unassignMultiNFTDirect(address(1), 1, address(1), 1, 0);
         uint256 _testBaseNFTTokenId = _testBaseNFT.mint(_userAddress);
         uint256 fragment1 = _testMultiFragmentNFT.mint(_userAddress);
 
@@ -557,7 +559,7 @@ contract PatchworkProtocolTest is Test {
     
         // finally a positive test case
         vm.prank(_scopeOwner);
-        _prot.batchAssignNFT(fragmentAddresses, fragments, address(_testPatchLiteRefNFT), patchTokenId);
+        _prot.batchAssignNFTDirect(fragmentAddresses, fragments, address(_testPatchLiteRefNFT), patchTokenId, 0);
 
         for (uint8 i = 0; i < 8; i++) {
             (address addr, uint256 tokenId) = _testFragmentLiteRefNFT.getAssignedTo(fragments[i]);

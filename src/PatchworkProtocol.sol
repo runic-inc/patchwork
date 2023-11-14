@@ -272,7 +272,6 @@ contract PatchworkProtocol is IPatchworkProtocol {
             uint256 fragmentTokenId = tokenIds[i];
             refs[i] = _doAssign(fragment, fragmentTokenId, target, targetTokenId, targetOwner);
         }
-        return (refs, targetOwner);
     }
 
     /**

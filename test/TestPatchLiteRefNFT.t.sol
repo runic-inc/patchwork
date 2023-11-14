@@ -127,4 +127,9 @@ contract TestPatchLiteRefNFTTest is Test {
         assertEq(testNFT.loadXP(1), 65535);
         assertEq(testNFT.loadLevel(1), 255);
     }
+
+    function testUnusedFuncs() public {
+        testNFT.loadDynamicReferencePage(0, 0, 0);
+        testNFT.getDynamicReferenceCount(0);
+    }
 }
