@@ -75,14 +75,14 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef {
     */
     function schema() pure external override returns (MetadataSchema memory) {
         MetadataSchemaEntry[] memory entries = new MetadataSchemaEntry[](8);
-        entries[0] = MetadataSchemaEntry(0, 0, FieldType.UINT64, 0, FieldVisibility.PUBLIC, 0, 0, "artifactIDs"); // Dynamic
-        entries[1] = MetadataSchemaEntry(1, 1, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 2, 0, "xp");
-        entries[2] = MetadataSchemaEntry(2, 2, FieldType.UINT8, 1, FieldVisibility.PUBLIC, 2, 16, "level");
-        entries[3] = MetadataSchemaEntry(3, 0, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 2, 24, "xpLost");
-        entries[4] = MetadataSchemaEntry(4, 0, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 2, 40, "stakedMade");
-        entries[5] = MetadataSchemaEntry(5, 0, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 2, 56, "stakedCorrect");
-        entries[6] = MetadataSchemaEntry(6, 0, FieldType.UINT8, 1, FieldVisibility.PUBLIC, 2, 72, "evolution");
-        entries[7] = MetadataSchemaEntry(7, 0, FieldType.CHAR16, 1, FieldVisibility.PUBLIC, 2, 80, "nickname");
+        entries[0] = MetadataSchemaEntry(0, 0, FieldType.LITEREF, 0, FieldVisibility.PUBLIC, 0, 0, "artifactIDs"); // Dynamic
+        entries[1] = MetadataSchemaEntry(1, 1, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 0, 0, "xp");
+        entries[2] = MetadataSchemaEntry(2, 2, FieldType.UINT8, 1, FieldVisibility.PUBLIC, 0, 16, "level");
+        entries[3] = MetadataSchemaEntry(3, 0, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 0, 24, "xpLost");
+        entries[4] = MetadataSchemaEntry(4, 0, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 0, 40, "stakedMade");
+        entries[5] = MetadataSchemaEntry(5, 0, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 0, 56, "stakedCorrect");
+        entries[6] = MetadataSchemaEntry(6, 0, FieldType.UINT8, 1, FieldVisibility.PUBLIC, 0, 72, "evolution");
+        entries[7] = MetadataSchemaEntry(7, 0, FieldType.CHAR16, 1, FieldVisibility.PUBLIC, 0, 80, "nickname");
         return MetadataSchema(1, entries);
     }
 
