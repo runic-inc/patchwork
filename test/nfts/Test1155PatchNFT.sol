@@ -35,7 +35,8 @@ contract Test1155PatchNFT is Patchwork1155Patch {
         // Just for testing
         tokenId = _nextTokenId;
         _nextTokenId++;
-        _storePatch(tokenId, originalNFTAddress, originalNFTTokenId, account);
+        // TODO optional
+        _storePatch(tokenId, originalNFTAddress, originalNFTTokenId, account, true);
         _safeMint(to, tokenId);
         _metadataStorage[tokenId] = new uint256[](1);
         return tokenId;

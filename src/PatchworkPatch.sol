@@ -18,6 +18,9 @@ abstract contract PatchworkPatch is PatchworkNFT, IPatchworkPatch {
     /// @dev Mapping from token ID to the token ID of the NFT that this patch is applied to.
     mapping(uint256 => uint256) internal _patchedTokenIds;
 
+    /// @dev Mapping of hash of original address + token ID for reverse lookups
+    mapping(bytes32 => uint256) internal _patchedAddressesRev; // hash of patched addr+tokenid to tokenId
+
     /**
     @dev See {IERC165-supportsInterface}
     */
@@ -47,10 +50,21 @@ abstract contract PatchworkPatch is PatchworkNFT, IPatchworkPatch {
     @param tokenId the tokenId of the patch
     @param originalNFTAddress the address of the original ERC-721 we are patching
     @param originalNFTTokenId the tokenId of the original ERC-721 we are patching
+    @param withReverse store reverse lookup
     */
-    function _storePatch(uint256 tokenId, address originalNFTAddress, uint256 originalNFTTokenId) internal virtual {
+    function _storePatch(uint256 tokenId, address originalNFTAddress, uint256 originalNFTTokenId, bool withReverse) internal virtual {
         _patchedAddresses[tokenId] = originalNFTAddress;
         _patchedTokenIds[tokenId] = originalNFTTokenId;
+        if (withReverse) {
+            _patchedAddressesRev[keccak256(abi.encodePacked(originalNFTAddress, originalNFTTokenId))] = tokenId;
+        }
+    }
+
+    /**
+    @dev See {IPatchworkPatch-getTokenIdForOriginalNFT}
+    */
+    function getTokenIdForOriginalNFT(address originalNFTAddress, uint256 originalNFTTokenId) public view virtual returns (uint256 tokenId) {
+        return _patchedAddressesRev[keccak256(abi.encodePacked(originalNFTAddress, originalNFTTokenId))];
     }
 
     /**

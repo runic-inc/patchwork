@@ -20,4 +20,12 @@ interface IPatchworkAccountPatch {
     @return tokenId ID of the newly minted token
     */
     function mintPatch(address owner, address originalAccountAddress) external returns (uint256 tokenId);
+
+    /**
+    @notice Returns the token ID (if it exists) for an NFT that may have been patched
+    @dev Requires reverse storage enabled
+    @param originalAddress Address of the original account
+    @return tokenId ID of the newly minted token
+    */
+    function getTokenIdForOriginalAccount(address originalAddress) external returns (uint256 tokenId);
 }

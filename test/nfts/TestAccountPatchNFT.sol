@@ -41,7 +41,8 @@ contract TestAccountPatchNFT is PatchworkAccountPatch {
         }
         uint256 tokenId = _nextTokenId;
         _nextTokenId++;
-        _storePatch(tokenId, original);
+        // TODO optional for test
+        _storePatch(tokenId, original, true);
         _mint(to, tokenId);
         _metadataStorage[tokenId] = new uint256[](1);
         return tokenId;
