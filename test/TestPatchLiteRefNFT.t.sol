@@ -128,7 +128,7 @@ contract TestPatchLiteRefNFTTest is Test {
         assertEq(testNFT.loadLevel(1), 255);
     }
 
-    function testUnusedFuncs() public {
+    function testUnusedFuncs() public view {
         testNFT.loadDynamicReferencePage(0, 0, 0);
         testNFT.getDynamicReferenceCount(0);
     }

@@ -113,37 +113,37 @@ contract TestFragmentLiteRefNFT is PatchworkFragmentSingle, PatchworkLiteRef {
         return unpackMetadata(_metadataStorage[_tokenId]);
     }
 
-   function addReference(uint256 ourTokenId, uint64 referenceAddress) public override {
+   function addReference(uint256 ourTokenId, uint64 liteRef) public override {
         require(_checkTokenWriteAuth(ourTokenId), "not authorized");
         uint256[] storage mdStorage = _metadataStorage[ourTokenId];
         uint256 slot = mdStorage[0];
         uint256 slot2 = mdStorage[1];
         if (uint64(slot) == 0) {
-            mdStorage[0] = slot | referenceAddress;
+            mdStorage[0] = slot | liteRef;
         } else if (uint64(slot >> 64) == 0) {
-            mdStorage[0] = slot | uint256(referenceAddress) << 64;
+            mdStorage[0] = slot | uint256(liteRef) << 64;
         } else if (uint64(slot >> 128) == 0) {
-            mdStorage[0] = slot | uint256(referenceAddress) << 128;
+            mdStorage[0] = slot | uint256(liteRef) << 128;
         } else if (uint64(slot >> 192) == 0) {
-            mdStorage[0] = slot | uint256(referenceAddress) << 192;
+            mdStorage[0] = slot | uint256(liteRef) << 192;
         } else if (uint64(slot2) == 0) {
-            mdStorage[0] = slot2 | referenceAddress;
+            mdStorage[0] = slot2 | liteRef;
         } else if (uint64(slot2 >> 64) == 0) {
-            mdStorage[0] = slot2 | uint256(referenceAddress) << 64;
+            mdStorage[0] = slot2 | uint256(liteRef) << 64;
         } else if (uint64(slot2 >> 128) == 0) {
-            mdStorage[0] = slot2 | uint256(referenceAddress) << 128;
+            mdStorage[0] = slot2 | uint256(liteRef) << 128;
         } else if (uint64(slot2 >> 192) == 0) {
-            mdStorage[0] = slot2 | uint256(referenceAddress) << 192;
+            mdStorage[0] = slot2 | uint256(liteRef) << 192;
         } else {
             revert("No reference slots available");
         }
     }
 
-    function addReferenceDirect(uint256 tokenId, uint64 referenceAddress, uint256 targetMetadataId) public override {
+    function addReferenceDirect(uint256 tokenId, uint64 liteRef, uint256 targetMetadataId) public override {
         if (targetMetadataId != 0) {
             revert("Unsupported metadata ID");
         }
-        addReference(tokenId, referenceAddress);
+        addReference(tokenId, liteRef);
     }
 
 
@@ -161,31 +161,31 @@ contract TestFragmentLiteRefNFT is PatchworkFragmentSingle, PatchworkLiteRef {
         batchAddReferences(tokenId, liteRefs);
     }
 
-    function batchAddReferences(uint256 ourTokenId, uint64[] calldata /*_referenceAddresses*/) public view override {
+    function batchAddReferences(uint256 ourTokenId, uint64[] calldata /*_liteRefs*/) public view override {
         require(_checkTokenWriteAuth(ourTokenId), "not authorized");
         // TODO bulk insert for fewer stores
     }
 
-    function removeReference(uint256 ourTokenId, uint64 referenceAddress) public override {
+    function removeReference(uint256 ourTokenId, uint64 liteRef) public override {
         require(_checkTokenWriteAuth(ourTokenId), "not authorized");
         uint256[] storage mdStorage = _metadataStorage[ourTokenId];
         uint256 slot = mdStorage[0];
         uint256 slot2 = mdStorage[1];
-        if (uint64(slot) == referenceAddress) {
+        if (uint64(slot) == liteRef) {
             mdStorage[0] = slot & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000000000000000;
-        } else if (uint64(slot >> 64) == referenceAddress) {
+        } else if (uint64(slot >> 64) == liteRef) {
             mdStorage[0] = slot & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000000000000000FFFFFFFFFFFFFFFF;
-        } else if (uint64(slot >> 128) == referenceAddress) {
+        } else if (uint64(slot >> 128) == liteRef) {
             mdStorage[0] = slot & 0xFFFFFFFFFFFFFFFF0000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-        } else if (uint64(slot >> 192) == referenceAddress) {
+        } else if (uint64(slot >> 192) == liteRef) {
             mdStorage[0] = slot & 0x0000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-        } else if (uint64(slot2) == referenceAddress) {
+        } else if (uint64(slot2) == liteRef) {
             mdStorage[0] = slot2 & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000000000000000;
-        } else if (uint64(slot2 >> 64) == referenceAddress) {
+        } else if (uint64(slot2 >> 64) == liteRef) {
             mdStorage[0] = slot2 & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000000000000000FFFFFFFFFFFFFFFF;
-        } else if (uint64(slot2 >> 128) == referenceAddress) {
+        } else if (uint64(slot2 >> 128) == liteRef) {
             mdStorage[0] = slot2 & 0xFFFFFFFFFFFFFFFF0000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-        } else if (uint64(slot2 >> 192) == referenceAddress) {
+        } else if (uint64(slot2 >> 192) == liteRef) {
             mdStorage[0] = slot2 & 0x0000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
         } else {
             revert("not assigned");
@@ -239,7 +239,7 @@ contract TestFragmentLiteRefNFT is PatchworkFragmentSingle, PatchworkLiteRef {
     }
 
     // Testing overrides
-    function getLiteReference(address addr, uint256 tokenId) public virtual override view returns (uint64 referenceAddress, bool redacted) {
+    function getLiteReference(address addr, uint256 tokenId) public virtual override view returns (uint64 liteRef, bool redacted) {
         if (_getLiteRefOverrideSet) {
             return (_getLiteRefOverride, false);
         }

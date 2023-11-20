@@ -144,38 +144,38 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef {
         return uint16(uint256(_metadataStorage[_tokenId][2]) >> 16);
     }
 
-    function addReference(uint256 ourTokenId, uint64 referenceAddress) public override {
+    function addReference(uint256 ourTokenId, uint64 liteRef) public override {
         require(_checkTokenWriteAuth(ourTokenId), "not authorized");
         // to append: find last slot, if it's not full, add, otherwise start a new slot.
         DynamicLiteRefs storage store = _dynamicLiterefStorage[ourTokenId];
         uint256 slotsLen = store.slots.length;
         if (slotsLen == 0) {
-            store.slots.push(uint256(referenceAddress));
-            store.idx[referenceAddress] = 0;
+            store.slots.push(uint256(liteRef));
+            store.idx[liteRef] = 0;
         } else {
             uint256 slot = store.slots[slotsLen-1];
             if (slot >= (1 << 192)) {
                 // new slot (pos 1)
-                store.slots.push(uint256(referenceAddress));
-                store.idx[referenceAddress] = slotsLen;
+                store.slots.push(uint256(liteRef));
+                store.idx[liteRef] = slotsLen;
             } else {
-                store.idx[referenceAddress] = slotsLen-1;
+                store.idx[liteRef] = slotsLen-1;
                 // Reverse search for the next empty subslot
                 if (slot >= (1 << 128)) {
                     // pos 4
-                    store.slots[slotsLen-1] = slot | uint256(referenceAddress) << 192;
+                    store.slots[slotsLen-1] = slot | uint256(liteRef) << 192;
                 } else if (slot >= (1 << 64)) {
                     // pos 3
-                    store.slots[slotsLen-1] = slot | uint256(referenceAddress) << 128;
+                    store.slots[slotsLen-1] = slot | uint256(liteRef) << 128;
                 } else {
                     // pos 2
-                    store.slots[slotsLen-1] = slot | uint256(referenceAddress) << 64;
+                    store.slots[slotsLen-1] = slot | uint256(liteRef) << 64;
                 }
             }
         }
     }
 
-    function batchAddReferences(uint256 ourTokenId, uint64[] calldata _referenceAddresses) public override {
+    function batchAddReferences(uint256 ourTokenId, uint64[] calldata _liteRefs) public override {
         require(_checkTokenWriteAuth(ourTokenId), "not authorized");
         // do in batches of 4 with 1 remainder pass
         DynamicLiteRefs storage store = _dynamicLiterefStorage[ourTokenId];
@@ -183,27 +183,27 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef {
         if (slotsLen > 0) {
             revert("already loaded");
         }
-        uint256 fullBatchCount = _referenceAddresses.length / 4;
-        uint256 remainder = _referenceAddresses.length % 4;
+        uint256 fullBatchCount = _liteRefs.length / 4;
+        uint256 remainder = _liteRefs.length % 4;
         for (uint256 batch = 0; batch < fullBatchCount; batch++) {
             uint256 refIdx = batch * 4;
-            uint256 slot = uint256(_referenceAddresses[refIdx]) | (uint256(_referenceAddresses[refIdx+1]) << 64) | (uint256(_referenceAddresses[refIdx+2]) << 128) | (uint256(_referenceAddresses[refIdx+3]) << 192);
+            uint256 slot = uint256(_liteRefs[refIdx]) | (uint256(_liteRefs[refIdx+1]) << 64) | (uint256(_liteRefs[refIdx+2]) << 128) | (uint256(_liteRefs[refIdx+3]) << 192);
             store.slots.push(slot);
-            store.idx[_referenceAddresses[refIdx]] = batch;
-            store.idx[_referenceAddresses[refIdx + 1]] = batch;
-            store.idx[_referenceAddresses[refIdx + 2]] = batch;
-            store.idx[_referenceAddresses[refIdx + 3]] = batch;
+            store.idx[_liteRefs[refIdx]] = batch;
+            store.idx[_liteRefs[refIdx + 1]] = batch;
+            store.idx[_liteRefs[refIdx + 2]] = batch;
+            store.idx[_liteRefs[refIdx + 3]] = batch;
         }
         uint256 rSlot;
         for (uint256 i = 0; i < remainder; i++) {
             uint256 idx = (fullBatchCount * 4) + i;
-            rSlot = rSlot | (uint256(_referenceAddresses[idx]) << (i * 64));
-            store.idx[_referenceAddresses[idx]] = fullBatchCount;
+            rSlot = rSlot | (uint256(_liteRefs[idx]) << (i * 64));
+            store.idx[_liteRefs[idx]] = fullBatchCount;
         }
         store.slots.push(rSlot);
     }
 
-    function removeReference(uint256 ourTokenId, uint64 referenceAddress) public override {
+    function removeReference(uint256 ourTokenId, uint64 liteRef) public override {
         require(_checkTokenWriteAuth(ourTokenId), "not authorized");
         DynamicLiteRefs storage store = _dynamicLiterefStorage[ourTokenId];
         uint256 slotsLen = store.slots.length;
@@ -212,15 +212,15 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef {
         }
 
         console.log("removing");
-        console.logBytes8(bytes8(referenceAddress));
+        console.logBytes8(bytes8(liteRef));
         for (uint256 i = 0; i < store.slots.length; i++) {
             console.logBytes32(bytes32(store.slots[i]));
         }
         uint256 count = getDynamicReferenceCount(ourTokenId);
         if (count == 1) {
-            if (store.slots[0] == referenceAddress) {
+            if (store.slots[0] == liteRef) {
                 store.slots.pop();
-                delete store.idx[referenceAddress];
+                delete store.idx[liteRef];
             } else {
                 revert("not found");
             }
@@ -246,23 +246,23 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef {
                 lastRef = uint64(slot);
                 store.slots.pop();
             }
-            if (lastRef == referenceAddress) {
+            if (lastRef == liteRef) {
                 // it was the last ref. No need to replace anything. It's already cleared so just clear the index
-                delete store.idx[referenceAddress];
+                delete store.idx[liteRef];
             } else {
                 // Find the ref and replace it with lastRef then update indexes
-                uint256 refSlotIdx = store.idx[referenceAddress];
+                uint256 refSlotIdx = store.idx[liteRef];
                 slot = store.slots[refSlotIdx];
-                if (uint64(slot >> 192) == referenceAddress) {
+                if (uint64(slot >> 192) == liteRef) {
                     slot = slot & 0x0000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
                     slot = slot | (uint256(lastRef) << 192);
-                } else if (uint64(slot >> 128) == referenceAddress) {
+                } else if (uint64(slot >> 128) == liteRef) {
                     slot = slot & 0xFFFFFFFFFFFFFFFF0000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
                     slot = slot | (uint256(lastRef) << 128);
-                } else if (uint64(slot >> 64) == referenceAddress) {
+                } else if (uint64(slot >> 64) == liteRef) {
                     slot = slot & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000000000000000FFFFFFFFFFFFFFFF;
                     slot = slot | (uint256(lastRef) << 64);
-                } else if (uint64(slot) == referenceAddress) {
+                } else if (uint64(slot) == liteRef) {
                     slot = slot & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000000000000000;
                     slot = slot | uint256(lastRef);
                 } else {
@@ -270,16 +270,16 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef {
                 }
                 store.slots[refSlotIdx] = slot;
                 store.idx[lastRef] = refSlotIdx;
-                delete store.idx[referenceAddress];
+                delete store.idx[liteRef];
             }
         }
     }
 
-    function addReferenceDirect(uint256 tokenId, uint64 referenceAddress, uint256 targetMetadataId) public override {
+    function addReferenceDirect(uint256 tokenId, uint64 liteRef, uint256 targetMetadataId) public override {
         if (targetMetadataId != 0) {
             revert("Unsupported metadata ID");
         }
-        addReference(tokenId, referenceAddress);
+        addReference(tokenId, liteRef);
     }
 
 
