@@ -96,7 +96,7 @@ abstract contract PatchworkLiteRef is IPatchworkLiteRef, ERC165 {
     /**
     @dev See {IPatchworkLiteRef-getLiteReference}
     */
-    function getLiteReference(address addr, uint256 tokenId) public virtual view returns (uint64 referenceAddress, bool redacted) {
+    function getLiteReference(address addr, uint256 tokenId) public virtual view returns (uint64 liteRef, bool redacted) {
         uint8 refId = _referenceAddressIds[addr];
         if (refId == 0) {
             return (0, false);
@@ -110,10 +110,10 @@ abstract contract PatchworkLiteRef is IPatchworkLiteRef, ERC165 {
     /**
     @dev See {IPatchworkLiteRef-getReferenceAddressAndTokenId}
     */
-    function getReferenceAddressAndTokenId(uint64 referenceAddress) public virtual view returns (address addr, uint256 tokenId) {
+    function getReferenceAddressAndTokenId(uint64 liteRef) public virtual view returns (address addr, uint256 tokenId) {
         // <8 bits of refId, 56 bits of tokenId>
-        uint8 refId = uint8(referenceAddress >> 56);
-        tokenId = referenceAddress & 0x00FFFFFFFFFFFFFF; // 64 bit mask
+        uint8 refId = uint8(liteRef >> 56);
+        tokenId = liteRef & 0x00FFFFFFFFFFFFFF; // 64 bit mask
         return (_referenceAddresses[refId], tokenId);
     }
 
