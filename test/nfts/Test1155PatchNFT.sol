@@ -6,12 +6,14 @@ import "../../src/Patchwork1155Patch.sol";
 contract Test1155PatchNFT is Patchwork1155Patch {
 
     uint256 _nextTokenId = 0;
+    bool _reverseEnabled = false;
 
     struct Test1155PatchNFTMetadata {
         uint256 thing;
     }
 
-    constructor(address manager_) PatchworkNFT("testscope", "Test1155PatchNFT", "TPLR", msg.sender, manager_) {
+    constructor(address manager_, bool reverseEnabled_) PatchworkNFT("testscope", "Test1155PatchNFT", "TPLR", msg.sender, manager_) {
+        _reverseEnabled = reverseEnabled_;
     }
 
     function schemaURI() pure external returns (string memory) {
@@ -35,8 +37,7 @@ contract Test1155PatchNFT is Patchwork1155Patch {
         // Just for testing
         tokenId = _nextTokenId;
         _nextTokenId++;
-        // TODO optional
-        _storePatch(tokenId, originalNFTAddress, originalNFTTokenId, account, true);
+        _storePatch(tokenId, originalNFTAddress, originalNFTTokenId, account, _reverseEnabled);
         _safeMint(to, tokenId);
         _metadataStorage[tokenId] = new uint256[](1);
         return tokenId;
