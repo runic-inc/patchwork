@@ -34,4 +34,13 @@ interface IPatchworkPatch {
     @return address Address of the owner
     */
     function unpatchedOwnerOf(uint256 tokenId) external returns (address);
+
+    /**
+    @notice Returns the token ID (if it exists) for an NFT that may have been patched
+    @dev Requires reverse storage enabled
+    @param originalNFTAddress Address of the original NFT
+    @param originalNFTTokenId ID of the original NFT token
+    @return tokenId ID of the newly minted token
+    */
+    function getTokenIdForOriginalNFT(address originalNFTAddress, uint256 originalNFTTokenId) external returns (uint256 tokenId);
 }

@@ -128,7 +128,7 @@ contract TestPatchFragmentNFT is PatchworkPatch, PatchworkFragmentSingle {
         // Just for testing
         tokenId = _nextTokenId;
         _nextTokenId++;
-        _storePatch(tokenId, originalNFTAddress, originalNFTTokenId);
+        _storePatch(tokenId, originalNFTAddress, originalNFTTokenId, true);
         _safeMint(originalNFTOwner, tokenId);
         _metadataStorage[tokenId] = new uint256[](3);
         return tokenId;

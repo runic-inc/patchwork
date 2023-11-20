@@ -38,13 +38,13 @@ contract PatchworkAccountPatchTest is Test {
 
     function testScopeName() public {
         vm.prank(_scopeOwner);
-        TestAccountPatchNFT testAccountPatchNFT = new TestAccountPatchNFT(address(_prot), false);
+        TestAccountPatchNFT testAccountPatchNFT = new TestAccountPatchNFT(address(_prot), false, false);
         assertEq(_scopeName, testAccountPatchNFT.getScopeName());
     }
     
     function testSupportsInterface() public {
         vm.prank(_scopeOwner);
-        TestAccountPatchNFT testAccountPatchNFT = new TestAccountPatchNFT(address(_prot), false);
+        TestAccountPatchNFT testAccountPatchNFT = new TestAccountPatchNFT(address(_prot), false, false);
         assertTrue(testAccountPatchNFT.supportsInterface(type(IERC165).interfaceId));
         assertTrue(testAccountPatchNFT.supportsInterface(type(IERC721).interfaceId));
         assertTrue(testAccountPatchNFT.supportsInterface(type(IERC4906).interfaceId));
@@ -56,7 +56,7 @@ contract PatchworkAccountPatchTest is Test {
     function testAccountPatchNotSameOwner() public {
         // Not same owner model, yes transferrable
         vm.prank(_scopeOwner);
-        TestAccountPatchNFT testAccountPatchNFT = new TestAccountPatchNFT(address(_prot), false);
+        TestAccountPatchNFT testAccountPatchNFT = new TestAccountPatchNFT(address(_prot), false, false);
         // User patching is off, not authorized
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _defaultUser));
         _prot.createAccountPatch(_userAddress, _user2Address, address(testAccountPatchNFT));
@@ -78,7 +78,7 @@ contract PatchworkAccountPatchTest is Test {
     function testAccountPatchSameOwner() public {
         // Same owner model, not transferrable
         vm.prank(_scopeOwner);
-        TestAccountPatchNFT testAccountPatchNFT = new TestAccountPatchNFT(address(_prot), true);
+        TestAccountPatchNFT testAccountPatchNFT = new TestAccountPatchNFT(address(_prot), true, false);
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.MintNotAllowed.selector, _userAddress));
         vm.prank(_scopeOwner);
         _prot.createAccountPatch(_userAddress, _user2Address, address(testAccountPatchNFT));
@@ -94,10 +94,19 @@ contract PatchworkAccountPatchTest is Test {
         _prot.setScopeRules(_scopeName, true, false, false);
         // Not same owner model, yes transferrable
         vm.prank(_scopeOwner);
-        TestAccountPatchNFT testAccountPatchNFT = new TestAccountPatchNFT(address(_prot), false);
+        TestAccountPatchNFT testAccountPatchNFT = new TestAccountPatchNFT(address(_prot), false, false);
         // User patching is on
         _prot.createAccountPatch(_userAddress, _user2Address, address(testAccountPatchNFT));
     }
 
-
+    function testReverseLookups() public {
+        vm.startPrank(_scopeOwner);
+        TestAccountPatchNFT testAccountPatchNFT = new TestAccountPatchNFT(address(_prot), false, true);
+        // User patching is on
+        uint256 pId = _prot.createAccountPatch(_userAddress, _user2Address, address(testAccountPatchNFT));
+        assertEq(pId, testAccountPatchNFT.getTokenIdForOriginalAccount(_user2Address));
+        // disabled case
+        TestAccountPatchNFT testAccountPatchNFT2 = new TestAccountPatchNFT(address(_prot), false, false);
+        assertEq(0, testAccountPatchNFT2.getTokenIdForOriginalAccount(_user2Address));
+    }
 }

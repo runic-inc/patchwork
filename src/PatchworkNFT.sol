@@ -240,4 +240,11 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT, IERC4906 {
         }
         _;
     }
+
+    modifier mustBeManager() {
+        if (msg.sender != _manager) {
+            revert IPatchworkProtocol.NotAuthorized(msg.sender);
+        }
+        _;
+    }
 }

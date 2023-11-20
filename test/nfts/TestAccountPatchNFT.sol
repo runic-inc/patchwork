@@ -7,13 +7,15 @@ contract TestAccountPatchNFT is PatchworkAccountPatch {
 
     uint256 _nextTokenId = 0;
     bool _sameOwnerModel;
+    bool _reverseEnabled;
 
     struct TestPatchworkNFTMetadata {
         uint256 thing;
     }
 
-    constructor(address manager_, bool sameOwnerModel_) PatchworkNFT("testscope", "TestAccountPatchNFT", "TPLR", msg.sender, manager_) {
+    constructor(address manager_, bool sameOwnerModel_, bool reverseEnabled_) PatchworkNFT("testscope", "TestAccountPatchNFT", "TPLR", msg.sender, manager_) {
         _sameOwnerModel = sameOwnerModel_;
+        _reverseEnabled = reverseEnabled_;
     }
 
     function schemaURI() pure external returns (string memory) {
@@ -41,7 +43,7 @@ contract TestAccountPatchNFT is PatchworkAccountPatch {
         }
         uint256 tokenId = _nextTokenId;
         _nextTokenId++;
-        _storePatch(tokenId, original);
+        _storePatch(tokenId, original, _reverseEnabled);
         _mint(to, tokenId);
         _metadataStorage[tokenId] = new uint256[](1);
         return tokenId;
