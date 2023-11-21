@@ -28,6 +28,12 @@ contract PatchworkProtocol is IPatchworkProtocol {
     mapping(bytes32 => bool) _liteRefs;
 
     /**
+    @notice unique patches
+    @dev Hash of the patch mapped to a boolean indicating its uniqueness
+    */
+    mapping(bytes32 => bool) _uniquePatches;
+
+    /**
     @dev See {IPatchworkProtocol-claimScope}
     */
     function claimScope(string calldata scopeName) public {
@@ -162,10 +168,10 @@ contract PatchworkProtocol is IPatchworkProtocol {
         }
         // limit this to one unique patch (originalNFTAddress+TokenID+patchAddress)
         bytes32 _hash = keccak256(abi.encodePacked(originalNFTAddress, originalNFTTokenId, patchAddress));
-        if (scope.uniquePatches[_hash]) {
+        if (_uniquePatches[_hash]) {
             revert AlreadyPatched(originalNFTAddress, originalNFTTokenId, patchAddress);
         }
-        scope.uniquePatches[_hash] = true;
+        _uniquePatches[_hash] = true;
         tokenId = patch.mintPatch(owner, originalNFTAddress, originalNFTTokenId);
         emit Patch(owner, originalNFTAddress, originalNFTTokenId, patchAddress, tokenId);
         return tokenId;
@@ -189,10 +195,10 @@ contract PatchworkProtocol is IPatchworkProtocol {
         }
         // limit this to one unique patch (originalNFTAddress+TokenID+patchAddress)
         bytes32 _hash = keccak256(abi.encodePacked(originalNFTAddress, originalNFTTokenId, originalAccount, patchAddress));
-        if (scope.uniquePatches[_hash]) {
+        if (_uniquePatches[_hash]) {
             revert ERC1155AlreadyPatched(originalNFTAddress, originalNFTTokenId, originalAccount, patchAddress);
         }
-        scope.uniquePatches[_hash] = true;
+        _uniquePatches[_hash] = true;
         tokenId = patch.mintPatch(to, originalNFTAddress, originalNFTTokenId, originalAccount);
         emit ERC1155Patch(to, originalNFTAddress, originalNFTTokenId, originalAccount, patchAddress, tokenId);
         return tokenId;
@@ -215,10 +221,10 @@ contract PatchworkProtocol is IPatchworkProtocol {
         }
         // limit this to one unique patch (originalAddress+TokenID+patchAddress)
         bytes32 _hash = keccak256(abi.encodePacked(originalAddress, patchAddress));
-        if (scope.uniquePatches[_hash]) {
+        if (_uniquePatches[_hash]) {
             revert AccountAlreadyPatched(originalAddress, patchAddress);
         }
-        scope.uniquePatches[_hash] = true;
+        _uniquePatches[_hash] = true;
         tokenId = patch.mintPatch(owner, originalAddress);
         emit AccountPatch(owner, originalAddress, patchAddress, tokenId);
         return tokenId;

@@ -265,12 +265,6 @@ interface IPatchworkProtocol {
         @dev Address mapped to a boolean indicating if it's whitelisted
         */
         mapping(address => bool) whitelist;
-
-        /**
-        @notice Mapped list of unique patches associated with this scope
-        @dev Hash of the patch mapped to a boolean indicating its uniqueness
-        */
-        mapping(bytes32 => bool) uniquePatches;
     }
 
     /**
