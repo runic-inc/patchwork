@@ -58,9 +58,9 @@ contract PatchworkFragmentMultiTest is Test {
     function testMultiAssign() public {
         vm.startPrank(_scopeOwner);
         uint256 m1 = _testMultiNFT.mint(_user2Address);
-        uint256 lr1 = _testFragmentLiteRefNFT.mint(_userAddress);
-        uint256 lr2 = _testFragmentLiteRefNFT.mint(_userAddress);
-        uint256 lr3 = _testFragmentLiteRefNFT.mint(_userAddress);
+        uint256 lr1 = _testFragmentLiteRefNFT.mint(_userAddress, "");
+        uint256 lr2 = _testFragmentLiteRefNFT.mint(_userAddress, "");
+        uint256 lr3 = _testFragmentLiteRefNFT.mint(_userAddress, "");
         // must be registered
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentUnregistered.selector, address(_testMultiNFT)));
         _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr1);
@@ -118,8 +118,8 @@ contract PatchworkFragmentMultiTest is Test {
         // Enable user assign
         _prot.setScopeRules(_scopeName, false, true, false);
         uint256 m1 = _testMultiNFT.mint(_user2Address);
-        uint256 lr1 = _testFragmentLiteRefNFT.mint(_userAddress);
-        uint256 lr2 = _testFragmentLiteRefNFT.mint(_userAddress);
+        uint256 lr1 = _testFragmentLiteRefNFT.mint(_userAddress, "");
+        uint256 lr2 = _testFragmentLiteRefNFT.mint(_userAddress, "");
         // must be registered
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentUnregistered.selector, address(_testMultiNFT)));
         _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr1);
@@ -149,7 +149,7 @@ contract PatchworkFragmentMultiTest is Test {
         _testFragmentLiteRefNFT.registerReferenceAddress(address(_testMultiNFT));
         uint256[] memory liteRefIds = new uint256[](20);
         for (uint256 i = 0; i < liteRefIds.length; i++) {
-            liteRefIds[i] = _testFragmentLiteRefNFT.mint(_userAddress);
+            liteRefIds[i] = _testFragmentLiteRefNFT.mint(_userAddress, "");
             _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), liteRefIds[i]);
         }
         assertEq(20, _testMultiNFT.getAssignmentCount(m1));
@@ -190,7 +190,7 @@ contract PatchworkFragmentMultiTest is Test {
         _prot.setScopeRules(_scopeName, false, false, true);
         _prot.addWhitelist(_scopeName, address(_testFragmentLiteRefNFT));
         _testFragmentLiteRefNFT.registerReferenceAddress(address(multi));
-        uint256 lr1 = _testFragmentLiteRefNFT.mint(_userAddress);
+        uint256 lr1 = _testFragmentLiteRefNFT.mint(_userAddress, "");
         _prot.assignNFT(address(multi), m1, address(_testFragmentLiteRefNFT), lr1);
     }
 }

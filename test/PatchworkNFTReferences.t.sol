@@ -64,7 +64,7 @@ contract PatchworkNFTCombinedTest is Test {
 
         // test assign perms
         uint256 baseTokenId = _testBaseNFT.mint(_userAddress);
-        uint256 fragmentTokenId = _testFragmentLiteRefNFT.mint(_userAddress);
+        uint256 fragmentTokenId = _testFragmentLiteRefNFT.mint(_userAddress, "");
         assertEq(_userAddress, _testFragmentLiteRefNFT.ownerOf(fragmentTokenId)); // TODO why doesn't this cover the branch != address(0)
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _user2Address));
         vm.prank(_user2Address);
@@ -91,7 +91,7 @@ contract PatchworkNFTCombinedTest is Test {
         vm.prank(_userAddress); // can't call directly
         _testFragmentLiteRefNFT.unassign(fragmentTokenId);
 
-        uint256 newFrag = _testFragmentLiteRefNFT.mint(_userAddress);
+        uint256 newFrag = _testFragmentLiteRefNFT.mint(_userAddress, "");
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _defaultUser));
         _testPatchLiteRefNFT.redactReferenceAddress(refIdx);
         vm.prank(_scopeOwner);

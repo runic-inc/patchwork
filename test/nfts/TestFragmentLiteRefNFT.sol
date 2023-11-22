@@ -11,6 +11,7 @@ pragma solidity ^0.8.13;
 
 import "../../src/PatchworkFragmentSingle.sol";
 import "../../src/PatchworkLiteRef.sol";
+import "../../src/IPatchworkMintable.sol";
 
 enum FragmentType {
     BASE,
@@ -26,7 +27,7 @@ struct TestFragmentLiteRefNFTMetadata {
     string name;
 }
 
-contract TestFragmentLiteRefNFT is PatchworkFragmentSingle, PatchworkLiteRef {
+contract TestFragmentLiteRefNFT is PatchworkFragmentSingle, PatchworkLiteRef, IPatchworkMintable {
 
     uint256 _nextTokenId;
     bool _testLockOverride;
@@ -44,11 +45,22 @@ contract TestFragmentLiteRefNFT is PatchworkFragmentSingle, PatchworkLiteRef {
             PatchworkFragmentSingle.supportsInterface(interfaceID);             
     }
 
-    function mint(address to) external returns (uint256 tokenId) {
+    function getScopeName() public view override (PatchworkFragmentSingle, IPatchworkMintable) returns (string memory scopeName) {
+        return PatchworkNFT.getScopeName();
+    }
+
+    function mint(address to, bytes calldata /* data */) public returns (uint256 tokenId) {
         tokenId = _nextTokenId;
         _nextTokenId++;
         _safeMint(to, tokenId);
         _metadataStorage[tokenId] = new uint256[](3);
+    }
+    
+    function mintBatch(address to, bytes calldata data, uint256 quantity) external returns (uint256[] memory tokenIds) {
+        tokenIds = new uint256[](quantity);
+        for (uint256 i = 0; i < quantity; i++) {
+            tokenIds[i] = mint(to, data);
+        }
     }
 
     function schemaURI() pure external returns (string memory) {
