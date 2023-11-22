@@ -219,6 +219,18 @@ interface IPatchworkProtocol {
     */
     error UnsupportedContract();
 
+    struct ProtocolFeeConfig {
+        uint256 mintBp; // mint basis points (10000 = 100%)
+        uint256 patchBp; // patch basis points (10000 = 100%)
+        uint256 assignBp; // assign basis points (10000 = 100%)
+    }
+
+    // TODO discount table?
+    struct MintConfig {
+        uint256 flatFee; // wei
+        bool active;
+    }
+
     /**
     @notice Represents a defined scope within the system
     @dev Contains details about the scope ownership, permissions, and mappings for references and assignments
@@ -265,7 +277,54 @@ interface IPatchworkProtocol {
         @dev Address mapped to a boolean indicating if it's whitelisted
         */
         mapping(address => bool) whitelist;
+
+        mapping(address => MintConfig) mintConfigurations;
+
+        mapping(address => uint256) patchFees;
+
+        mapping(address => uint256) assignFees;
+
+        uint256 balance;
+
+        mapping(address => bool) bankers;
     }
+
+    function setMintConfiguration(string memory scopeName, address addr, MintConfig memory config) external;
+
+    function getMintConfiguration(string memory scopeName, address addr) external returns (MintConfig memory config);
+
+    function setPatchFee(string memory scopeName, address addr, uint256 baseFee) external;
+
+    function getPatchFee(string memory scopeName, address addr) external returns (uint256 baseFee);
+
+    function setAssignFee(string memory scopeName, address fragmentAddress, uint256 baseFee) external;
+
+    function getAssignFee(string memory scopeName, address fragmentAddress) external returns (uint256 baseFee);
+
+    function addBanker(string memory scopeName, address addr) external;
+
+    function removeBanker(string memory scopeName, address addr) external;
+
+    // TODO nonreentrant
+    function withdraw(string memory scopeName, uint256 amount) external;
+
+    function balanceOf(string memory scopeName) external returns (uint256 balance);
+
+    function mint(string memory scopeName, address to, address nft, bytes calldata data) external payable returns (uint256 tokenId);
+    
+    function mintBatch(string memory scopeName, address to, address nft, bytes calldata data, uint256 quantity) external payable returns (uint256[] memory tokenIds);
+
+    function setProtocolFeeConfig(ProtocolFeeConfig memory config) external;
+
+    function getProtocolFeeConfig() external returns (ProtocolFeeConfig memory config);
+
+    function addProtocolBanker(address addr) external;
+
+    function removeProtocolBanker(address addr) external;
+
+    function withdrawFromProtocol(uint256 balance) external;
+
+    function balanceOfProtocol() external returns (uint256 balance);
 
     /**
     @notice Emitted when a fragment is assigned
@@ -476,7 +535,7 @@ interface IPatchworkProtocol {
     @param patchAddress Address of the IPatchworkPatch to mint
     @return tokenId Token ID of the newly created patch
     */
-    function createPatch(address owner, address originalNFTAddress, uint originalNFTTokenId, address patchAddress) external returns (uint256 tokenId);
+    function createPatch(address owner, address originalNFTAddress, uint originalNFTTokenId, address patchAddress) external payable returns (uint256 tokenId);
 
     /**
     @notice Create a new 1155 patch
@@ -486,7 +545,7 @@ interface IPatchworkProtocol {
     @param patchAddress Address of the IPatchworkPatch to mint
     @return tokenId Token ID of the newly created patch
     */
-    function create1155Patch(address to, address originalNFTAddress, uint originalNFTTokenId, address originalAccount, address patchAddress) external returns (uint256 tokenId);
+    function create1155Patch(address to, address originalNFTAddress, uint originalNFTTokenId, address originalAccount, address patchAddress) external payable returns (uint256 tokenId);
     
     /**
     @notice Create a new account patch
@@ -495,7 +554,7 @@ interface IPatchworkProtocol {
     @param patchAddress Address of the IPatchworkPatch to mint
     @return tokenId Token ID of the newly created patch
     */
-    function createAccountPatch(address owner, address originalAddress, address patchAddress) external returns (uint256 tokenId);
+    function createAccountPatch(address owner, address originalAddress, address patchAddress) external payable returns (uint256 tokenId);
 
     /**
     @notice Assigns an NFT relation to have an IPatchworkLiteRef form a LiteRef to a IPatchworkAssignableNFT
@@ -504,7 +563,7 @@ interface IPatchworkProtocol {
     @param target The IPatchworkLiteRef address to hold the reference to the fragment
     @param targetTokenId The IPatchworkLiteRef Token ID to hold the reference to the fragment
     */
-    function assignNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) external;
+    function assignNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) external payable;
 
     /**
     @notice Assigns an NFT relation to have an IPatchworkLiteRef form a LiteRef to a IPatchworkAssignableNFT
@@ -514,7 +573,7 @@ interface IPatchworkProtocol {
     @param targetTokenId The IPatchworkLiteRef Token ID to hold the reference to the fragment
     @param targetMetadataId The metadata ID on the target NFT to store the reference in
     */
-    function assignNFTDirect(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) external;
+    function assignNFTDirect(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) external payable;
 
     /**
     @notice Assign multiple NFT fragments to a target NFT in batch
@@ -523,7 +582,7 @@ interface IPatchworkProtocol {
     @param target The address of the target IPatchworkLiteRef NFT
     @param targetTokenId The token ID of the target IPatchworkLiteRef NFT
     */
-    function batchAssignNFT(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId) external;
+    function batchAssignNFT(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId) external payable;
 
     /**
     @notice Assign multiple NFT fragments to a target NFT in batch
@@ -533,7 +592,7 @@ interface IPatchworkProtocol {
     @param targetTokenId The token ID of the target IPatchworkLiteRef NFT
     @param targetMetadataId The metadata ID on the target NFT to store the references in
     */
-    function batchAssignNFTDirect(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId, uint256 targetMetadataId) external;
+    function batchAssignNFTDirect(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId, uint256 targetMetadataId) external payable;
 
     /**
     @notice Unassign a NFT fragment from a target NFT

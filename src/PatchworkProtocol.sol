@@ -9,14 +9,16 @@ import "./IPatchworkPatch.sol";
 import "./IPatchwork1155Patch.sol";
 import "./IPatchworkAccountPatch.sol";
 import "./IPatchworkProtocol.sol";
+import "./IPatchworkMintable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 /** 
 @title Patchwork Protocol
 @author Runic Labs, Inc
 @notice Manages data integrity of relational NFTs implemented with Patchwork interfaces 
 */
-contract PatchworkProtocol is IPatchworkProtocol {
+contract PatchworkProtocol is IPatchworkProtocol, Ownable {
 
     /// Scopes
     mapping(string => Scope) private _scopes;
@@ -32,6 +34,14 @@ contract PatchworkProtocol is IPatchworkProtocol {
     @dev Hash of the patch mapped to a boolean indicating its uniqueness
     */
     mapping(bytes32 => bool) _uniquePatches;
+
+    uint256 _protocolBalance;
+
+    mapping(address => bool) _protocolBankers;
+
+    ProtocolFeeConfig _protocolFeeConfig;
+
+    constructor() Ownable() {}
 
     /**
     @dev See {IPatchworkProtocol-claimScope}
@@ -130,6 +140,150 @@ contract PatchworkProtocol is IPatchworkProtocol {
         emit ScopeRuleChange(scopeName, msg.sender, allowUserPatch, allowUserAssign, requireWhitelist);
     }
 
+    function setMintConfiguration(string memory scopeName, address addr, MintConfig memory config) public {
+        Scope storage scope = _mustHaveScope(scopeName);
+        _mustBeOwnerOrOperator(scope);
+        // TODO address must be mintable and in this scope
+        scope.mintConfigurations[addr] = config;
+        // TODO event
+    }
+
+    function getMintConfiguration(string memory scopeName, address addr) public view returns (MintConfig memory config) {
+        Scope storage scope = _mustHaveScope(scopeName);
+        return scope.mintConfigurations[addr];
+    }
+
+    // TODO can we get rid of the scopeName on these
+    function setPatchFee(string memory scopeName, address addr, uint256 baseFee) public {
+        Scope storage scope = _mustHaveScope(scopeName);
+        _mustBeOwnerOrOperator(scope);
+        scope.patchFees[addr] = baseFee;
+    }
+
+    function getPatchFee(string memory scopeName, address addr) public view returns (uint256 baseFee) {
+        Scope storage scope = _mustHaveScope(scopeName);
+        return scope.patchFees[addr];
+    }
+
+    function setAssignFee(string memory scopeName, address fragmentAddress, uint256 baseFee) public {
+        Scope storage scope = _mustHaveScope(scopeName);
+        _mustBeOwnerOrOperator(scope);
+        scope.assignFees[fragmentAddress] = baseFee;
+    }
+
+    function getAssignFee(string memory scopeName, address fragmentAddress) public view returns (uint256 baseFee) {
+        Scope storage scope = _mustHaveScope(scopeName);
+        return scope.assignFees[fragmentAddress];
+    }
+
+    function addBanker(string memory scopeName, address addr) public {
+        Scope storage scope = _mustHaveScope(scopeName);
+        _mustBeOwnerOrOperator(scope);
+        scope.bankers[addr] = true;
+        // TODO event
+    }
+
+    function removeBanker(string memory scopeName, address addr) public {
+        Scope storage scope = _mustHaveScope(scopeName);
+        _mustBeOwnerOrOperator(scope);
+        delete scope.bankers[addr];
+        // TODO event
+    }
+
+    // TODO nonreentrant
+    function withdraw(string memory scopeName, uint256 amount) public {
+        Scope storage scope = _mustHaveScope(scopeName);
+        if (msg.sender != scope.owner && !scope.bankers[msg.sender]) {
+            revert NotAuthorized(msg.sender);
+        }
+        if (amount > scope.balance) {
+            revert("insufficient balance");
+        }
+        // modify state before calling to send
+        scope.balance -= amount;
+        // transfer funds
+        (bool sent,) = msg.sender.call{value: amount}("");
+        require(sent, "Failed to send");
+        // TODO event
+    }
+
+    function balanceOf(string memory scopeName) public view returns (uint256 balance) {
+        Scope storage scope = _mustHaveScope(scopeName);
+        return scope.balance;
+    }
+
+    function mint(string memory scopeName, address to, address nft, bytes calldata data) external payable returns (uint256 tokenId) {
+        Scope storage scope = _mustHaveScope(scopeName);
+        MintConfig memory config = scope.mintConfigurations[nft];
+        if (!config.active) {
+            revert("mint not active");
+        }
+        if (msg.value != config.flatFee) {
+            revert("incorrect fee amount");
+        }
+        if (msg.value != 0) {
+            uint256 protocolFee = msg.value * _protocolFeeConfig.mintBp / 10000;
+            _protocolBalance += protocolFee;
+            scope.balance += msg.value - protocolFee;
+        }
+        tokenId = IPatchworkMintable(nft).mint(to, data);
+        // TODO event
+    }
+    
+    function mintBatch(string memory scopeName, address to, address nft, bytes calldata data, uint256 quantity) external payable returns (uint256[] memory tokenIds) {
+        Scope storage scope = _mustHaveScope(scopeName);
+        MintConfig memory config = scope.mintConfigurations[nft];
+        if (!config.active) {
+            revert("mint not active");
+        }
+        uint256 totalFee = config.flatFee * quantity;
+        if (msg.value != totalFee) {
+            revert("incorrect fee amount");
+        }
+        if (msg.value != 0) {
+            uint256 protocolFee = msg.value * _protocolFeeConfig.mintBp / 10000;
+            _protocolBalance += protocolFee;
+            scope.balance += msg.value - protocolFee;
+        }
+        tokenIds = IPatchworkMintable(nft).mintBatch(to, data, quantity);
+        // TODO event
+    }
+
+    function setProtocolFeeConfig(ProtocolFeeConfig memory config) public {
+        if (msg.sender != owner() && _protocolBankers[msg.sender] == false) {
+            revert("Not authorized"); // TODO
+        }
+        _protocolFeeConfig = config;
+    }
+
+    function getProtocolFeeConfig() public view returns (ProtocolFeeConfig memory config) {
+        return _protocolFeeConfig;
+    }
+
+    function addProtocolBanker(address addr) external onlyOwner {
+        _protocolBankers[addr] = true;
+    }
+
+    function removeProtocolBanker(address addr) external onlyOwner {
+        delete _protocolBankers[addr];
+    }
+
+    // TODO nonreentrant
+    function withdrawFromProtocol(uint256 amount) external {
+        // TODO mustBeBanker
+        if (amount > _protocolBalance) {
+            revert("insufficient funds");
+        }
+        _protocolBalance -= amount;
+        (bool sent,) = msg.sender.call{value: amount}("");
+        require(sent, "Failed to send");
+        // TODO event
+    }
+
+    function balanceOfProtocol() public view returns (uint256 balance) {
+        return _protocolBalance;
+    }
+
     /**
     @dev See {IPatchworkProtocol-addWhitelist}
     */
@@ -153,7 +307,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
     /**
     @dev See {IPatchworkProtocol-createPatch}
     */
-    function createPatch(address owner, address originalNFTAddress, uint originalNFTTokenId, address patchAddress) public returns (uint256 tokenId) {
+    function createPatch(address owner, address originalNFTAddress, uint originalNFTTokenId, address patchAddress) external payable returns (uint256 tokenId) {
         IPatchworkPatch patch = IPatchworkPatch(patchAddress);
         string memory scopeName = patch.getScopeName();
         // mint a Patch that is soulbound to the originalNFT using the contract address at patchAddress which must support Patchwork metadata
@@ -166,6 +320,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
         } else {
             revert NotAuthorized(msg.sender);
         }
+        _handlePatchFee(scope, patchAddress);
         // limit this to one unique patch (originalNFTAddress+TokenID+patchAddress)
         bytes32 _hash = keccak256(abi.encodePacked(originalNFTAddress, originalNFTTokenId, patchAddress));
         if (_uniquePatches[_hash]) {
@@ -180,7 +335,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
    /**
     @dev See {IPatchworkProtocol-create1155Patch}
     */
-    function create1155Patch(address to, address originalNFTAddress, uint originalNFTTokenId, address originalAccount, address patchAddress) public returns (uint256 tokenId) {
+    function create1155Patch(address to, address originalNFTAddress, uint originalNFTTokenId, address originalAccount, address patchAddress) external payable returns (uint256 tokenId) {
         IPatchwork1155Patch patch = IPatchwork1155Patch(patchAddress);
         string memory scopeName = patch.getScopeName();
         // mint a Patch that is soulbound to the originalNFT using the contract address at patchAddress which must support Patchwork metadata
@@ -193,6 +348,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
         } else {
             revert NotAuthorized(msg.sender);
         }
+        _handlePatchFee(scope, patchAddress);
         // limit this to one unique patch (originalNFTAddress+TokenID+patchAddress)
         bytes32 _hash = keccak256(abi.encodePacked(originalNFTAddress, originalNFTTokenId, originalAccount, patchAddress));
         if (_uniquePatches[_hash]) {
@@ -206,7 +362,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
     /**
     @dev See {IPatchworkProtocol-createAccountPatch}
     */
-    function createAccountPatch(address owner, address originalAddress, address patchAddress) public returns (uint256 tokenId) {
+    function createAccountPatch(address owner, address originalAddress, address patchAddress) external payable returns (uint256 tokenId) {
         IPatchworkAccountPatch patch = IPatchworkAccountPatch(patchAddress);
         string memory scopeName = patch.getScopeName();
         // mint a Patch that is soulbound to the originalNFT using the contract address at patchAddress which must support Patchwork metadata
@@ -219,6 +375,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
         } else {
             revert NotAuthorized(msg.sender);
         }
+        _handlePatchFee(scope, patchAddress);
         // limit this to one unique patch (originalAddress+TokenID+patchAddress)
         bytes32 _hash = keccak256(abi.encodePacked(originalAddress, patchAddress));
         if (_uniquePatches[_hash]) {
@@ -230,10 +387,34 @@ contract PatchworkProtocol is IPatchworkProtocol {
         return tokenId;
     }
 
+    function _handlePatchFee(Scope storage scope, address patchAddress) private {
+        uint256 patchFee = scope.patchFees[patchAddress];
+        if (msg.value != patchFee) {
+            revert("incorrect fee amount"); // TODO
+        }
+        if (msg.value > 0) {
+            uint256 protocolFee = msg.value * _protocolFeeConfig.patchBp / 10000;
+            _protocolBalance += protocolFee;
+            scope.balance += msg.value - protocolFee;
+        }
+    }
+
+    function _handleAssignFee(Scope storage scope, address fragmentAddress) private {
+        uint256 assignFee = scope.assignFees[fragmentAddress];
+        if (msg.value != assignFee) {
+            revert("incorrect fee amount"); // TODO
+        }
+        if (msg.value > 0) {
+            uint256 protocolFee = msg.value * _protocolFeeConfig.assignBp / 10000;
+            _protocolBalance += protocolFee;
+            scope.balance += msg.value - protocolFee;
+        }
+    }
+
     /**
     @dev See {IPatchworkProtocol-assignNFT}
     */
-    function assignNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) public mustNotBeFrozen(target, targetTokenId) {
+    function assignNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) public payable mustNotBeFrozen(target, targetTokenId) {
         address targetOwner = IERC721(target).ownerOf(targetTokenId);
         uint64 ref = _doAssign(fragment, fragmentTokenId, target, targetTokenId, targetOwner);
         IPatchworkLiteRef(target).addReference(targetTokenId, ref);
@@ -242,7 +423,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
     /**
     @dev See {IPatchworkProtocol-assignNFTDirect}
     */
-    function assignNFTDirect(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) public mustNotBeFrozen(target, targetTokenId) {
+    function assignNFTDirect(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) public payable mustNotBeFrozen(target, targetTokenId) {
         address targetOwner = IERC721(target).ownerOf(targetTokenId);
         uint64 ref = _doAssign(fragment, fragmentTokenId, target, targetTokenId, targetOwner);
         IPatchworkLiteRef(target).addReferenceDirect(targetTokenId, ref, targetMetadataId);
@@ -251,7 +432,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
     /**
     @dev See {IPatchworkProtocol-batchAssignNFT}
     */
-    function batchAssignNFT(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId) public mustNotBeFrozen(target, targetTokenId) {
+    function batchAssignNFT(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId) public payable mustNotBeFrozen(target, targetTokenId) {
         (uint64[] memory refs, ) = _batchAssignCommon(fragments, tokenIds, target, targetTokenId);
         IPatchworkLiteRef(target).batchAddReferences(targetTokenId, refs);
     }
@@ -259,7 +440,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
     /**
     @dev See {IPatchworkProtocol-batchAssignNFTDirect}
     */
-    function batchAssignNFTDirect(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId, uint256 targetMetadataId) public mustNotBeFrozen(target, targetTokenId) {
+    function batchAssignNFTDirect(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId, uint256 targetMetadataId) public payable mustNotBeFrozen(target, targetTokenId) {
         (uint64[] memory refs, ) = _batchAssignCommon(fragments, tokenIds, target, targetTokenId);
         IPatchworkLiteRef(target).batchAddReferencesDirect(targetTokenId, refs, targetMetadataId);
     }
@@ -306,6 +487,7 @@ contract PatchworkProtocol is IPatchworkProtocol {
             string memory fragmentScopeName = assignableNFT.getScopeName();
             Scope storage fragmentScope = _mustHaveScope(fragmentScopeName);
             _mustBeWhitelisted(fragmentScopeName, fragmentScope, fragment);
+            _handleAssignFee(fragmentScope, fragment);
         }
         if (targetScope.owner == msg.sender || targetScope.operators[msg.sender]) {
             // all good
