@@ -41,6 +41,10 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable {
 
     ProtocolFeeConfig _protocolFeeConfig;
 
+    // TODO overrides?
+    mapping(string => ProtocolFeeConfig) _scopeFeeOverrides; // scope-based fee overrides
+    mapping(address => uint256) _addressBpOverride;
+
     constructor() Ownable() {}
 
     /**
@@ -202,7 +206,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable {
         // modify state before calling to send
         scope.balance -= amount;
         // transfer funds
-        (bool sent,) = msg.sender.call{value: amount}("");
+        (bool sent,) = msg.sender.call{value: amount}(""); // TODO gas
         require(sent, "Failed to send");
         // TODO event
     }
@@ -212,6 +216,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable {
         return scope.balance;
     }
 
+    // TODO remove scopeName
     function mint(string memory scopeName, address to, address nft, bytes calldata data) external payable returns (uint256 tokenId) {
         Scope storage scope = _mustHaveScope(scopeName);
         MintConfig memory config = scope.mintConfigurations[nft];
@@ -270,12 +275,14 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable {
 
     // TODO nonreentrant
     function withdrawFromProtocol(uint256 amount) external {
-        // TODO mustBeBanker
+        if (msg.sender != owner() && _protocolBankers[msg.sender] == false) {
+            revert("Not authorized"); // TODO
+        }
         if (amount > _protocolBalance) {
             revert("insufficient funds");
         }
         _protocolBalance -= amount;
-        (bool sent,) = msg.sender.call{value: amount}("");
+        (bool sent,) = msg.sender.call{value: amount}(""); // TODO gas
         require(sent, "Failed to send");
         // TODO event
     }

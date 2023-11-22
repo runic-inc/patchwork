@@ -704,7 +704,7 @@ contract PatchworkProtocolTest is Test {
         uint256 _testBaseNFTTokenId = _testBaseNFT.mint(_userAddress);
         uint256 fragment1 = _testFragmentLiteRefNFT.mint(_userAddress);
         uint256 fragment2 = _testFragmentLiteRefNFT.mint(_userAddress);
-        _testPatchworkNFT.mint(_userAddress, 1);
+        uint256 n = _testPatchworkNFT.mint(_userAddress, "");
         vm.startPrank(_scopeOwner);
         _prot.claimScope(_scopeName);
         _prot.setScopeRules(_scopeName, false, false, false);
@@ -736,7 +736,7 @@ contract PatchworkProtocolTest is Test {
         // only owner may lock
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _user2Address));
         vm.prank(_user2Address);
-        _testPatchworkNFT.setLocked(1, true);
+        _testPatchworkNFT.setLocked(n, true);
 
         // an assigned fragment is locked implicitly
         assertEq(false, _testFragmentLiteRefNFT.locked(fragment1));

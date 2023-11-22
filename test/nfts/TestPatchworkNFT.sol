@@ -2,8 +2,11 @@
 pragma solidity ^0.8.13;
 
 import "../../src/PatchworkNFT.sol";
+import "../../src/IPatchworkMintable.sol";
 
-contract TestPatchworkNFT is PatchworkNFT {
+contract TestPatchworkNFT is PatchworkNFT, IPatchworkMintable {
+
+    uint256 _nextTokenId;
 
     struct TestPatchworkNFTMetadata {
         uint256 thing;
@@ -26,8 +29,21 @@ contract TestPatchworkNFT is PatchworkNFT {
         return MetadataSchema(1, entries);
     }
 
-    function mint(address to, uint256 tokenId) public {
+    function getScopeName() public view override (PatchworkNFT, IPatchworkMintable) returns (string memory scopeName) {
+        return PatchworkNFT.getScopeName();
+    }
+
+    function mint(address to, bytes calldata /* data */) public returns (uint256 tokenId) {
+        tokenId = _nextTokenId;
+        _nextTokenId++;
         _mint(to, tokenId);
         _metadataStorage[tokenId] = new uint256[](1);
+    }
+    
+    function mintBatch(address to, bytes calldata data, uint256 quantity) external returns (uint256[] memory tokenIds) {
+        tokenIds = new uint256[](quantity);
+        for (uint256 i = 0; i < quantity; i++) {
+            tokenIds[i] = mint(to, data);
+        }
     }
 }

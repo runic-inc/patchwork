@@ -11,6 +11,7 @@ pragma solidity ^0.8.13;
 
 import "../../src/PatchworkNFT.sol";
 import "../../src/PatchworkLiteRef.sol";
+import "../../src/IPatchworkMintable.sol";
 import "forge-std/console.sol";
 
 struct TestDynamicArrayLiteRefNFTMetadata {
@@ -28,7 +29,7 @@ struct DynamicLiteRefs {
     mapping(uint64 => uint256) idx;
 }
 
-contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef {
+contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef, IPatchworkMintable {
 
     uint256 _nextTokenId;
 
@@ -54,13 +55,24 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef {
         _manager = manager_;
     }
 
-    function mint(address to) external returns (uint256 tokenId) {
+    function getScopeName() public view override (PatchworkNFT, IPatchworkMintable) returns (string memory scopeName) {
+        return PatchworkNFT.getScopeName();
+    }
+
+    function mint(address to, bytes calldata /* data */) public returns (uint256 tokenId) {
         tokenId = _nextTokenId;
         _nextTokenId++;
         _safeMint(to, tokenId);
         _metadataStorage[tokenId] = new uint256[](1);
         _dynamicLiterefStorage[tokenId].slots = new uint256[](0);
-    } 
+    }
+    
+    function mintBatch(address to, bytes calldata data, uint256 quantity) external returns (uint256[] memory tokenIds) {
+        tokenIds = new uint256[](quantity);
+        for (uint256 i = 0; i < quantity; i++) {
+            tokenIds[i] = mint(to, data);
+        }
+    }
 
     /*
     Hard coded prototype schema is:

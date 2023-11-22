@@ -49,125 +49,125 @@ contract PatchworkNFTTest is Test {
     }
 
     function testLoadStorePackedMetadataSlot() public {
-        _testPatchworkNFT.mint(_userAddress, 1);
+        uint256 n = _testPatchworkNFT.mint(_userAddress, "");
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _defaultUser));
-        _testPatchworkNFT.storePackedMetadataSlot(1, 0, 0x505050);
+        _testPatchworkNFT.storePackedMetadataSlot(n, 0, 0x505050);
         vm.prank(_scopeOwner);
-        _testPatchworkNFT.storePackedMetadataSlot(1, 0, 0x505050);
-        assertEq(0x505050, _testPatchworkNFT.loadPackedMetadataSlot(1, 0));
+        _testPatchworkNFT.storePackedMetadataSlot(n, 0, 0x505050);
+        assertEq(0x505050, _testPatchworkNFT.loadPackedMetadataSlot(n, 0));
     }
 
     function testTransferFrom() public {
         // TODO make sure these are calling checkTransfer on proto
-        _testPatchworkNFT.mint(_userAddress, 1);
-        assertEq(_userAddress, _testPatchworkNFT.ownerOf(1));
+        uint256 n = _testPatchworkNFT.mint(_userAddress, "");
+        assertEq(_userAddress, _testPatchworkNFT.ownerOf(n));
         vm.prank(_userAddress);
-        _testPatchworkNFT.transferFrom(_userAddress, _user2Address, 1);
-        assertEq(_user2Address, _testPatchworkNFT.ownerOf(1));
+        _testPatchworkNFT.transferFrom(_userAddress, _user2Address, n);
+        assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
         vm.prank(_user2Address);
-        _testPatchworkNFT.safeTransferFrom(_user2Address, _userAddress, 1);
-        assertEq(_userAddress, _testPatchworkNFT.ownerOf(1));
+        _testPatchworkNFT.safeTransferFrom(_user2Address, _userAddress, n);
+        assertEq(_userAddress, _testPatchworkNFT.ownerOf(n));
         vm.prank(_userAddress);
-        _testPatchworkNFT.safeTransferFrom(_userAddress, _user2Address, 1, bytes("abcd"));
-        assertEq(_user2Address, _testPatchworkNFT.ownerOf(1));
+        _testPatchworkNFT.safeTransferFrom(_userAddress, _user2Address, n, bytes("abcd"));
+        assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
 
         // test wrong user revert
         vm.startPrank(_userAddress);
-        assertEq(_user2Address, _testPatchworkNFT.ownerOf(1));
+        assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
         vm.expectRevert("ERC721: caller is not token owner or approved");
-        _testPatchworkNFT.transferFrom(_user2Address, _userAddress, 1);
-        assertEq(_user2Address, _testPatchworkNFT.ownerOf(1));
+        _testPatchworkNFT.transferFrom(_user2Address, _userAddress, n);
+        assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
         vm.expectRevert("ERC721: caller is not token owner or approved");
-        _testPatchworkNFT.safeTransferFrom(_user2Address, _userAddress, 1);
-        assertEq(_user2Address, _testPatchworkNFT.ownerOf(1));
+        _testPatchworkNFT.safeTransferFrom(_user2Address, _userAddress, n);
+        assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
         vm.expectRevert("ERC721: caller is not token owner or approved");
-        _testPatchworkNFT.safeTransferFrom(_user2Address, _userAddress, 1, bytes("abcd"));
-        assertEq(_user2Address, _testPatchworkNFT.ownerOf(1));
+        _testPatchworkNFT.safeTransferFrom(_user2Address, _userAddress, n, bytes("abcd"));
+        assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
     }
 
     function testLockFreezeSeparation() public {
-        _testPatchworkNFT.mint(_userAddress, 1);
+        uint256 n = _testPatchworkNFT.mint(_userAddress, "");
         vm.startPrank(_userAddress);
-        assertFalse(_testPatchworkNFT.locked(1));
-        _testPatchworkNFT.setLocked(1, true);
-        assertTrue(_testPatchworkNFT.locked(1));
-        assertFalse(_testPatchworkNFT.frozen(1));
-        _testPatchworkNFT.setFrozen(1, true);
-        assertTrue(_testPatchworkNFT.frozen(1));
-        assertTrue(_testPatchworkNFT.locked(1));
-        _testPatchworkNFT.setLocked(1, false);
-        assertTrue(_testPatchworkNFT.frozen(1));
-        assertFalse(_testPatchworkNFT.locked(1));
-        _testPatchworkNFT.setFrozen(1, false);
-        assertFalse(_testPatchworkNFT.frozen(1));
-        assertFalse(_testPatchworkNFT.locked(1));
-        _testPatchworkNFT.setFrozen(1, true);
-        assertTrue(_testPatchworkNFT.frozen(1));
-        assertFalse(_testPatchworkNFT.locked(1));
-        _testPatchworkNFT.setLocked(1, true);
-        assertTrue(_testPatchworkNFT.frozen(1));
-        assertTrue(_testPatchworkNFT.locked(1));
+        assertFalse(_testPatchworkNFT.locked(n));
+        _testPatchworkNFT.setLocked(n, true);
+        assertTrue(_testPatchworkNFT.locked(n));
+        assertFalse(_testPatchworkNFT.frozen(n));
+        _testPatchworkNFT.setFrozen(n, true);
+        assertTrue(_testPatchworkNFT.frozen(n));
+        assertTrue(_testPatchworkNFT.locked(n));
+        _testPatchworkNFT.setLocked(n, false);
+        assertTrue(_testPatchworkNFT.frozen(n));
+        assertFalse(_testPatchworkNFT.locked(n));
+        _testPatchworkNFT.setFrozen(n, false);
+        assertFalse(_testPatchworkNFT.frozen(n));
+        assertFalse(_testPatchworkNFT.locked(n));
+        _testPatchworkNFT.setFrozen(n, true);
+        assertTrue(_testPatchworkNFT.frozen(n));
+        assertFalse(_testPatchworkNFT.locked(n));
+        _testPatchworkNFT.setLocked(n, true);
+        assertTrue(_testPatchworkNFT.frozen(n));
+        assertTrue(_testPatchworkNFT.locked(n));
     }
 
     function testTransferFromWithFreezeNonce() public {
         // TODO make sure these are calling checkTransfer on proto
-        _testPatchworkNFT.mint(_userAddress, 1);
+        uint256 n = _testPatchworkNFT.mint(_userAddress, "");
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _defaultUser));
-        _testPatchworkNFT.setFrozen(1, true);
+        _testPatchworkNFT.setFrozen(n, true);
         vm.prank(_userAddress);
-        _testPatchworkNFT.setFrozen(1, true);
-        assertEq(_userAddress, _testPatchworkNFT.ownerOf(1));
+        _testPatchworkNFT.setFrozen(n, true);
+        assertEq(_userAddress, _testPatchworkNFT.ownerOf(n));
         vm.prank(_userAddress);
-        _testPatchworkNFT.transferFromWithFreezeNonce(_userAddress, _user2Address, 1, 0);
-        assertEq(_user2Address, _testPatchworkNFT.ownerOf(1));
+        _testPatchworkNFT.transferFromWithFreezeNonce(_userAddress, _user2Address, n, 0);
+        assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
         vm.prank(_user2Address);
-        _testPatchworkNFT.safeTransferFromWithFreezeNonce(_user2Address, _userAddress, 1, 0);
-        assertEq(_userAddress, _testPatchworkNFT.ownerOf(1));
+        _testPatchworkNFT.safeTransferFromWithFreezeNonce(_user2Address, _userAddress, n, 0);
+        assertEq(_userAddress, _testPatchworkNFT.ownerOf(n));
         vm.prank(_userAddress);
-        _testPatchworkNFT.safeTransferFromWithFreezeNonce(_userAddress, _user2Address, 1, bytes("abcd"), 0);
-        assertEq(_user2Address, _testPatchworkNFT.ownerOf(1));
+        _testPatchworkNFT.safeTransferFromWithFreezeNonce(_userAddress, _user2Address, n, bytes("abcd"), 0);
+        assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
 
         vm.startPrank(_user2Address);
         // test not frozen revert
-        _testPatchworkNFT.setFrozen(1, false);
-        assertEq(_user2Address, _testPatchworkNFT.ownerOf(1));
+        _testPatchworkNFT.setFrozen(n, false);
+        assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
 
-        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotFrozen.selector, _testPatchworkNFT, 1));
-        _testPatchworkNFT.transferFromWithFreezeNonce(_user2Address, _userAddress, 1, 1);
-        assertEq(_user2Address, _testPatchworkNFT.ownerOf(1));
-        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotFrozen.selector, _testPatchworkNFT, 1));
-        _testPatchworkNFT.safeTransferFromWithFreezeNonce(_user2Address, _userAddress, 1, 1);
-        assertEq(_user2Address, _testPatchworkNFT.ownerOf(1));
-        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotFrozen.selector, _testPatchworkNFT, 1));
-        _testPatchworkNFT.safeTransferFromWithFreezeNonce(_user2Address, _userAddress, 1, bytes("abcd"), 1);
-        assertEq(_user2Address, _testPatchworkNFT.ownerOf(1));
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotFrozen.selector, _testPatchworkNFT, n));
+        _testPatchworkNFT.transferFromWithFreezeNonce(_user2Address, _userAddress, n, 1);
+        assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotFrozen.selector, _testPatchworkNFT, n));
+        _testPatchworkNFT.safeTransferFromWithFreezeNonce(_user2Address, _userAddress, n, 1);
+        assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotFrozen.selector, _testPatchworkNFT, n));
+        _testPatchworkNFT.safeTransferFromWithFreezeNonce(_user2Address, _userAddress, n, bytes("abcd"), 1);
+        assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
 
         // test incorrect nonce revert
-        _testPatchworkNFT.setFrozen(1, true);
-        assertEq(_user2Address, _testPatchworkNFT.ownerOf(1));
-        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.IncorrectNonce.selector, _testPatchworkNFT, 1, 0));
-        _testPatchworkNFT.transferFromWithFreezeNonce(_user2Address, _userAddress, 1, 0);
-        assertEq(_user2Address, _testPatchworkNFT.ownerOf(1));
-        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.IncorrectNonce.selector, _testPatchworkNFT, 1, 0));
-        _testPatchworkNFT.safeTransferFromWithFreezeNonce(_user2Address, _userAddress, 1, 0);
-        assertEq(_user2Address, _testPatchworkNFT.ownerOf(1));
-        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.IncorrectNonce.selector, _testPatchworkNFT, 1, 0));
-        _testPatchworkNFT.safeTransferFromWithFreezeNonce(_user2Address, _userAddress, 1, bytes("abcd"), 0);
-        assertEq(_user2Address, _testPatchworkNFT.ownerOf(1));
+        _testPatchworkNFT.setFrozen(n, true);
+        assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.IncorrectNonce.selector, _testPatchworkNFT, n, 0));
+        _testPatchworkNFT.transferFromWithFreezeNonce(_user2Address, _userAddress, n, 0);
+        assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.IncorrectNonce.selector, _testPatchworkNFT, n, 0));
+        _testPatchworkNFT.safeTransferFromWithFreezeNonce(_user2Address, _userAddress, n, 0);
+        assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.IncorrectNonce.selector, _testPatchworkNFT, n, 0));
+        _testPatchworkNFT.safeTransferFromWithFreezeNonce(_user2Address, _userAddress, n, bytes("abcd"), 0);
+        assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
         vm.stopPrank();
 
         // test wrong user revert
         vm.startPrank(_userAddress);
-        assertEq(_user2Address, _testPatchworkNFT.ownerOf(1));
+        assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
         vm.expectRevert("ERC721: caller is not token owner or approved");
-        _testPatchworkNFT.transferFromWithFreezeNonce(_user2Address, _userAddress, 1, 1);
-        assertEq(_user2Address, _testPatchworkNFT.ownerOf(1));
+        _testPatchworkNFT.transferFromWithFreezeNonce(_user2Address, _userAddress, n, 1);
+        assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
         vm.expectRevert("ERC721: caller is not token owner or approved");
-        _testPatchworkNFT.safeTransferFromWithFreezeNonce(_user2Address, _userAddress, 1, 1);
-        assertEq(_user2Address, _testPatchworkNFT.ownerOf(1));
+        _testPatchworkNFT.safeTransferFromWithFreezeNonce(_user2Address, _userAddress, n, 1);
+        assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
         vm.expectRevert("ERC721: caller is not token owner or approved");
-        _testPatchworkNFT.safeTransferFromWithFreezeNonce(_user2Address, _userAddress, 1, bytes("abcd"), 1);
-        assertEq(_user2Address, _testPatchworkNFT.ownerOf(1));
+        _testPatchworkNFT.safeTransferFromWithFreezeNonce(_user2Address, _userAddress, n, bytes("abcd"), 1);
+        assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
         vm.stopPrank();
     }
 }
