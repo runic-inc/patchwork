@@ -249,7 +249,7 @@ contract PatchworkProtocolTest is Test {
  
         uint256 fragmentTokenId1 = _testFragmentLiteRefNFT.mint(_userAddress, "");
         uint256 fragmentTokenId2 = _testFragmentLiteRefNFT.mint(_userAddress, "");
-        uint256 multi1 = _testMultiFragmentNFT.mint(_userAddress);
+        uint256 multi1 = _testMultiFragmentNFT.mint(_userAddress, "");
         //Register _testPatchLiteRefNFT to _testPatchLiteRefNFT
         _testFragmentLiteRefNFT.registerReferenceAddress(address(_testFragmentLiteRefNFT));
         _testFragmentLiteRefNFT.registerReferenceAddress(address(_testMultiFragmentNFT));
@@ -444,7 +444,7 @@ contract PatchworkProtocolTest is Test {
         vm.expectRevert(); // not unassignable
         _prot.unassignMultiNFTDirect(address(1), 1, address(1), 1, 0);
         uint256 _testBaseNFTTokenId = _testBaseNFT.mint(_userAddress);
-        uint256 fragment1 = _testMultiFragmentNFT.mint(_userAddress);
+        uint256 fragment1 = _testMultiFragmentNFT.mint(_userAddress, "");
 
         vm.startPrank(_scopeOwner);
         _prot.claimScope(_scopeName);
