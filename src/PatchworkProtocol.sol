@@ -45,6 +45,8 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable {
     mapping(string => ProtocolFeeConfig) _scopeFeeOverrides; // scope-based fee overrides
     mapping(address => uint256) _addressBpOverride;
 
+    uint256 public constant TRANSFER_GAS_LIMIT = 5000;
+
     constructor() Ownable() {}
 
     /**
@@ -206,7 +208,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable {
         // modify state before calling to send
         scope.balance -= amount;
         // transfer funds
-        (bool sent,) = msg.sender.call{value: amount}(""); // TODO gas
+        (bool sent,) = msg.sender.call{value: amount, gas: TRANSFER_GAS_LIMIT}("");
         require(sent, "Failed to send");
         // TODO event
     }
@@ -282,7 +284,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable {
             revert("insufficient funds");
         }
         _protocolBalance -= amount;
-        (bool sent,) = msg.sender.call{value: amount}(""); // TODO gas
+        (bool sent,) = msg.sender.call{value: amount, gas: TRANSFER_GAS_LIMIT}("");
         require(sent, "Failed to send");
         // TODO event
     }

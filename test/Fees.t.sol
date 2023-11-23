@@ -7,6 +7,11 @@ import "forge-std/console.sol";
 import "../src/PatchworkProtocol.sol";
 import "./nfts/Test1155PatchNFT.sol";
 import "./nfts/TestBase1155.sol";
+import "./nfts/TestFragmentLiteRefNFT.sol";
+import "./nfts/TestDynamicArrayLiteRefNFT.sol";
+import "./nfts/TestMultiFragmentNFT.sol";
+import "./nfts/TestPatchLiteRefNFT.sol";
+import "./nfts/TestAccountPatchNFT.sol";
 
 contract FeesTest is Test {
 
@@ -28,12 +33,13 @@ contract FeesTest is Test {
 
         vm.prank(_patchworkOwner);
         _prot = new PatchworkProtocol();
+        vm.prank(_patchworkOwner);
+        _prot.setProtocolFeeConfig(IPatchworkProtocol.ProtocolFeeConfig(1000, 1000, 1000)); // 10%, 10%, 10%
 
         vm.startPrank(_scopeOwner);
         _scopeName = "testscope";
         _prot.claimScope(_scopeName);
         _prot.setScopeRules(_scopeName, false, false, false);
-        
         vm.stopPrank();
     }
 
@@ -42,10 +48,27 @@ contract FeesTest is Test {
         _prot.addProtocolBanker(_defaultUser);
         vm.prank(_patchworkOwner);
         _prot.addProtocolBanker(_user2Address);
-        // TODO set up a mint to make some money
+        vm.startPrank(_scopeOwner);
+        TestFragmentLiteRefNFT lr = new TestFragmentLiteRefNFT(address(_prot));
+        _prot.addWhitelist(_scopeName, address(lr));
+        _prot.setMintConfiguration(_scopeName, address(lr), IPatchworkProtocol.MintConfig(1000000000, true));
+        vm.stopPrank();
+        // mint something just to get some money in the account
+        IPatchworkProtocol.MintConfig memory mc = _prot.getMintConfiguration(_scopeName, address(lr));
+        uint256 mintCost = mc.flatFee;
+        assertEq(1000000000, mintCost);
+        _prot.mint{value: mintCost}(_scopeName, _userAddress, address(lr), "");
+        assertEq(900000000, _prot.balanceOf(_scopeName));
+        assertEq(100000000, _prot.balanceOfProtocol());
         vm.expectRevert();
-        _prot.withdrawFromProtocol(0);
-        vm.prank(_user2Address); // TODO test owner too
-        _prot.withdrawFromProtocol(0);
+        _prot.withdrawFromProtocol(100000000);
+        vm.prank(_user2Address); 
+        vm.expectRevert(); // insufficient balance
+        _prot.withdrawFromProtocol(500000000);
+        // banker + owner should work
+        vm.prank(_user2Address); 
+        _prot.withdrawFromProtocol(50000000);
+        vm.prank(_patchworkOwner);
+        _prot.withdrawFromProtocol(50000000);    
     }
 }
