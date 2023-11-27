@@ -318,13 +318,13 @@ interface IPatchworkProtocol {
 
     function getMintConfiguration(address addr) external view returns (MintConfig memory config);
 
-    function setPatchFee(string memory scopeName, address addr, uint256 baseFee) external;
+    function setPatchFee(address addr, uint256 baseFee) external;
 
-    function getPatchFee(string memory scopeName, address addr) external view returns (uint256 baseFee);
+    function getPatchFee(address addr) external view returns (uint256 baseFee);
 
-    function setAssignFee(string memory scopeName, address fragmentAddress, uint256 baseFee) external;
+    function setAssignFee(address fragmentAddress, uint256 baseFee) external;
 
-    function getAssignFee(string memory scopeName, address fragmentAddress) external view returns (uint256 baseFee);
+    function getAssignFee(address fragmentAddress) external view returns (uint256 baseFee);
 
     function addBanker(string memory scopeName, address addr) external;
 
@@ -335,9 +335,9 @@ interface IPatchworkProtocol {
 
     function balanceOf(string memory scopeName) external view returns (uint256 balance);
 
-    function mint(string memory scopeName, address to, address nft, bytes calldata data) external payable returns (uint256 tokenId);
+    function mint(address to, address nft, bytes calldata data) external payable returns (uint256 tokenId);
     
-    function mintBatch(string memory scopeName, address to, address nft, bytes calldata data, uint256 quantity) external payable returns (uint256[] memory tokenIds);
+    function mintBatch(address to, address nft, bytes calldata data, uint256 quantity) external payable returns (uint256[] memory tokenIds);
 
     function setProtocolFeeConfig(ProtocolFeeConfig memory config) external;
 

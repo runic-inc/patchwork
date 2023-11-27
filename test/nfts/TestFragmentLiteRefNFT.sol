@@ -46,7 +46,7 @@ contract TestFragmentLiteRefNFT is PatchworkFragmentSingle, PatchworkLiteRef, IP
             interfaceID == type(IPatchworkMintable).interfaceId;
     }
 
-    function getScopeName() public view override (PatchworkFragmentSingle, IPatchworkMintable) returns (string memory scopeName) {
+    function getScopeName() public view override (PatchworkFragmentSingle, IPatchworkScoped) returns (string memory scopeName) {
         return PatchworkNFT.getScopeName();
     }
 

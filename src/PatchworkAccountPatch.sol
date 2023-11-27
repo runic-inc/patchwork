@@ -29,7 +29,7 @@ abstract contract PatchworkAccountPatch is PatchworkNFT, IPatchworkAccountPatch 
     /**
     @dev See {IPatchworkNFT-getScopeName}
     */
-    function getScopeName() public view virtual override(PatchworkNFT, IPatchworkAccountPatch) returns (string memory) {
+    function getScopeName() public view virtual override(PatchworkNFT, IPatchworkScoped) returns (string memory) {
         return _scopeName;
     }
 

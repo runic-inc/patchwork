@@ -57,7 +57,7 @@ contract FeesTest is Test {
         IPatchworkProtocol.MintConfig memory mc = _prot.getMintConfiguration(address(lr));
         uint256 mintCost = mc.flatFee;
         assertEq(1000000000, mintCost);
-        _prot.mint{value: mintCost}(_scopeName, _userAddress, address(lr), "");
+        _prot.mint{value: mintCost}(_userAddress, address(lr), "");
         assertEq(900000000, _prot.balanceOf(_scopeName));
         assertEq(100000000, _prot.balanceOfProtocol());
         // default user not authorized
@@ -98,7 +98,7 @@ contract FeesTest is Test {
         IPatchworkProtocol.MintConfig memory mc = _prot.getMintConfiguration(address(lr));
         uint256 mintCost = mc.flatFee;
         assertEq(1000000000, mintCost);
-        _prot.mint{value: mintCost}(_scopeName, _userAddress, address(lr), "");
+        _prot.mint{value: mintCost}(_userAddress, address(lr), "");
         assertEq(900000000, _prot.balanceOf(_scopeName));
         assertEq(100000000, _prot.balanceOfProtocol());
         // TODO custom errors

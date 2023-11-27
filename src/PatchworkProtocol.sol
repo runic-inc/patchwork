@@ -10,6 +10,7 @@ import "./IPatchwork1155Patch.sol";
 import "./IPatchworkAccountPatch.sol";
 import "./IPatchworkProtocol.sol";
 import "./IPatchworkMintable.sol";
+import "./IPatchworkScoped.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -167,26 +168,41 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable {
         return scope.mintConfigurations[addr];
     }
 
-    // TODO can we get rid of the scopeName on these
-    function setPatchFee(string memory scopeName, address addr, uint256 baseFee) public {
+    function setPatchFee(address addr, uint256 baseFee) public {
+        if (!IERC165(addr).supportsInterface(type(IPatchworkScoped).interfaceId)) {
+            revert UnsupportedContract();
+        }
+        string memory scopeName = IPatchworkScoped(addr).getScopeName();
         Scope storage scope = _mustHaveScope(scopeName);
+        _mustBeWhitelisted(scopeName, scope, addr);
         _mustBeOwnerOrOperator(scope);
         scope.patchFees[addr] = baseFee;
     }
 
-    function getPatchFee(string memory scopeName, address addr) public view returns (uint256 baseFee) {
-        Scope storage scope = _mustHaveScope(scopeName);
+    function getPatchFee(address addr) public view returns (uint256 baseFee) {
+        if (!IERC165(addr).supportsInterface(type(IPatchworkScoped).interfaceId)) {
+            revert UnsupportedContract();
+        }
+        Scope storage scope = _mustHaveScope(IPatchworkScoped(addr).getScopeName());
         return scope.patchFees[addr];
     }
 
-    function setAssignFee(string memory scopeName, address fragmentAddress, uint256 baseFee) public {
+    function setAssignFee(address fragmentAddress, uint256 baseFee) public {
+        if (!IERC165(fragmentAddress).supportsInterface(type(IPatchworkScoped).interfaceId)) {
+            revert UnsupportedContract();
+        }
+        string memory scopeName = IPatchworkScoped(fragmentAddress).getScopeName();
         Scope storage scope = _mustHaveScope(scopeName);
+        _mustBeWhitelisted(scopeName, scope, fragmentAddress);
         _mustBeOwnerOrOperator(scope);
         scope.assignFees[fragmentAddress] = baseFee;
     }
 
-    function getAssignFee(string memory scopeName, address fragmentAddress) public view returns (uint256 baseFee) {
-        Scope storage scope = _mustHaveScope(scopeName);
+    function getAssignFee(address fragmentAddress) public view returns (uint256 baseFee) {
+        if (!IERC165(fragmentAddress).supportsInterface(type(IPatchworkScoped).interfaceId)) {
+            revert UnsupportedContract();
+        }
+        Scope storage scope = _mustHaveScope(IPatchworkScoped(fragmentAddress).getScopeName());
         return scope.assignFees[fragmentAddress];
     }
 
@@ -228,42 +244,47 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable {
         return scope.balance;
     }
 
-    // TODO remove scopeName
-    function mint(string memory scopeName, address to, address nft, bytes calldata data) external payable returns (uint256 tokenId) {
-        Scope storage scope = _mustHaveScope(scopeName);
-        MintConfig memory config = scope.mintConfigurations[nft];
-        if (!config.active) {
-            revert MintNotActive();
-        }
+    function mint(address to, address nft, bytes calldata data) external payable returns (uint256 tokenId) {
+        (MintConfig memory config, string memory scopeName, Scope storage scope) = _setupMint(nft);
         if (msg.value != config.flatFee) {
             revert IncorrectFeeAmount();
         }
-        if (msg.value != 0) {
-            uint256 protocolFee = msg.value * _protocolFeeConfig.mintBp / 10000;
-            _protocolBalance += protocolFee;
-            scope.balance += msg.value - protocolFee;
-        }
+        _handleMintFee(scope);
         tokenId = IPatchworkMintable(nft).mint(to, data);
         emit Mint(msg.sender, scopeName, to, nft, data);
     }
     
-    function mintBatch(string memory scopeName, address to, address nft, bytes calldata data, uint256 quantity) external payable returns (uint256[] memory tokenIds) {
-        Scope storage scope = _mustHaveScope(scopeName);
-        MintConfig memory config = scope.mintConfigurations[nft];
-        if (!config.active) {
-            revert MintNotActive();
-        }
+    function mintBatch(address to, address nft, bytes calldata data, uint256 quantity) external payable returns (uint256[] memory tokenIds) {
+        (MintConfig memory config, string memory scopeName, Scope storage scope) = _setupMint(nft);
         uint256 totalFee = config.flatFee * quantity;
         if (msg.value != totalFee) {
             revert IncorrectFeeAmount();
         }
+        _handleMintFee(scope);
+        tokenIds = IPatchworkMintable(nft).mintBatch(to, data, quantity);
+        emit MintBatch(msg.sender, scopeName, to, nft, data, quantity);
+    }
+
+    function _setupMint(address nft) internal view returns (MintConfig memory config, string memory scopeName, Scope storage scope) {
+        if (!IERC165(nft).supportsInterface(type(IPatchworkMintable).interfaceId)) {
+            revert UnsupportedContract();
+        }
+        scopeName = IPatchworkMintable(nft).getScopeName();
+        scope = _mustHaveScope(scopeName);
+        _mustBeWhitelisted(scopeName, scope, nft);
+        config = scope.mintConfigurations[nft];
+        if (!config.active) {
+            revert MintNotActive();
+        }
+    }
+
+    function _handleMintFee(Scope storage scope) internal {
+        // Account for 100% of the message value
         if (msg.value != 0) {
             uint256 protocolFee = msg.value * _protocolFeeConfig.mintBp / 10000;
             _protocolBalance += protocolFee;
             scope.balance += msg.value - protocolFee;
         }
-        tokenIds = IPatchworkMintable(nft).mintBatch(to, data, quantity);
-        emit MintBatch(msg.sender, scopeName, to, nft, data, quantity);
     }
 
     function setProtocolFeeConfig(ProtocolFeeConfig memory config) public {

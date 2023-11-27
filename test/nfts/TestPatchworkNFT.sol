@@ -34,7 +34,7 @@ contract TestPatchworkNFT is PatchworkNFT, IPatchworkMintable {
         return MetadataSchema(1, entries);
     }
 
-    function getScopeName() public view override (PatchworkNFT, IPatchworkMintable) returns (string memory scopeName) {
+    function getScopeName() public view override (PatchworkNFT, IPatchworkScoped) returns (string memory scopeName) {
         return PatchworkNFT.getScopeName();
     }
 

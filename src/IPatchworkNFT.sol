@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "./IERC5192.sol";
+import "./IPatchworkScoped.sol";
 
 /** 
 @title Patchwork Protocol NFT Interface Metadata
@@ -75,7 +76,7 @@ interface PatchworkNFTInterfaceMeta {
 @author Runic Labs, Inc
 @notice Interface for contracts supporting Patchwork metadata standard
 */
-interface IPatchworkNFT is PatchworkNFTInterfaceMeta, IERC5192 {
+interface IPatchworkNFT is IPatchworkScoped, PatchworkNFTInterfaceMeta, IERC5192 {
     /**
     @notice Emitted when the freeze status is changed to frozen.
     @param tokenId The identifier for a token.
@@ -101,12 +102,6 @@ interface IPatchworkNFT is PatchworkNFTInterfaceMeta, IERC5192 {
     */
     event SchemaChange(address indexed addr);
     
-    /**
-    @notice Get the scope this NFT claims to belong to
-    @return string the name of the scope
-    */
-    function getScopeName() external view returns (string memory);
-
     /**
     @notice Returns the URI of the schema
     @return string the URI of the schema
