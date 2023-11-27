@@ -13,13 +13,14 @@ import "./IPatchworkMintable.sol";
 import "./IPatchworkScoped.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /** 
 @title Patchwork Protocol
 @author Runic Labs, Inc
 @notice Manages data integrity of relational NFTs implemented with Patchwork interfaces 
 */
-contract PatchworkProtocol is IPatchworkProtocol, Ownable {
+contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
 
     /// Scopes
     mapping(string => Scope) private _scopes;
@@ -48,7 +49,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable {
 
     uint256 public constant TRANSFER_GAS_LIMIT = 5000;
 
-    constructor() Ownable() {}
+    constructor() Ownable() ReentrancyGuard() {}
 
     /**
     @dev See {IPatchworkProtocol-claimScope}
@@ -220,8 +221,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable {
         emit ScopeBankerRemove(scopeName, msg.sender, addr);
     }
 
-    // TODO nonreentrant
-    function withdraw(string memory scopeName, uint256 amount) public {
+    function withdraw(string memory scopeName, uint256 amount) public nonReentrant {
         Scope storage scope = _mustHaveScope(scopeName);
         if (msg.sender != scope.owner && !scope.bankers[msg.sender]) {
             revert NotAuthorized(msg.sender);
@@ -308,8 +308,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable {
         emit ProtocolBankerRemove(msg.sender, addr);
     }
 
-    // TODO nonreentrant
-    function withdrawFromProtocol(uint256 amount) external {
+    function withdrawFromProtocol(uint256 amount) external nonReentrant {
         if (msg.sender != owner() && _protocolBankers[msg.sender] == false) {
             revert NotAuthorized(msg.sender);
         }

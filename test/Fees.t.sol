@@ -101,9 +101,6 @@ contract FeesTest is Test {
         _prot.mint{value: mintCost}(_userAddress, address(lr), "");
         assertEq(900000000, _prot.balanceOf(_scopeName));
         assertEq(100000000, _prot.balanceOfProtocol());
-        // TODO custom errors
-        // TODO remove scope from API
-        // TODO events
         // TODO non reentrant
     }
 }
