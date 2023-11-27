@@ -21,7 +21,7 @@ interface IPatchworkMultiAssignableNFT is IPatchworkAssignableNFT {
     @param target the address of the target
     @param targetTokenId the tokenId of the target
     */
-    function isAssignedTo(uint256 ourTokenId, address target, uint256 targetTokenId) external returns (bool);
+    function isAssignedTo(uint256 ourTokenId, address target, uint256 targetTokenId) external view returns (bool);
 
     /**
     @notice Unassigns a token
@@ -33,7 +33,7 @@ interface IPatchworkMultiAssignableNFT is IPatchworkAssignableNFT {
     @notice Counts the number of unique assignments this token has
     @param tokenId tokenId of our fragment
     */
-    function getAssignmentCount(uint256 tokenId) external returns (uint256);
+    function getAssignmentCount(uint256 tokenId) external view returns (uint256);
 
     /**
     @notice Gets assignments for a fragment
@@ -41,5 +41,5 @@ interface IPatchworkMultiAssignableNFT is IPatchworkAssignableNFT {
     @param offset the page offset
     @param count the maximum numer of entries to return
     */
-    function getAssignments(uint256 tokenId, uint256 offset, uint256 count) external returns (Assignment[] memory);
+    function getAssignments(uint256 tokenId, uint256 offset, uint256 count) external view returns (Assignment[] memory);
 }

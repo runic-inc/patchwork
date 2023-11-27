@@ -146,16 +146,24 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable {
         emit ScopeRuleChange(scopeName, msg.sender, allowUserPatch, allowUserAssign, requireWhitelist);
     }
 
-    function setMintConfiguration(string memory scopeName, address addr, MintConfig memory config) public {
+    function setMintConfiguration(address addr, MintConfig memory config) public {
+        if (!IERC165(addr).supportsInterface(type(IPatchworkMintable).interfaceId)) {
+            revert UnsupportedContract();
+        }
+        IPatchworkMintable mintable = IPatchworkMintable(addr);
+        string memory scopeName = mintable.getScopeName();
         Scope storage scope = _mustHaveScope(scopeName);
+        _mustBeWhitelisted(scopeName, scope, addr);
         _mustBeOwnerOrOperator(scope);
-        // TODO address must be mintable and in this scope
         scope.mintConfigurations[addr] = config;
-        // TODO event
+        emit MintConfigure(scopeName, msg.sender, addr, config);
     }
 
-    function getMintConfiguration(string memory scopeName, address addr) public view returns (MintConfig memory config) {
-        Scope storage scope = _mustHaveScope(scopeName);
+    function getMintConfiguration(address addr) public view returns (MintConfig memory config) {
+        if (!IERC165(addr).supportsInterface(type(IPatchworkMintable).interfaceId)) {
+            revert UnsupportedContract();
+        }
+        Scope storage scope = _mustHaveScope(IPatchworkMintable(addr).getScopeName());
         return scope.mintConfigurations[addr];
     }
 
@@ -186,14 +194,14 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable {
         Scope storage scope = _mustHaveScope(scopeName);
         _mustBeOwnerOrOperator(scope);
         scope.bankers[addr] = true;
-        // TODO event
+        emit ScopeBankerAdd(scopeName, msg.sender, addr);
     }
 
     function removeBanker(string memory scopeName, address addr) public {
         Scope storage scope = _mustHaveScope(scopeName);
         _mustBeOwnerOrOperator(scope);
         delete scope.bankers[addr];
-        // TODO event
+        emit ScopeBankerRemove(scopeName, msg.sender, addr);
     }
 
     // TODO nonreentrant
@@ -203,14 +211,16 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable {
             revert NotAuthorized(msg.sender);
         }
         if (amount > scope.balance) {
-            revert("insufficient balance");
+            revert InsufficientFunds();
         }
         // modify state before calling to send
         scope.balance -= amount;
         // transfer funds
         (bool sent,) = msg.sender.call{value: amount, gas: TRANSFER_GAS_LIMIT}("");
-        require(sent, "Failed to send");
-        // TODO event
+        if (!sent) {
+            revert FailedToSend();
+        }
+        emit ScopeWithdraw(scopeName, msg.sender, amount);
     }
 
     function balanceOf(string memory scopeName) public view returns (uint256 balance) {
@@ -223,10 +233,10 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable {
         Scope storage scope = _mustHaveScope(scopeName);
         MintConfig memory config = scope.mintConfigurations[nft];
         if (!config.active) {
-            revert("mint not active");
+            revert MintNotActive();
         }
         if (msg.value != config.flatFee) {
-            revert("incorrect fee amount");
+            revert IncorrectFeeAmount();
         }
         if (msg.value != 0) {
             uint256 protocolFee = msg.value * _protocolFeeConfig.mintBp / 10000;
@@ -234,18 +244,18 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable {
             scope.balance += msg.value - protocolFee;
         }
         tokenId = IPatchworkMintable(nft).mint(to, data);
-        // TODO event
+        emit Mint(msg.sender, scopeName, to, nft, data);
     }
     
     function mintBatch(string memory scopeName, address to, address nft, bytes calldata data, uint256 quantity) external payable returns (uint256[] memory tokenIds) {
         Scope storage scope = _mustHaveScope(scopeName);
         MintConfig memory config = scope.mintConfigurations[nft];
         if (!config.active) {
-            revert("mint not active");
+            revert MintNotActive();
         }
         uint256 totalFee = config.flatFee * quantity;
         if (msg.value != totalFee) {
-            revert("incorrect fee amount");
+            revert IncorrectFeeAmount();
         }
         if (msg.value != 0) {
             uint256 protocolFee = msg.value * _protocolFeeConfig.mintBp / 10000;
@@ -253,12 +263,12 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable {
             scope.balance += msg.value - protocolFee;
         }
         tokenIds = IPatchworkMintable(nft).mintBatch(to, data, quantity);
-        // TODO event
+        emit MintBatch(msg.sender, scopeName, to, nft, data, quantity);
     }
 
     function setProtocolFeeConfig(ProtocolFeeConfig memory config) public {
         if (msg.sender != owner() && _protocolBankers[msg.sender] == false) {
-            revert("Not authorized"); // TODO
+            revert NotAuthorized(msg.sender);
         }
         _protocolFeeConfig = config;
     }
@@ -269,24 +279,28 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable {
 
     function addProtocolBanker(address addr) external onlyOwner {
         _protocolBankers[addr] = true;
+        emit ProtocolBankerAdd(msg.sender, addr);
     }
 
     function removeProtocolBanker(address addr) external onlyOwner {
         delete _protocolBankers[addr];
+        emit ProtocolBankerRemove(msg.sender, addr);
     }
 
     // TODO nonreentrant
     function withdrawFromProtocol(uint256 amount) external {
         if (msg.sender != owner() && _protocolBankers[msg.sender] == false) {
-            revert("Not authorized"); // TODO
+            revert NotAuthorized(msg.sender);
         }
         if (amount > _protocolBalance) {
-            revert("insufficient funds");
+            revert InsufficientFunds();
         }
         _protocolBalance -= amount;
         (bool sent,) = msg.sender.call{value: amount, gas: TRANSFER_GAS_LIMIT}("");
-        require(sent, "Failed to send");
-        // TODO event
+        if (!sent) {
+            revert FailedToSend();
+        }
+        emit ProtocolWithdraw(msg.sender, amount);
     }
 
     function balanceOfProtocol() public view returns (uint256 balance) {
@@ -399,7 +413,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable {
     function _handlePatchFee(Scope storage scope, address patchAddress) private {
         uint256 patchFee = scope.patchFees[patchAddress];
         if (msg.value != patchFee) {
-            revert("incorrect fee amount"); // TODO
+            revert IncorrectFeeAmount();
         }
         if (msg.value > 0) {
             uint256 protocolFee = msg.value * _protocolFeeConfig.patchBp / 10000;
@@ -411,7 +425,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable {
     function _handleAssignFee(Scope storage scope, address fragmentAddress) private {
         uint256 assignFee = scope.assignFees[fragmentAddress];
         if (msg.value != assignFee) {
-            revert("incorrect fee amount"); // TODO
+            revert IncorrectFeeAmount();
         }
         if (msg.value > 0) {
             uint256 protocolFee = msg.value * _protocolFeeConfig.assignBp / 10000;

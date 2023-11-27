@@ -6,7 +6,7 @@ pragma solidity ^0.8.13;
 @author Runic Labs, Inc
 */
 interface IPatchworkMintable {
-    function getScopeName() external returns (string memory scopeName);
+    function getScopeName() external view returns (string memory scopeName);
     
     function mint(address to, bytes calldata data) external returns (uint256 tokenId);
     

@@ -210,25 +210,50 @@ interface IPatchworkProtocol {
     error DataIntegrityError(address addr, uint256 tokenId, address addr2, uint256 tokenId2);
 
     /**
-    @notice The operation is not supported
+    @notice The available balance does not satisfy the amount
     */
-    error UnsupportedOperation();
+    error InsufficientFunds();
 
+    /**
+    @notice The supplied fee is not the corret amount
+    */
+    error IncorrectFeeAmount();
+
+    /**
+    @notice Minting is not active for this address 
+    */
+    error MintNotActive();
+
+    /**
+    @notice The value could not be sent 
+    */
+    error FailedToSend();   
+    
     /**
     @notice The contract is not supported
     */
     error UnsupportedContract();
+    
+    /**
+    @notice The operation is not supported
+    */
+    error UnsupportedOperation();
 
+    /** 
+    @notice Protocol Fee Configuration
+    */
     struct ProtocolFeeConfig {
-        uint256 mintBp; // mint basis points (10000 = 100%)
-        uint256 patchBp; // patch basis points (10000 = 100%)
-        uint256 assignBp; // assign basis points (10000 = 100%)
+        uint256 mintBp;   /// mint basis points (10000 = 100%)
+        uint256 patchBp;  /// patch basis points (10000 = 100%)
+        uint256 assignBp; /// assign basis points (10000 = 100%)
     }
 
-    // TODO discount table?
+    /**
+    @notice Mint configuration
+    */
     struct MintConfig {
-        uint256 flatFee; // wei
-        bool active;
+        uint256 flatFee; /// wei
+        bool active;     /// If the mint is active
     }
 
     /**
@@ -289,17 +314,17 @@ interface IPatchworkProtocol {
         mapping(address => bool) bankers;
     }
 
-    function setMintConfiguration(string memory scopeName, address addr, MintConfig memory config) external;
+    function setMintConfiguration(address addr, MintConfig memory config) external;
 
-    function getMintConfiguration(string memory scopeName, address addr) external returns (MintConfig memory config);
+    function getMintConfiguration(address addr) external view returns (MintConfig memory config);
 
     function setPatchFee(string memory scopeName, address addr, uint256 baseFee) external;
 
-    function getPatchFee(string memory scopeName, address addr) external returns (uint256 baseFee);
+    function getPatchFee(string memory scopeName, address addr) external view returns (uint256 baseFee);
 
     function setAssignFee(string memory scopeName, address fragmentAddress, uint256 baseFee) external;
 
-    function getAssignFee(string memory scopeName, address fragmentAddress) external returns (uint256 baseFee);
+    function getAssignFee(string memory scopeName, address fragmentAddress) external view returns (uint256 baseFee);
 
     function addBanker(string memory scopeName, address addr) external;
 
@@ -308,7 +333,7 @@ interface IPatchworkProtocol {
     // TODO nonreentrant
     function withdraw(string memory scopeName, uint256 amount) external;
 
-    function balanceOf(string memory scopeName) external returns (uint256 balance);
+    function balanceOf(string memory scopeName) external view returns (uint256 balance);
 
     function mint(string memory scopeName, address to, address nft, bytes calldata data) external payable returns (uint256 tokenId);
     
@@ -316,7 +341,7 @@ interface IPatchworkProtocol {
 
     function setProtocolFeeConfig(ProtocolFeeConfig memory config) external;
 
-    function getProtocolFeeConfig() external returns (ProtocolFeeConfig memory config);
+    function getProtocolFeeConfig() external view returns (ProtocolFeeConfig memory config);
 
     function addProtocolBanker(address addr) external;
 
@@ -324,7 +349,7 @@ interface IPatchworkProtocol {
 
     function withdrawFromProtocol(uint256 balance) external;
 
-    function balanceOfProtocol() external returns (uint256 balance);
+    function balanceOfProtocol() external view returns (uint256 balance);
 
     /**
     @notice Emitted when a fragment is assigned
@@ -451,6 +476,80 @@ interface IPatchworkProtocol {
     event ScopeWhitelistRemove(string scopeName, address indexed actor, address indexed addr);
 
     /**
+    @notice Emitted when a mint is configured
+    @param scopeName The name of the scope
+    @param nft The address of the NFT that is mintable
+    @param config The mint configuration
+    */
+    event MintConfigure(string scopeName, address indexed actor, address indexed nft, MintConfig config);
+
+    /**
+    @notice Emitted when a banker is added to a scope
+    @param scopeName The name of the scope
+    @param actor The address responsible for the action
+    @param banker The banker that was added
+    */
+    event ScopeBankerAdd(string scopeName, address indexed actor, address indexed banker);
+
+    /**
+    @notice Emitted when a banker is removed from a scope
+    @param scopeName The name of the scope
+    @param actor The address responsible for the action
+    @param banker The banker that was removed
+    */
+    event ScopeBankerRemove(string scopeName, address indexed actor, address indexed banker);
+    
+    /**
+    @notice Emitted when a withdrawl is made from a scope
+    @param scopeName The name of the scope
+    @param actor The address responsible for the action
+    @param amount The amount withdrawn
+    */    
+    event ScopeWithdraw(string scopeName, address indexed actor, uint256 amount);
+
+    /**
+    @notice Emitted when a banker is added to the protocol
+    @param actor The address responsible for the action
+    @param banker The banker that was added
+    */
+    event ProtocolBankerAdd(address indexed actor, address indexed banker);
+
+    /**
+    @notice Emitted when a banker is removed from the protocol
+    @param actor The address responsible for the action
+    @param banker The banker that was removed
+    */
+    event ProtocolBankerRemove(address indexed actor, address indexed banker);
+
+    /**
+    @notice Emitted when a withdrawl is made from the protocol
+    @param actor The address responsible for the action
+    @param amount The amount withdrawn
+    */
+    event ProtocolWithdraw(address indexed actor, uint256 amount);
+
+    /**
+    @notice Emitted on mint
+    @param actor The address responsible for the action
+    @param scopeName The scope of the NFT
+    @param to The receipient of the mint
+    @param nft The nft minted
+    @param data The data used to mint
+    */
+    event Mint(address indexed actor, string scopeName, address indexed to, address indexed nft, bytes data);
+
+    /**
+    @notice Emitted on batch mint
+    @param actor The address responsible for the action
+    @param scopeName The scope of the NFT
+    @param to The receipient of the mint
+    @param nft The nft minted
+    @param data The data used to mint
+    @param quantity The quantity minted
+    */
+    event MintBatch(address indexed actor, string scopeName, address indexed to, address indexed nft, bytes data, uint256 quantity);
+
+    /**
     @notice Claim a scope
     @param scopeName the name of the scope
     */
@@ -481,14 +580,14 @@ interface IPatchworkProtocol {
     @param scopeName Name of the scope
     @return ownerElect Address of the scope's owner-elect
     */
-    function getScopeOwnerElect(string calldata scopeName) external returns (address ownerElect);
+    function getScopeOwnerElect(string calldata scopeName) external view returns (address ownerElect);
 
     /**
     @notice Get owner of a scope
     @param scopeName Name of the scope
     @return owner Address of the scope owner
     */
-    function getScopeOwner(string calldata scopeName) external returns (address owner);
+    function getScopeOwner(string calldata scopeName) external view returns (address owner);
 
     /**
     @notice Add an operator to a scope

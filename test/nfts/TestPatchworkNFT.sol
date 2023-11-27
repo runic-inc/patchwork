@@ -15,6 +15,11 @@ contract TestPatchworkNFT is PatchworkNFT, IPatchworkMintable {
     constructor(address manager_) PatchworkNFT("testscope", "TestPatchworkNFT", "TPLR", msg.sender, manager_) {
     }
 
+    function supportsInterface(bytes4 interfaceID) public view virtual override returns (bool) {
+        return PatchworkNFT.supportsInterface(interfaceID) || 
+            interfaceID == type(IPatchworkMintable).interfaceId;
+    }
+
     function schemaURI() pure external returns (string memory) {
         return "https://mything/my-nft-metadata.json";
     }

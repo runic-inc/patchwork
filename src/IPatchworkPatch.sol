@@ -11,7 +11,7 @@ interface IPatchworkPatch {
     @notice Get the scope this NFT claims to belong to
     @return string the name of the scope
     */
-    function getScopeName() external returns (string memory);
+    function getScopeName() external view returns (string memory);
 
     /**
     @notice Creates a new token for the owner, representing a patch
@@ -33,7 +33,7 @@ interface IPatchworkPatch {
     @param tokenId ID of the token
     @return address Address of the owner
     */
-    function unpatchedOwnerOf(uint256 tokenId) external returns (address);
+    function unpatchedOwnerOf(uint256 tokenId) external view returns (address);
 
     /**
     @notice Returns the token ID (if it exists) for an NFT that may have been patched
@@ -42,5 +42,5 @@ interface IPatchworkPatch {
     @param originalNFTTokenId ID of the original NFT token
     @return tokenId ID of the newly minted token
     */
-    function getTokenIdForOriginalNFT(address originalNFTAddress, uint256 originalNFTTokenId) external returns (uint256 tokenId);
+    function getTokenIdForOriginalNFT(address originalNFTAddress, uint256 originalNFTTokenId) external view returns (uint256 tokenId);
 }

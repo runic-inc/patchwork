@@ -11,7 +11,7 @@ interface IPatchwork1155Patch {
     @notice Get the scope this NFT claims to belong to
     @return string the name of the scope
     */
-    function getScopeName() external returns (string memory);
+    function getScopeName() external view returns (string memory);
 
     /**
     @notice Creates a new token for the owner, representing a patch

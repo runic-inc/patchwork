@@ -105,26 +105,26 @@ interface IPatchworkNFT is PatchworkNFTInterfaceMeta, IERC5192 {
     @notice Get the scope this NFT claims to belong to
     @return string the name of the scope
     */
-    function getScopeName() external returns (string memory);
+    function getScopeName() external view returns (string memory);
 
     /**
     @notice Returns the URI of the schema
     @return string the URI of the schema
     */
-    function schemaURI() external returns (string memory);
+    function schemaURI() external view returns (string memory);
 
     /**
     @notice Returns the metadata schema
     @return MetadataSchema the metadata schema
     */
-    function schema() external returns (MetadataSchema memory);
+    function schema() external view returns (MetadataSchema memory);
 
     /**
     @notice Returns the URI of the image associated with the given token ID
     @param tokenId ID of the token
     @return string the image URI
     */
-    function imageURI(uint256 tokenId) external returns (string memory);
+    function imageURI(uint256 tokenId) external view returns (string memory);
 
     /**
     @notice Sets permissions for a given address
@@ -147,14 +147,14 @@ interface IPatchworkNFT is PatchworkNFTInterfaceMeta, IERC5192 {
     @param slot Slot to load metadata from
     @return uint256 the raw slot data as a uint256
     */
-    function loadPackedMetadataSlot(uint256 tokenId, uint256 slot) external returns (uint256);
+    function loadPackedMetadataSlot(uint256 tokenId, uint256 slot) external view returns (uint256);
 
     /**
     @notice Returns the freeze nonce for a given token ID
     @param tokenId ID of the token
     @return nonce the nonce
     */
-    function getFreezeNonce(uint256 tokenId) external returns (uint256 nonce);
+    function getFreezeNonce(uint256 tokenId) external view returns (uint256 nonce);
 
     /**
     @notice Sets the freeze status of a token

@@ -15,6 +15,11 @@ contract TestMultiFragmentNFT is PatchworkFragmentMulti, IPatchworkMintable {
     constructor (address _manager) PatchworkNFT("testscope", "TestMultiFragmentNFT", "TFLR", msg.sender, _manager) {
     }
 
+    function supportsInterface(bytes4 interfaceID) public view virtual override returns (bool) {
+        return PatchworkFragmentMulti.supportsInterface(interfaceID) || 
+            interfaceID == type(IPatchworkMintable).interfaceId;
+    }
+
     function getScopeName() public view override (PatchworkFragmentMulti, IPatchworkMintable) returns (string memory scopeName) {
         return PatchworkNFT.getScopeName();
     }

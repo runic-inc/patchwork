@@ -42,7 +42,8 @@ contract TestFragmentLiteRefNFT is PatchworkFragmentSingle, PatchworkLiteRef, IP
     // ERC-165
     function supportsInterface(bytes4 interfaceID) public view virtual override(PatchworkFragmentSingle, PatchworkLiteRef) returns (bool) {
         return PatchworkLiteRef.supportsInterface(interfaceID) || 
-            PatchworkFragmentSingle.supportsInterface(interfaceID);             
+            PatchworkFragmentSingle.supportsInterface(interfaceID) ||
+            interfaceID == type(IPatchworkMintable).interfaceId;
     }
 
     function getScopeName() public view override (PatchworkFragmentSingle, IPatchworkMintable) returns (string memory scopeName) {
