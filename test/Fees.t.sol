@@ -44,7 +44,7 @@ contract FeesTest is Test {
     }
 
     function testProtocolBankers() public {
-        vm.expectRevert(); // caller is not owner
+        vm.expectRevert("Ownable: caller is not the owner"); // caller is not owner
         _prot.addProtocolBanker(_defaultUser);
         vm.prank(_patchworkOwner);
         _prot.addProtocolBanker(_user2Address);
@@ -61,28 +61,28 @@ contract FeesTest is Test {
         assertEq(900000000, _prot.balanceOf(_scopeName));
         assertEq(100000000, _prot.balanceOfProtocol());
         // default user not authorized
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _defaultUser));
         _prot.withdrawFromProtocol(100000000);
         vm.prank(_user2Address); 
-        vm.expectRevert(); // insufficient balance
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.InsufficientFunds.selector));
         _prot.withdrawFromProtocol(500000000);
-        vm.expectRevert(); // userAddress not authorized
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _userAddress));
         vm.prank(_userAddress);
         _prot.withdrawFromProtocol(50000000);
         // banker + owner should work
         vm.prank(_user2Address); 
         _prot.withdrawFromProtocol(50000000);
         // Remove a banker
-        vm.expectRevert(); // not authorized - caller is not owner
+        vm.expectRevert("Ownable: caller is not the owner");
         _prot.removeProtocolBanker(_user2Address);
         vm.prank(_patchworkOwner);
         _prot.removeProtocolBanker(_user2Address);
-        vm.expectRevert(); // Not authorized anymore
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _user2Address));
         vm.prank(_user2Address); 
         _prot.withdrawFromProtocol(50000000);
         vm.prank(_patchworkOwner);
         _prot.withdrawFromProtocol(50000000);
-        vm.expectRevert(); // insufficient balance
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.InsufficientFunds.selector));
         vm.prank(_patchworkOwner);
         _prot.withdrawFromProtocol(1);
     }
@@ -101,6 +101,79 @@ contract FeesTest is Test {
         _prot.mint{value: mintCost}(_userAddress, address(lr), "");
         assertEq(900000000, _prot.balanceOf(_scopeName));
         assertEq(100000000, _prot.balanceOfProtocol());
-        // TODO non reentrant
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _userAddress));
+        vm.prank(_userAddress);
+        _prot.withdraw(_scopeName, 450000000);
+        vm.prank(_user2Address);
+        _prot.withdraw(_scopeName, 450000000);
+        vm.prank(_scopeOwner);
+        _prot.removeBanker(_scopeName, _user2Address);
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _user2Address));
+        vm.prank(_user2Address);
+        _prot.withdraw(_scopeName, 450000000);
+        // will work and take balance to 0
+        vm.prank(_scopeOwner);
+        _prot.withdraw(_scopeName, 450000000);
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.InsufficientFunds.selector));
+        vm.prank(_scopeOwner);
+        _prot.withdraw(_scopeName, 1);
+    }
+
+    function testMints() public {
+        vm.startPrank(_scopeOwner);
+         _prot.setScopeRules(_scopeName, false, false, true);
+        TestFragmentLiteRefNFT lr = new TestFragmentLiteRefNFT(address(_prot));
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotWhitelisted.selector, _scopeName, address(lr)));
+        _prot.setMintConfiguration(address(lr), IPatchworkProtocol.MintConfig(1000000000, true));
+        vm.stopPrank();
+        // mint something just to get some money in the account
+        IPatchworkProtocol.MintConfig memory mc = _prot.getMintConfiguration(address(lr));
+        uint256 mintCost = mc.flatFee;
+        assertEq(0, mintCost); // Couldn't be set due to whitelisting
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotWhitelisted.selector, _scopeName, address(lr)));
+        _prot.mint{value: mintCost}(_userAddress, address(lr), "");
+        assertEq(0, _prot.balanceOf(_scopeName));
+        assertEq(0, _prot.balanceOfProtocol());
+        // Now whitelisted
+        vm.startPrank(_scopeOwner);
+        _prot.addWhitelist(_scopeName, address(lr));
+        _prot.setMintConfiguration(address(lr), IPatchworkProtocol.MintConfig(1000000000, true));
+        vm.stopPrank();
+        // mint something just to get some money in the account
+        mc = _prot.getMintConfiguration(address(lr));
+        mintCost = mc.flatFee;
+        assertEq(1000000000, mintCost);
+        _prot.mint{value: mintCost}(_userAddress, address(lr), "");
+        assertEq(900000000, _prot.balanceOf(_scopeName));
+        assertEq(100000000, _prot.balanceOfProtocol());
+    }
+
+    function testBatchMints() public {
+        vm.startPrank(_scopeOwner);
+         _prot.setScopeRules(_scopeName, false, false, true);
+        TestFragmentLiteRefNFT lr = new TestFragmentLiteRefNFT(address(_prot));
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotWhitelisted.selector, _scopeName, address(lr)));
+        _prot.setMintConfiguration(address(lr), IPatchworkProtocol.MintConfig(1000000000, true));
+        vm.stopPrank();
+        // mint something just to get some money in the account
+        IPatchworkProtocol.MintConfig memory mc = _prot.getMintConfiguration(address(lr));
+        uint256 mintCost = mc.flatFee;
+        assertEq(0, mintCost); // Couldn't be set due to whitelisting
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotWhitelisted.selector, _scopeName, address(lr)));
+        _prot.mintBatch{value: mintCost}(_userAddress, address(lr), "", 5);
+        assertEq(0, _prot.balanceOf(_scopeName));
+        assertEq(0, _prot.balanceOfProtocol());
+        // Now whitelisted
+        vm.startPrank(_scopeOwner);
+        _prot.addWhitelist(_scopeName, address(lr));
+        _prot.setMintConfiguration(address(lr), IPatchworkProtocol.MintConfig(1000000000, true));
+        vm.stopPrank();
+        // mint something just to get some money in the account
+        mc = _prot.getMintConfiguration(address(lr));
+        mintCost = mc.flatFee * 5;
+        assertEq(5000000000, mintCost);
+        _prot.mintBatch{value: mintCost}(_userAddress, address(lr), "", 5);
+        assertEq(4500000000, _prot.balanceOf(_scopeName));
+        assertEq(500000000, _prot.balanceOfProtocol());
     }
 }
