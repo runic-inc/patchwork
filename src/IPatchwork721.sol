@@ -89,15 +89,15 @@ interface IPatchwork721 is IPatchworkScoped, IPatchworkMetadata, IERC5192, IERC7
     event Thawed(uint256 indexed tokenId);
 
     /**
-    @notice Emitted when the permissions are changed for an NFT
+    @notice Emitted when the permissions are changed
     @param to The address the permissions are assigned to
     @param permissions The permissions
     */
     event PermissionChange(address indexed to, uint256 permissions);
 
     /**
-    @notice Emitted when the schema has changed for an NFT
-    @param addr the address of the NFT
+    @notice Emitted when the schema has changed
+    @param addr the address of the Patchwork721
     */
     event SchemaChange(address indexed addr);
     

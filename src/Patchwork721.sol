@@ -13,35 +13,35 @@ import "./IPatchworkProtocol.sol";
 */
 abstract contract Patchwork721 is ERC721, IPatchwork721, IERC4906 {
 
-    /// @dev The scope name for the NFT.
+    /// @dev The scope name of this 721.
     string internal _scopeName;
 
     /// @dev The address that denotes the owner of the contract.
     address internal _owner;
 
-    /// @dev The address that manages the NFTs (PatchworkProtocol).
+    /// @dev Our manager (PatchworkProtocol).
     address internal _manager;
 
     /// @dev A mapping to keep track of permissions for each address.
     mapping(address => uint256) internal _permissionsAllow;
 
-    /// @dev A mapping for storing metadata associated with each NFT token ID.
+    /// @dev A mapping for storing metadata associated with each token ID.
     mapping(uint256 => uint256[]) internal _metadataStorage;
 
-    /// @dev A mapping for storing freeze nonces of each NFT token ID.
+    /// @dev A mapping for storing freeze nonces of each token ID.
     mapping(uint256 => uint256) internal _freezeNonces;
 
-    /// @dev A mapping indicating whether a specific NFT token ID is frozen.
+    /// @dev A mapping indicating whether a specific token ID is frozen.
     mapping(uint256 => bool) internal _freezes;
 
-    /// @dev A mapping indicating whether a specific NFT token ID is locked.
+    /// @dev A mapping indicating whether a specific token ID is locked.
     mapping(uint256 => bool) internal _locks;
 
     /**
-     * @notice Creates a new instance of the PatchworkNFT contract with the provided parameters.
-     * @param scopeName_ The scope name for the NFT.
-     * @param name_ The ERC-721 name for the NFT.
-     * @param symbol_ The ERC-721 symbol for the NFT.
+     * @notice Creates a new instance of the Patchwork721 contract with the provided parameters.
+     * @param scopeName_ The scope name.
+     * @param name_ The ERC-721 name.
+     * @param symbol_ The ERC-721 symbol.
      * @param owner_ The address that will be set as the owner.
      * @param manager_ The address that will be set as the manager (PatchworkProtocol).
      */
