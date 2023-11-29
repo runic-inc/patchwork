@@ -51,7 +51,7 @@ contract PatchworkPatchTest is Test {
         assertTrue(_testPatchLiteRefNFT.supportsInterface(type(IERC721).interfaceId));
         assertTrue(_testPatchLiteRefNFT.supportsInterface(type(IERC4906).interfaceId));
         assertTrue(_testPatchLiteRefNFT.supportsInterface(type(IERC5192).interfaceId));
-        assertTrue(_testPatchLiteRefNFT.supportsInterface(type(IPatchworkNFT).interfaceId));
+        assertTrue(_testPatchLiteRefNFT.supportsInterface(type(IPatchwork721).interfaceId));
         assertTrue(_testPatchLiteRefNFT.supportsInterface(type(IPatchworkLiteRef).interfaceId));
         assertTrue(_testPatchLiteRefNFT.supportsInterface(type(IPatchworkPatch).interfaceId));
     }

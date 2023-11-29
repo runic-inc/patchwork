@@ -12,7 +12,7 @@ contract Test1155PatchNFT is Patchwork1155Patch {
         uint256 thing;
     }
 
-    constructor(address manager_, bool reverseEnabled_) PatchworkNFT("testscope", "Test1155PatchNFT", "TPLR", msg.sender, manager_) {
+    constructor(address manager_, bool reverseEnabled_) Patchwork721("testscope", "Test1155PatchNFT", "TPLR", msg.sender, manager_) {
         _reverseEnabled = reverseEnabled_;
     }
 

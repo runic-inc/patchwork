@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "./PatchworkNFT.sol";
+import "./Patchwork721.sol";
 import "./IPatchworkMultiAssignable.sol";
 
 /**
 @title PatchworkFragmentMulti
 @dev base implementation of a Single-relation Fragment is IPatchworkAssignable
 */
-abstract contract PatchworkFragmentMulti is PatchworkNFT, IPatchworkMultiAssignable {
+abstract contract PatchworkFragmentMulti is Patchwork721, IPatchworkMultiAssignable {
 
     struct AssignmentStorage {
         mapping(bytes32 => uint256) index;
@@ -21,9 +21,9 @@ abstract contract PatchworkFragmentMulti is PatchworkNFT, IPatchworkMultiAssigna
     mapping(uint256 => AssignmentStorage) internal _assignmentStorage;
 
     /**
-    @dev See {IPatchworkNFT-getScopeName}
+    @dev See {IPatchwork721-getScopeName}
     */
-    function getScopeName() public view virtual override (PatchworkNFT, IPatchworkScoped) returns (string memory) {
+    function getScopeName() public view virtual override (Patchwork721, IPatchworkScoped) returns (string memory) {
         return _scopeName;
     }
 
@@ -98,14 +98,14 @@ abstract contract PatchworkFragmentMulti is PatchworkNFT, IPatchworkMultiAssigna
 
 
     /**
-    @dev See {IPatchworkNFT-getAssignmentCount}
+    @dev See {IPatchwork721-getAssignmentCount}
     */
     function getAssignmentCount(uint256 tokenId) public view returns (uint256) {
         return _assignmentStorage[tokenId].assignments.length;
     }
 
     /**
-    @dev See {IPatchworkNFT-getAssignments}
+    @dev See {IPatchwork721-getAssignments}
     */
     function getAssignments(uint256 tokenId, uint256 offset, uint256 count) external view returns (Assignment[] memory) {
         AssignmentStorage storage store = _assignmentStorage[tokenId];

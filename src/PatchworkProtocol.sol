@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "./IPatchworkNFT.sol";
+import "./IPatchwork721.sol";
 import "./IPatchworkSingleAssignable.sol";
 import "./IPatchworkMultiAssignable.sol";
 import "./IPatchworkLiteRef.sol";
@@ -18,7 +18,6 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 /** 
 @title Patchwork Protocol
 @author Runic Labs, Inc
-@notice Manages data integrity of relational NFTs implemented with Patchwork interfaces 
 */
 contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
 
@@ -350,10 +349,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     /**
     @dev See {IPatchworkProtocol-patch}
     */
-    function patch(address owner, address originalNFTAddress, uint originalNFTTokenId, address patchAddress) external payable returns (uint256 tokenId) {
+    function patch(address owner, address originalAddress, uint originalTokenId, address patchAddress) external payable returns (uint256 tokenId) {
         IPatchworkPatch patch_ = IPatchworkPatch(patchAddress);
         string memory scopeName = patch_.getScopeName();
-        // mint a Patch that is soulbound to the originalNFT using the contract address at patchAddress which must support Patchwork metadata
         Scope storage scope = _mustHaveScope(scopeName);
         _mustBeWhitelisted(scopeName, scope, patchAddress);
         if (scope.owner == msg.sender || scope.operators[msg.sender]) {
@@ -364,24 +362,23 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
             revert NotAuthorized(msg.sender);
         }
         _handlePatchFee(scope, patchAddress);
-        // limit this to one unique patch (originalNFTAddress+TokenID+patchAddress)
-        bytes32 _hash = keccak256(abi.encodePacked(originalNFTAddress, originalNFTTokenId, patchAddress));
+        // limit this to one unique patch (originalAddress+TokenID+patchAddress)
+        bytes32 _hash = keccak256(abi.encodePacked(originalAddress, originalTokenId, patchAddress));
         if (_uniquePatches[_hash]) {
-            revert AlreadyPatched(originalNFTAddress, originalNFTTokenId, patchAddress);
+            revert AlreadyPatched(originalAddress, originalTokenId, patchAddress);
         }
         _uniquePatches[_hash] = true;
-        tokenId = patch_.mintPatch(owner, originalNFTAddress, originalNFTTokenId);
-        emit Patch(owner, originalNFTAddress, originalNFTTokenId, patchAddress, tokenId);
+        tokenId = patch_.mintPatch(owner, originalAddress, originalTokenId);
+        emit Patch(owner, originalAddress, originalTokenId, patchAddress, tokenId);
         return tokenId;
     }
 
    /**
     @dev See {IPatchworkProtocol-patch1155}
     */
-    function patch1155(address to, address originalNFTAddress, uint originalNFTTokenId, address originalAccount, address patchAddress) external payable returns (uint256 tokenId) {
+    function patch1155(address to, address originalAddress, uint originalTokenId, address originalAccount, address patchAddress) external payable returns (uint256 tokenId) {
         IPatchwork1155Patch patch_ = IPatchwork1155Patch(patchAddress);
         string memory scopeName = patch_.getScopeName();
-        // mint a Patch that is soulbound to the originalNFT using the contract address at patchAddress which must support Patchwork metadata
         Scope storage scope = _mustHaveScope(scopeName);
         _mustBeWhitelisted(scopeName, scope, patchAddress);
         if (scope.owner == msg.sender || scope.operators[msg.sender]) {
@@ -392,14 +389,14 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
             revert NotAuthorized(msg.sender);
         }
         _handlePatchFee(scope, patchAddress);
-        // limit this to one unique patch (originalNFTAddress+TokenID+patchAddress)
-        bytes32 _hash = keccak256(abi.encodePacked(originalNFTAddress, originalNFTTokenId, originalAccount, patchAddress));
+        // limit this to one unique patch (originalAddress+TokenID+patchAddress)
+        bytes32 _hash = keccak256(abi.encodePacked(originalAddress, originalTokenId, originalAccount, patchAddress));
         if (_uniquePatches[_hash]) {
-            revert ERC1155AlreadyPatched(originalNFTAddress, originalNFTTokenId, originalAccount, patchAddress);
+            revert ERC1155AlreadyPatched(originalAddress, originalTokenId, originalAccount, patchAddress);
         }
         _uniquePatches[_hash] = true;
-        tokenId = patch_.mintPatch(to, originalNFTAddress, originalNFTTokenId, originalAccount);
-        emit ERC1155Patch(to, originalNFTAddress, originalNFTTokenId, originalAccount, patchAddress, tokenId);
+        tokenId = patch_.mintPatch(to, originalAddress, originalTokenId, originalAccount);
+        emit ERC1155Patch(to, originalAddress, originalTokenId, originalAccount, patchAddress, tokenId);
         return tokenId;
     }
     /**
@@ -408,7 +405,6 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     function patchAccount(address owner, address originalAddress, address patchAddress) external payable returns (uint256 tokenId) {
         IPatchworkAccountPatch patch_ = IPatchworkAccountPatch(patchAddress);
         string memory scopeName = patch_.getScopeName();
-        // mint a Patch that is soulbound to the originalNFT using the contract address at patchAddress which must support Patchwork metadata
         Scope storage scope = _mustHaveScope(scopeName);
         _mustBeWhitelisted(scopeName, scope, patchAddress);
         if (scope.owner == msg.sender || scope.operators[msg.sender]) {
@@ -489,7 +485,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     }
 
     /**
-    @dev Common function to handle the batch assignment of NFTs.
+    @dev Common function to handle the batch assignments.
     */
     function _batchAssignCommon(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId) private returns (uint64[] memory refs, address targetOwner) {
         if (fragments.length != tokenIds.length) {
@@ -505,9 +501,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     }
 
     /**
-    @notice Performs assignment of an IPatchworkAssignableNFT to an IPatchworkLiteRef
-    @param fragment the IPatchworkAssignableNFT's address
-    @param fragmentTokenId the IPatchworkAssignableNFT's tokenId
+    @notice Performs assignment of an IPatchworkAssignable to an IPatchworkLiteRef
+    @param fragment the IPatchworkAssignable's address
+    @param fragmentTokenId the IPatchworkAssignable's tokenId
     @param target the IPatchworkLiteRef target's address
     @param targetTokenId the IPatchworkLiteRef target's tokenId
     @param targetOwner the owner address of the target
@@ -517,17 +513,17 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         if (fragment == target && fragmentTokenId == targetTokenId) {
             revert SelfAssignmentNotAllowed(fragment, fragmentTokenId);
         }
-        IPatchworkAssignable assignableNFT = IPatchworkAssignable(fragment);
+        IPatchworkAssignable assignable = IPatchworkAssignable(fragment);
         if (_isLocked(fragment, fragmentTokenId)) {
             revert Locked(fragment, fragmentTokenId);
         }
         // Use the target's scope for general permission and check the fragment for detailed permissions
-        string memory targetScopeName = IPatchworkNFT(target).getScopeName();
+        string memory targetScopeName = IPatchwork721(target).getScopeName();
         Scope storage targetScope = _mustHaveScope(targetScopeName);
         _mustBeWhitelisted(targetScopeName, targetScope, target);
         {
             // Whitelist check, these variables do not need to stay in the function level stack
-            string memory fragmentScopeName = assignableNFT.getScopeName();
+            string memory fragmentScopeName = assignable.getScopeName();
             Scope storage fragmentScope = _mustHaveScope(fragmentScopeName);
             _mustBeWhitelisted(fragmentScopeName, fragmentScope, fragment);
             _handleAssignFee(fragmentScope, fragment);
@@ -564,7 +560,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
             revert FragmentAlreadyAssigned(address(_fragment), _fragmentTokenId);
         }
         // call assign on the fragment
-        assignableNFT.assign(_fragmentTokenId, _target, _targetTokenId);
+        assignable.assign(_fragmentTokenId, _target, _targetTokenId);
         // add to our storage of assignments
         _liteRefs[targetRef] = true;
         emit Assign(targetOwner, _fragment, _fragmentTokenId, _target, _targetTokenId);
@@ -575,20 +571,20 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-unassign}
     */
     function unassign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) public mustNotBeFrozen(target, targetTokenId) {
-        _unassignNFT(fragment, fragmentTokenId, target, targetTokenId, false, 0);
+        _unassign(fragment, fragmentTokenId, target, targetTokenId, false, 0);
     }
 
     /**
     @dev See {IPatchworkProtocol-unassign}
     */
     function unassign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) public mustNotBeFrozen(target, targetTokenId) {
-        _unassignNFT(fragment, fragmentTokenId, target, targetTokenId, true, targetMetadataId);
+        _unassign(fragment, fragmentTokenId, target, targetTokenId, true, targetMetadataId);
     }
 
     /**
-    @dev Common function to handle the unassignment of NFTs.
+    @dev Common function to handle unassignments.
     */
-    function _unassignNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, bool isDirect, uint256 targetMetadataId) private {
+    function _unassign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, bool isDirect, uint256 targetMetadataId) private {
         if (IERC165(fragment).supportsInterface(type(IPatchworkMultiAssignable).interfaceId)) {
             if (isDirect) {
                 unassignMulti(fragment, fragmentTokenId, target, targetTokenId, targetMetadataId);
@@ -625,7 +621,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     }
 
     /**
-    @dev Common function to handle the unassignment of multi NFTs.
+    @dev Common function to handle the unassignment of multi assignables.
     */
     function _unassignMultiCommon(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, bool isDirect, uint256 targetMetadataId) private {
         IPatchworkMultiAssignable assignable = IPatchworkMultiAssignable(fragment);
@@ -652,23 +648,23 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     }
 
     /**
-    @dev Common function to handle the unassignment of single NFTs.
+    @dev Common function to handle the unassignment of single assignables.
     */
     function _unassignSingleCommon(address fragment, uint fragmentTokenId, bool isDirect, uint256 targetMetadataId) private {
-        IPatchworkSingleAssignable assignableNFT = IPatchworkSingleAssignable(fragment);
-        string memory scopeName = assignableNFT.getScopeName();
-        (address target, uint256 targetTokenId) = assignableNFT.getAssignedTo(fragmentTokenId);
+        IPatchworkSingleAssignable assignable = IPatchworkSingleAssignable(fragment);
+        string memory scopeName = assignable.getScopeName();
+        (address target, uint256 targetTokenId) = assignable.getAssignedTo(fragmentTokenId);
         if (target == address(0)) {
             revert FragmentNotAssigned(fragment, fragmentTokenId);
         }
         _doUnassign(fragment, fragmentTokenId, target, targetTokenId, isDirect, targetMetadataId, scopeName);
-        assignableNFT.unassign(fragmentTokenId);
+        assignable.unassign(fragmentTokenId);
     }
 
     /**
-    @notice Performs unassignment of an IPatchworkAssignableNFT to an IPatchworkLiteRef
-    @param fragment the IPatchworkAssignableNFT's address
-    @param fragmentTokenId the IPatchworkAssignableNFT's tokenId
+    @notice Performs unassignment of an IPatchworkAssignable to an IPatchworkLiteRef
+    @param fragment the IPatchworkAssignable's address
+    @param fragmentTokenId the IPatchworkAssignable's tokenId
     @param target the IPatchworkLiteRef target's address
     @param targetTokenId the IPatchworkLiteRef target's tokenId
     @param scopeName the name of the assignable's scope
@@ -709,8 +705,8 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     function applyTransfer(address from, address to, uint256 tokenId) public {
         address nft = msg.sender;
         if (IERC165(nft).supportsInterface(type(IPatchworkSingleAssignable).interfaceId)) {
-            IPatchworkSingleAssignable assignableNFT = IPatchworkSingleAssignable(nft);
-            (address addr,) = assignableNFT.getAssignedTo(tokenId);
+            IPatchworkSingleAssignable assignable = IPatchworkSingleAssignable(nft);
+            (address addr,) = assignable.getAssignedTo(tokenId);
             if (addr != address(0)) {
                 revert TransferBlockedByAssignment(nft, tokenId);
             }
@@ -718,14 +714,13 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         if (IERC165(nft).supportsInterface(type(IPatchworkPatch).interfaceId)) {
             revert TransferNotAllowed(nft, tokenId);
         }
-        if (IERC165(nft).supportsInterface(type(IPatchworkNFT).interfaceId)) {
-            if (IPatchworkNFT(nft).locked(tokenId)) {
+        if (IERC165(nft).supportsInterface(type(IPatchwork721).interfaceId)) {
+            if (IPatchwork721(nft).locked(tokenId)) {
                 revert Locked(nft, tokenId);
             }
         }
         if (IERC165(nft).supportsInterface(type(IPatchworkLiteRef).interfaceId)) {
-            IPatchworkLiteRef liteRefNFT = IPatchworkLiteRef(nft);
-            (address[] memory addresses, uint256[] memory tokenIds) = liteRefNFT.loadAllStaticReferences(tokenId);
+            (address[] memory addresses, uint256[] memory tokenIds) = IPatchworkLiteRef(nft).loadAllStaticReferences(tokenId);
             for (uint i = 0; i < addresses.length; i++) {
                 if (addresses[i] != address(0)) {
                     _applyAssignedTransfer(addresses[i], from, to, tokenIds[i], nft, tokenId);
@@ -734,20 +729,19 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         }
     }
 
-    function _applyAssignedTransfer(address nft, address from, address to, uint256 tokenId, address assignedToNFT_, uint256 assignedToTokenId_) private {
+    function _applyAssignedTransfer(address nft, address from, address to, uint256 tokenId, address assignedTo_, uint256 assignedToTokenId_) private {
         if (!IERC165(nft).supportsInterface(type(IPatchworkSingleAssignable).interfaceId)) {
             revert NotPatchworkAssignable(nft);
         }
-        (address assignedToNFT, uint256 assignedToTokenId) = IPatchworkSingleAssignable(nft).getAssignedTo(tokenId);
+        (address assignedTo, uint256 assignedToTokenId) = IPatchworkSingleAssignable(nft).getAssignedTo(tokenId);
         // 2-way Check the assignment to prevent spoofing
-        if (assignedToNFT_ != assignedToNFT || assignedToTokenId_ != assignedToTokenId) {
-            revert DataIntegrityError(assignedToNFT_, assignedToTokenId_, assignedToNFT, assignedToTokenId);
+        if (assignedTo_ != assignedTo || assignedToTokenId_ != assignedToTokenId) {
+            revert DataIntegrityError(assignedTo_, assignedToTokenId_, assignedTo, assignedToTokenId);
         }
         IPatchworkSingleAssignable(nft).onAssignedTransfer(from, to, tokenId);
         if (IERC165(nft).supportsInterface(type(IPatchworkLiteRef).interfaceId)) {
             address nft_ = nft; // local variable prevents optimizer stack issue in v0.8.18
-            IPatchworkLiteRef liteRefNFT = IPatchworkLiteRef(nft);
-            (address[] memory addresses, uint256[] memory tokenIds) = liteRefNFT.loadAllStaticReferences(tokenId);
+            (address[] memory addresses, uint256[] memory tokenIds) = IPatchworkLiteRef(nft).loadAllStaticReferences(tokenId);
             for (uint i = 0; i < addresses.length; i++) {
                 if (addresses[i] != address(0)) {
                     _applyAssignedTransfer(addresses[i], from, to, tokenIds[i], nft_, tokenId);
@@ -761,8 +755,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     */ 
     function updateOwnershipTree(address nft, uint256 tokenId) public {
         if (IERC165(nft).supportsInterface(type(IPatchworkLiteRef).interfaceId)) {
-            IPatchworkLiteRef liteRefNFT = IPatchworkLiteRef(nft);
-            (address[] memory addresses, uint256[] memory tokenIds) = liteRefNFT.loadAllStaticReferences(tokenId);
+            (address[] memory addresses, uint256[] memory tokenIds) = IPatchworkLiteRef(nft).loadAllStaticReferences(tokenId);
             for (uint i = 0; i < addresses.length; i++) {
                 if (addresses[i] != address(0)) {
                     updateOwnershipTree(addresses[i], tokenIds[i]);
@@ -843,8 +836,8 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @return frozen if the nft or an owner up the tree is frozen
     */
     function _isFrozen(address nft, uint256 tokenId) private view returns (bool frozen) {
-        if (IERC165(nft).supportsInterface(type(IPatchworkNFT).interfaceId)) {
-            if (IPatchworkNFT(nft).frozen(tokenId)) {
+        if (IERC165(nft).supportsInterface(type(IPatchwork721).interfaceId)) {
+            if (IPatchwork721(nft).frozen(tokenId)) {
                 return true;
             }
             if (IERC165(nft).supportsInterface(type(IPatchworkSingleAssignable).interfaceId)) {
@@ -864,8 +857,8 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @return locked if the nft is locked
     */
     function _isLocked(address nft, uint256 tokenId) private view returns (bool locked) {
-        if (IERC165(nft).supportsInterface(type(IPatchworkNFT).interfaceId)) {
-            if (IPatchworkNFT(nft).locked(tokenId)) {
+        if (IERC165(nft).supportsInterface(type(IPatchwork721).interfaceId)) {
+            if (IPatchwork721(nft).locked(tokenId)) {
                 return true;
             }
         }

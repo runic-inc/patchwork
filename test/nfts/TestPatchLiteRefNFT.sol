@@ -27,7 +27,7 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
 
     uint256 _nextTokenId;
 
-    constructor(address manager_) PatchworkNFT("testscope", "TestPatchLiteRef", "TPLR", msg.sender, manager_) PatchworkLiteRef() {
+    constructor(address manager_) Patchwork721("testscope", "TestPatchLiteRef", "TPLR", msg.sender, manager_) PatchworkLiteRef() {
     }
 
     // ERC-165
@@ -258,8 +258,8 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
         return (addresses, tokenIds);
     }
     
-    function _checkWriteAuth() internal override(PatchworkNFT, PatchworkLiteRef) view returns (bool allow) {
-        return PatchworkNFT._checkWriteAuth();
+    function _checkWriteAuth() internal override(Patchwork721, PatchworkLiteRef) view returns (bool allow) {
+        return Patchwork721._checkWriteAuth();
     }
 
     function burn(uint256 tokenId) public {

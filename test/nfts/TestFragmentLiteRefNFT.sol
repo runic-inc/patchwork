@@ -36,7 +36,7 @@ contract TestFragmentLiteRefNFT is PatchworkFragmentSingle, PatchworkLiteRef, IP
     bool _getAssignedToOverrideSet;
     address _getAssignedToOverride;
 
-    constructor (address _manager) PatchworkNFT("testscope", "TestFragmentLiteRef", "TFLR", msg.sender, _manager) {
+    constructor (address _manager) Patchwork721("testscope", "TestFragmentLiteRef", "TFLR", msg.sender, _manager) {
     }
 
     // ERC-165
@@ -47,7 +47,7 @@ contract TestFragmentLiteRefNFT is PatchworkFragmentSingle, PatchworkLiteRef, IP
     }
 
     function getScopeName() public view override (PatchworkFragmentSingle, IPatchworkScoped) returns (string memory scopeName) {
-        return PatchworkNFT.getScopeName();
+        return Patchwork721.getScopeName();
     }
 
     function mint(address to, bytes calldata /* data */) public payable returns (uint256 tokenId) {
@@ -227,8 +227,8 @@ contract TestFragmentLiteRefNFT is PatchworkFragmentSingle, PatchworkLiteRef, IP
         return (addresses, tokenIds);
     }
 
-    function _checkWriteAuth() internal override(PatchworkNFT, PatchworkLiteRef) view returns (bool allow) {
-        return PatchworkNFT._checkWriteAuth();
+    function _checkWriteAuth() internal override(Patchwork721, PatchworkLiteRef) view returns (bool allow) {
+        return Patchwork721._checkWriteAuth();
     }
 
     // Function for mocking test behaviors - set to true for it to return unlocked always

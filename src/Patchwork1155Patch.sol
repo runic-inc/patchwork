@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "./PatchworkNFT.sol";
+import "./Patchwork721.sol";
 import "./IPatchwork1155Patch.sol";
 
 /**
 @title Patchwork1155Patch
 @dev Base implementation of IPatchwork1155Patch
-@dev It extends the functionalities of PatchworkNFT and implements the IPatchwork1155Patch interface.
+@dev It extends the functionalities of Patchwork721 and implements the IPatchwork1155Patch interface.
 */
-abstract contract Patchwork1155Patch is PatchworkNFT, IPatchwork1155Patch {
+abstract contract Patchwork1155Patch is Patchwork721, IPatchwork1155Patch {
 
     struct PatchCanonical {
         address addr;
@@ -32,9 +32,9 @@ abstract contract Patchwork1155Patch is PatchworkNFT, IPatchwork1155Patch {
     }
 
     /**
-    @dev See {IPatchworkNFT-getScopeName}
+    @dev See {IPatchwork721-getScopeName}
     */
-    function getScopeName() public view virtual override(PatchworkNFT, IPatchworkScoped) returns (string memory) {
+    function getScopeName() public view virtual override(Patchwork721, IPatchworkScoped) returns (string memory) {
         return _scopeName;
     }
 

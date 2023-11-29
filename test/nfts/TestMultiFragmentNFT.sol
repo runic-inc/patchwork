@@ -12,7 +12,7 @@ struct TestMultiFragmentNFTMetadata {
 contract TestMultiFragmentNFT is PatchworkFragmentMulti, IPatchworkMintable {
     uint256 _nextTokenId;
 
-    constructor (address _manager) PatchworkNFT("testscope", "TestMultiFragmentNFT", "TFLR", msg.sender, _manager) {
+    constructor (address _manager) Patchwork721("testscope", "TestMultiFragmentNFT", "TFLR", msg.sender, _manager) {
     }
 
     function supportsInterface(bytes4 interfaceID) public view virtual override returns (bool) {
@@ -21,7 +21,7 @@ contract TestMultiFragmentNFT is PatchworkFragmentMulti, IPatchworkMintable {
     }
 
     function getScopeName() public view override (PatchworkFragmentMulti, IPatchworkScoped) returns (string memory scopeName) {
-        return PatchworkNFT.getScopeName();
+        return Patchwork721.getScopeName();
     }
 
     function mint(address to, bytes calldata /* data */) public payable returns (uint256 tokenId) {

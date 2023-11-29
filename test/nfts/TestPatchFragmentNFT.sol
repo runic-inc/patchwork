@@ -26,7 +26,7 @@ contract TestPatchFragmentNFT is PatchworkPatch, PatchworkFragmentSingle {
 
     uint256 _nextTokenId;
 
-    constructor(address manager_) PatchworkNFT("testscope", "TestPatchFragment", "TPLR", msg.sender, manager_) PatchworkFragmentSingle() {
+    constructor(address manager_) Patchwork721("testscope", "TestPatchFragment", "TPLR", msg.sender, manager_) PatchworkFragmentSingle() {
     }
 
     // ERC-165

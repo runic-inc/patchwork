@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "../../src/PatchworkNFT.sol";
+import "../../src/Patchwork721.sol";
 import "../../src/IPatchworkMintable.sol";
 
-contract TestPatchworkNFT is PatchworkNFT, IPatchworkMintable {
+contract TestPatchworkNFT is Patchwork721, IPatchworkMintable {
 
     uint256 _nextTokenId;
 
@@ -12,11 +12,11 @@ contract TestPatchworkNFT is PatchworkNFT, IPatchworkMintable {
         uint256 thing;
     }
 
-    constructor(address manager_) PatchworkNFT("testscope", "TestPatchworkNFT", "TPLR", msg.sender, manager_) {
+    constructor(address manager_) Patchwork721("testscope", "TestPatchworkNFT", "TPLR", msg.sender, manager_) {
     }
 
     function supportsInterface(bytes4 interfaceID) public view virtual override returns (bool) {
-        return PatchworkNFT.supportsInterface(interfaceID) || 
+        return Patchwork721.supportsInterface(interfaceID) || 
             interfaceID == type(IPatchworkMintable).interfaceId;
     }
 
@@ -34,8 +34,8 @@ contract TestPatchworkNFT is PatchworkNFT, IPatchworkMintable {
         return MetadataSchema(1, entries);
     }
 
-    function getScopeName() public view override (PatchworkNFT, IPatchworkScoped) returns (string memory scopeName) {
-        return PatchworkNFT.getScopeName();
+    function getScopeName() public view override (Patchwork721, IPatchworkScoped) returns (string memory scopeName) {
+        return Patchwork721.getScopeName();
     }
 
     function mint(address to, bytes calldata /* data */) public payable returns (uint256 tokenId) {

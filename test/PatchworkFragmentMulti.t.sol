@@ -50,7 +50,7 @@ contract PatchworkFragmentMultiTest is Test {
         assertTrue(_testMultiNFT.supportsInterface(type(IERC721).interfaceId));
         assertTrue(_testMultiNFT.supportsInterface(type(IERC4906).interfaceId));
         assertTrue(_testMultiNFT.supportsInterface(type(IERC5192).interfaceId));
-        assertTrue(_testMultiNFT.supportsInterface(type(IPatchworkNFT).interfaceId));
+        assertTrue(_testMultiNFT.supportsInterface(type(IPatchwork721).interfaceId));
         assertTrue(_testMultiNFT.supportsInterface(type(IPatchworkAssignable).interfaceId));
         assertTrue(_testMultiNFT.supportsInterface(type(IPatchworkMultiAssignable).interfaceId));
     }

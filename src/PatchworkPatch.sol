@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "./PatchworkNFT.sol";
+import "./Patchwork721.sol";
 import "./IPatchworkPatch.sol";
 
 /**
@@ -10,7 +10,7 @@ import "./IPatchworkPatch.sol";
 @dev It is soul-bound to another ERC-721 and cannot be transferred or reassigned.
 @dev It extends the functionalities of PatchworkNFT and implements the IPatchworkPatch interface.
 */
-abstract contract PatchworkPatch is PatchworkNFT, IPatchworkPatch {
+abstract contract PatchworkPatch is Patchwork721, IPatchworkPatch {
 
     /// @dev Mapping from token ID to the address of the NFT that this patch is applied to.
     mapping(uint256 => address) internal _patchedAddresses;
@@ -30,9 +30,9 @@ abstract contract PatchworkPatch is PatchworkNFT, IPatchworkPatch {
     }
 
     /**
-    @dev See {IPatchworkNFT-getScopeName}
+    @dev See {IPatchwork721-getScopeName}
     */
-    function getScopeName() public view virtual override(PatchworkNFT, IPatchworkScoped) returns (string memory) {
+    function getScopeName() public view virtual override(Patchwork721, IPatchworkScoped) returns (string memory) {
         return _scopeName;
     }
 
@@ -91,7 +91,7 @@ abstract contract PatchworkPatch is PatchworkNFT, IPatchworkPatch {
 
     /**
     @dev always false because a patch cannot be locked as the ownership is inferred
-    @dev See {IPatchworkNFT-locked}
+    @dev See {IPatchwork721-locked}
     */
     function locked(uint256 /* tokenId */) public pure virtual override returns (bool) {
         return false;
@@ -99,7 +99,7 @@ abstract contract PatchworkPatch is PatchworkNFT, IPatchworkPatch {
 
     /**
     @dev always reverts because a patch cannot be locked as the ownership is inferred
-    @dev See {IPatchworkNFT-setLocked}
+    @dev See {IPatchwork721-setLocked}
     */ 
     function setLocked(uint256 /* tokenId */, bool /* locked_ */) public view virtual override {
         revert IPatchworkProtocol.CannotLockSoulboundPatch(address(this));

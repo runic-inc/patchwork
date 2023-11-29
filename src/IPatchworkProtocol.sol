@@ -133,7 +133,7 @@ interface IPatchworkProtocol {
 
     /**
     @notice Ran out of available IDs for allocation
-    @dev Max 255 IDs per NFT
+    @dev Max 255 IDs per target
     */
     error OutOfIDs();
 
@@ -334,9 +334,9 @@ interface IPatchworkProtocol {
 
     function balanceOf(string memory scopeName) external view returns (uint256 balance);
 
-    function mint(address to, address nft, bytes calldata data) external payable returns (uint256 tokenId);
+    function mint(address to, address mintable, bytes calldata data) external payable returns (uint256 tokenId);
     
-    function mintBatch(address to, address nft, bytes calldata data, uint256 quantity) external payable returns (uint256[] memory tokenIds);
+    function mintBatch(address to, address mintable, bytes calldata data, uint256 quantity) external payable returns (uint256[] memory tokenIds);
 
     function setProtocolFeeConfig(ProtocolFeeConfig memory config) external;
 
@@ -373,8 +373,8 @@ interface IPatchworkProtocol {
     /**
     @notice Emitted when a patch is minted
     @param owner The owner of the patch
-    @param originalAddress The address of the original NFT's contract
-    @param originalTokenId The tokenId of the original NFT
+    @param originalAddress The address of the original 721's contract
+    @param originalTokenId The tokenId of the original 721
     @param patchAddress The address of the patch's contract
     @param patchTokenId The tokenId of the patch
     */
@@ -383,8 +383,8 @@ interface IPatchworkProtocol {
     /**
     @notice Emitted when a patch is minted
     @param owner The owner of the patch
-    @param originalAddress The address of the original NFT's contract
-    @param originalTokenId The tokenId of the original NFT
+    @param originalAddress The address of the original 1155's contract
+    @param originalTokenId The tokenId of the original 1155
     @param originalAccount The address of the original 1155's account
     @param patchAddress The address of the patch's contract
     @param patchTokenId The tokenId of the patch
@@ -395,7 +395,7 @@ interface IPatchworkProtocol {
     /**
     @notice Emitted when an account patch is minted
     @param owner The owner of the patch
-    @param originalAddress The address of the original NFT's contract
+    @param originalAddress The address of the original account
     @param patchAddress The address of the patch's contract
     @param patchTokenId The tokenId of the patch
     */
@@ -477,10 +477,10 @@ interface IPatchworkProtocol {
     /**
     @notice Emitted when a mint is configured
     @param scopeName The name of the scope
-    @param nft The address of the NFT that is mintable
+    @param mintable The address of the IPatchworkMintable
     @param config The mint configuration
     */
-    event MintConfigure(string scopeName, address indexed actor, address indexed nft, MintConfig config);
+    event MintConfigure(string scopeName, address indexed actor, address indexed mintable, MintConfig config);
 
     /**
     @notice Emitted when a banker is added to a scope
@@ -530,23 +530,23 @@ interface IPatchworkProtocol {
     /**
     @notice Emitted on mint
     @param actor The address responsible for the action
-    @param scopeName The scope of the NFT
+    @param scopeName The scope of the IPatchworkMintable
     @param to The receipient of the mint
-    @param nft The nft minted
+    @param mintable The IPatchworkMintable minted
     @param data The data used to mint
     */
-    event Mint(address indexed actor, string scopeName, address indexed to, address indexed nft, bytes data);
+    event Mint(address indexed actor, string scopeName, address indexed to, address indexed mintable, bytes data);
 
     /**
     @notice Emitted on batch mint
     @param actor The address responsible for the action
-    @param scopeName The scope of the NFT
+    @param scopeName The scope of the IPatchworkMintable
     @param to The receipient of the mint
-    @param nft The nft minted
+    @param mintable The IPatchworkMintable minted
     @param data The data used to mint
     @param quantity The quantity minted
     */
-    event MintBatch(address indexed actor, string scopeName, address indexed to, address indexed nft, bytes data, uint256 quantity);
+    event MintBatch(address indexed actor, string scopeName, address indexed to, address indexed mintable, bytes data, uint256 quantity);
 
     /**
     @notice Claim a scope
@@ -628,22 +628,22 @@ interface IPatchworkProtocol {
     /**
     @notice Create a new patch
     @param owner The owner of the patch
-    @param originalNFTAddress Address of the original NFT
-    @param originalNFTTokenId Token ID of the original NFT
+    @param originalAddress Address of the original 721
+    @param originalTokenId Token ID of the original 721
     @param patchAddress Address of the IPatchworkPatch to mint
     @return tokenId Token ID of the newly created patch
     */
-    function patch(address owner, address originalNFTAddress, uint originalNFTTokenId, address patchAddress) external payable returns (uint256 tokenId);
+    function patch(address owner, address originalAddress, uint originalTokenId, address patchAddress) external payable returns (uint256 tokenId);
 
     /**
     @notice Create a new 1155 patch
-    @param originalNFTAddress Address of the original NFT
-    @param originalNFTTokenId Token ID of the original NFT
+    @param originalAddress Address of the original 1155
+    @param originalTokenId Token ID of the original 1155
     @param originalAccount Address of the account to patch
     @param patchAddress Address of the IPatchworkPatch to mint
     @return tokenId Token ID of the newly created patch
     */
-    function patch1155(address to, address originalNFTAddress, uint originalNFTTokenId, address originalAccount, address patchAddress) external payable returns (uint256 tokenId);
+    function patch1155(address to, address originalAddress, uint originalTokenId, address originalAccount, address patchAddress) external payable returns (uint256 tokenId);
     
     /**
     @notice Create a new account patch
@@ -655,37 +655,37 @@ interface IPatchworkProtocol {
     function patchAccount(address owner, address originalAddress, address patchAddress) external payable returns (uint256 tokenId);
 
     /**
-    @notice Assigns a relation to have an IPatchworkLiteRef form a LiteRef to a IPatchworkAssignableNFT
-    @param fragment The IPatchworkAssignableNFT address to assign
-    @param fragmentTokenId The IPatchworkAssignableNFT Token ID to assign
+    @notice Assigns a relation to have an IPatchworkLiteRef form a LiteRef to a IPatchworkAssignable
+    @param fragment The IPatchworkAssignable address to assign
+    @param fragmentTokenId The IPatchworkAssignable Token ID to assign
     @param target The IPatchworkLiteRef address to hold the reference to the fragment
     @param targetTokenId The IPatchworkLiteRef Token ID to hold the reference to the fragment
     */
     function assign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) external payable;
 
     /**
-    @notice Assigns a relation to have an IPatchworkLiteRef form a LiteRef to a IPatchworkAssignableNFT
-    @param fragment The IPatchworkAssignableNFT address to assign
-    @param fragmentTokenId The IPatchworkAssignableNFT Token ID to assign
+    @notice Assigns a relation to have an IPatchworkLiteRef form a LiteRef to a IPatchworkAssignable
+    @param fragment The IPatchworkAssignable address to assign
+    @param fragmentTokenId The IPatchworkAssignable Token ID to assign
     @param target The IPatchworkLiteRef address to hold the reference to the fragment
     @param targetTokenId The IPatchworkLiteRef Token ID to hold the reference to the fragment
-    @param targetMetadataId The metadata ID on the target NFT to store the reference in
+    @param targetMetadataId The metadata ID on the target to store the reference in
     */
     function assign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) external payable;
 
     /**
     @notice Assign multiple fragments to a target in batch
-    @param fragments The array of addresses of the fragment IPatchworkAssignableNFTs
-    @param tokenIds The array of token IDs of the fragment IPatchworkAssignableNFTs
+    @param fragments The array of addresses of the fragment IPatchworkAssignables
+    @param tokenIds The array of token IDs of the fragment IPatchworkAssignables
     @param target The address of the target IPatchworkLiteRef 
     @param targetTokenId The token ID of the target IPatchworkLiteRef 
     */
     function assignBatch(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId) external payable;
 
     /**
-    @notice Assign multiple NFT fragments to a target in batch
-    @param fragments The array of addresses of the fragment IPatchworkAssignableNFTs
-    @param tokenIds The array of token IDs of the fragment IPatchworkAssignableNFTs
+    @notice Assign multiple fragments to a target in batch
+    @param fragments The array of addresses of the fragment IPatchworkAssignables
+    @param tokenIds The array of token IDs of the fragment IPatchworkAssignables
     @param target The address of the target IPatchworkLiteRef 
     @param targetTokenId The token ID of the target IPatchworkLiteRef 
     @param targetMetadataId The metadata ID on the target to store the references in
@@ -693,59 +693,59 @@ interface IPatchworkProtocol {
     function assignBatch(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId, uint256 targetMetadataId) external payable;
 
     /**
-    @notice Unassign a NFT fragment from a target NFT
-    @param fragment The IPatchworkSingleAssignableNFT address of the fragment NFT
-    @param fragmentTokenId The IPatchworkSingleAssignableNFT token ID of the fragment NFT
-    @dev reverts if fragment is not an IPatchworkSingleAssignableNFT
+    @notice Unassign a fragment from a target
+    @param fragment The IPatchworkSingleAssignable address of the fragment
+    @param fragmentTokenId The IPatchworkSingleAssignable token ID of the fragment
+    @dev reverts if fragment is not an IPatchworkSingleAssignable
     */
     function unassignSingle(address fragment, uint fragmentTokenId) external;
     
     /**
-    @notice Unassign a NFT fragment from a target NFT
-    @param fragment The IPatchworkSingleAssignableNFT address of the fragment NFT
-    @param fragmentTokenId The IPatchworkSingleAssignableNFT token ID of the fragment NFT
-    @param targetMetadataId The metadata ID on the target NFT to unassign from
-    @dev reverts if fragment is not an IPatchworkSingleAssignableNFT
+    @notice Unassign a fragment from a target
+    @param fragment The IPatchworkSingleAssignable address of the fragment
+    @param fragmentTokenId The IPatchworkSingleAssignable token ID of the fragment
+    @param targetMetadataId The metadata ID on the target to unassign from
+    @dev reverts if fragment is not an IPatchworkSingleAssignable
     */
     function unassignSingle(address fragment, uint fragmentTokenId, uint256 targetMetadataId) external;
 
     /**
-    @notice Unassigns a multi NFT relation
-    @param fragment The IPatchworMultiAssignableNFT address to unassign
-    @param fragmentTokenId The IPatchworkMultiAssignableNFT Token ID to unassign
+    @notice Unassigns a multi relation
+    @param fragment The IPatchworMultiAssignable address to unassign
+    @param fragmentTokenId The IPatchworkMultiAssignable Token ID to unassign
     @param target The IPatchworkLiteRef address which holds a reference to the fragment
     @param targetTokenId The IPatchworkLiteRef Token ID which holds a reference to the fragment
-    @dev reverts if fragment is not an IPatchworkMultiAssignableNFT
+    @dev reverts if fragment is not an IPatchworkMultiAssignable
     */
     function unassignMulti(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) external;
 
     /**
-    @notice Unassigns a multi NFT relation
-    @param fragment The IPatchworMultiAssignableNFT address to unassign
-    @param fragmentTokenId The IPatchworkMultiAssignableNFT Token ID to unassign
+    @notice Unassigns a multi relation
+    @param fragment The IPatchworMultiAssignable address to unassign
+    @param fragmentTokenId The IPatchworkMultiAssignable Token ID to unassign
     @param target The IPatchworkLiteRef address which holds a reference to the fragment
     @param targetTokenId The IPatchworkLiteRef Token ID which holds a reference to the fragment
-    @param targetMetadataId The metadata ID on the target NFT to unassign from
-    @dev reverts if fragment is not an IPatchworkMultiAssignableNFT
+    @param targetMetadataId The metadata ID on the target to unassign from
+    @dev reverts if fragment is not an IPatchworkMultiAssignable
     */
     function unassignMulti(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) external;
 
     /**
-    @notice Unassigns an NFT relation (single or multi)
-    @param fragment The IPatchworkAssignableNFT address to unassign
-    @param fragmentTokenId The IPatchworkAssignableNFT Token ID to unassign
+    @notice Unassigns a relation (single or multi)
+    @param fragment The IPatchworkAssignable address to unassign
+    @param fragmentTokenId The IPatchworkAssignable Token ID to unassign
     @param target The IPatchworkLiteRef address which holds a reference to the fragment
     @param targetTokenId The IPatchworkLiteRef Token ID which holds a reference to the fragment
     */
     function unassign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) external;
 
     /**
-    @notice Unassigns an NFT relation (single or multi)
-    @param fragment The IPatchworkAssignableNFT address to unassign
-    @param fragmentTokenId The IPatchworkAssignableNFT Token ID to unassign
+    @notice Unassigns a relation (single or multi)
+    @param fragment The IPatchworkAssignable address to unassign
+    @param fragmentTokenId The IPatchworkAssignable Token ID to unassign
     @param target The IPatchworkLiteRef address which holds a reference to the fragment
     @param targetTokenId The IPatchworkLiteRef Token ID which holds a reference to the fragment
-    @param targetMetadataId The metadata ID on the target NFT to unassign from
+    @param targetMetadataId The metadata ID on the target to unassign from
     */
     function unassign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) external;
 
@@ -758,9 +758,9 @@ interface IPatchworkProtocol {
     function applyTransfer(address from, address to, uint256 tokenId) external;
 
     /**
-    @notice Update the ownership tree of a specific Patchwork NFT
-    @param nft The address of the Patchwork NFT
+    @notice Update the ownership tree of a specific Patchwork 721
+    @param addr The address of the Patchwork 721
     @param tokenId The ID of the token whose ownership tree needs to be updated
     */
-    function updateOwnershipTree(address nft, uint256 tokenId) external;
+    function updateOwnershipTree(address addr, uint256 tokenId) external;
 }

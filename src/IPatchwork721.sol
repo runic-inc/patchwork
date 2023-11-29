@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./IERC5192.sol";
 import "./IPatchworkScoped.sol";
 
 /** 
-@title Patchwork Protocol NFT Interface Metadata
+@title Patchwork Protocol Interface Metadata
 @author Runic Labs, Inc
-@notice Metadata for IPatchworkNFT and related contract interfaces
+@notice Metadata for IPatchwork721 and related contract interfaces
 */
-interface PatchworkNFTInterfaceMeta {
+interface IPatchworkMetadata {
     /**
     @notice Enumeration of possible field data types.
     @dev This defines the various basic data types for the fields.
@@ -70,13 +70,12 @@ interface PatchworkNFTInterfaceMeta {
     }
 }
 
-// TODO - Protocol assumes this is IERC721. Should we just declare it here?
 /**
-@title Patchwork Protocol NFT Interface
+@title Patchwork Protocol 721 Interface
 @author Runic Labs, Inc
 @notice Interface for contracts supporting Patchwork metadata standard
 */
-interface IPatchworkNFT is IPatchworkScoped, PatchworkNFTInterfaceMeta, IERC5192 {
+interface IPatchwork721 is IPatchworkScoped, IPatchworkMetadata, IERC5192, IERC721 {
     /**
     @notice Emitted when the freeze status is changed to frozen.
     @param tokenId The identifier for a token.
