@@ -117,6 +117,7 @@ abstract contract Patchwork721 is ERC721, IPatchwork721, IERC4906 {
         return interfaceID == type(IPatchwork721).interfaceId ||
             interfaceID == type(IERC5192).interfaceId ||
             interfaceID == type(IERC4906).interfaceId ||    
+            interfaceID == type(IPatchworkScoped).interfaceId ||
             ERC721.supportsInterface(interfaceID);
     }
 

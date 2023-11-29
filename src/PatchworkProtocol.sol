@@ -352,6 +352,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-patch}
     */
     function patch(address owner, address originalAddress, uint originalTokenId, address patchAddress) external payable returns (uint256 tokenId) {
+        if (!IERC165(patchAddress).supportsInterface(type(IPatchworkPatch).interfaceId)) {
+            revert UnsupportedContract();
+        }
         IPatchworkPatch patch_ = IPatchworkPatch(patchAddress);
         string memory scopeName = patch_.getScopeName();
         Scope storage scope = _mustHaveScope(scopeName);
@@ -379,6 +382,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-patch1155}
     */
     function patch1155(address to, address originalAddress, uint originalTokenId, address originalAccount, address patchAddress) external payable returns (uint256 tokenId) {
+        if (!IERC165(patchAddress).supportsInterface(type(IPatchwork1155Patch).interfaceId)) {
+            revert UnsupportedContract();
+        }
         IPatchwork1155Patch patch_ = IPatchwork1155Patch(patchAddress);
         string memory scopeName = patch_.getScopeName();
         Scope storage scope = _mustHaveScope(scopeName);
@@ -405,6 +411,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-patchAccount}
     */
     function patchAccount(address owner, address originalAddress, address patchAddress) external payable returns (uint256 tokenId) {
+        if (!IERC165(patchAddress).supportsInterface(type(IPatchworkAccountPatch).interfaceId)) {
+            revert UnsupportedContract();
+        }
         IPatchworkAccountPatch patch_ = IPatchworkAccountPatch(patchAddress);
         string memory scopeName = patch_.getScopeName();
         Scope storage scope = _mustHaveScope(scopeName);

@@ -12,6 +12,7 @@ import "./nfts/TestDynamicArrayLiteRefNFT.sol";
 import "./nfts/TestMultiFragmentNFT.sol";
 import "./nfts/TestPatchLiteRefNFT.sol";
 import "./nfts/TestAccountPatchNFT.sol";
+import "./nfts/TestBaseNFT.sol";
 
 contract FeesTest is Test {
 
@@ -41,6 +42,7 @@ contract FeesTest is Test {
         _prot.claimScope(_scopeName);
         _prot.setScopeRules(_scopeName, false, false, false);
         vm.stopPrank();
+        vm.deal(_scopeOwner, 1 ether);
     }
 
     function testProtocolBankers() public {
@@ -177,7 +179,66 @@ contract FeesTest is Test {
         assertEq(500000000, _prot.balanceOfProtocol());
     }
 
-    // TODO patch fees
-    // TODO assign fees
+    function testPatchFees() public {
+        vm.startPrank(_scopeOwner);
+        _prot.setScopeRules(_scopeName, false, false, true);
+        TestBaseNFT tBase = new TestBaseNFT();
+        TestBase1155 tBase1155 = new TestBase1155();
+        TestPatchLiteRefNFT t721 = new TestPatchLiteRefNFT(address(_prot));
+        Test1155PatchNFT t1155 = new Test1155PatchNFT(address(_prot), false);
+        TestAccountPatchNFT tAccount = new TestAccountPatchNFT(address(_prot), false, false);
+
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
+        _prot.setPatchFee(address(tBase), 1);
+        vm.stopPrank();
+
+        // 721
+        _testPatchFees(address(t721));
+        vm.startPrank(_scopeOwner);
+        _prot.patch{value: _prot.getPatchFee(address(t721))}(_userAddress, address(tBase), tBase.mint(_userAddress), address(t721));
+        vm.stopPrank();
+
+        // 1155
+        _testPatchFees(address(t1155));
+        vm.startPrank(_scopeOwner);
+        _prot.patch1155{value: _prot.getPatchFee(address(t1155))}(_userAddress, address(tBase1155), tBase1155.mint(_userAddress, 1, 1), _userAddress, address(t1155));
+        vm.stopPrank();
+
+        // account
+        _testPatchFees(address(tAccount));
+        vm.startPrank(_scopeOwner);
+        _prot.patchAccount{value: _prot.getPatchFee(address(tAccount))}(_userAddress, _user2Address, address(tAccount));
+        vm.stopPrank();
+
+        // patch wrong types
+        vm.startPrank(_scopeOwner);
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
+        _prot.patch(_userAddress, address(tBase), 2, address(t1155));
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
+        _prot.patch1155(_userAddress, address(tBase1155), 3, address(0), address(t721));
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
+        _prot.patchAccount(_userAddress, _user2Address, address(t721));
+    }
+
+    function _testPatchFees(address patchAddr) private {
+        vm.startPrank(_scopeOwner);
+        // error cases
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotWhitelisted.selector, _scopeName, patchAddr));
+        _prot.setPatchFee(patchAddr, 1);
+        _prot.addWhitelist(_scopeName, patchAddr);
+        vm.stopPrank();
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _userAddress));
+        vm.prank(_userAddress);
+        _prot.setPatchFee(patchAddr, 1);
+        // success
+        vm.startPrank(_scopeOwner);
+        _prot.setPatchFee(patchAddr, 1);
+        vm.stopPrank();
+    }
+
+    function testAssignFees() public {
+
+    }
+
     
 }
