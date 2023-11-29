@@ -57,10 +57,10 @@ contract PatchworkFragmentMultiTest is Test {
 
     function testMultiAssign() public {
         vm.startPrank(_scopeOwner);
-        uint256 m1 = _testMultiNFT.mint(_user2Address);
-        uint256 lr1 = _testFragmentLiteRefNFT.mint(_userAddress);
-        uint256 lr2 = _testFragmentLiteRefNFT.mint(_userAddress);
-        uint256 lr3 = _testFragmentLiteRefNFT.mint(_userAddress);
+        uint256 m1 = _testMultiNFT.mint(_user2Address, "");
+        uint256 lr1 = _testFragmentLiteRefNFT.mint(_userAddress, "");
+        uint256 lr2 = _testFragmentLiteRefNFT.mint(_userAddress, "");
+        uint256 lr3 = _testFragmentLiteRefNFT.mint(_userAddress, "");
         // must be registered
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentUnregistered.selector, address(_testMultiNFT)));
         _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr1);
@@ -117,9 +117,9 @@ contract PatchworkFragmentMultiTest is Test {
         vm.startPrank(_scopeOwner);
         // Enable user assign
         _prot.setScopeRules(_scopeName, false, true, false);
-        uint256 m1 = _testMultiNFT.mint(_user2Address);
-        uint256 lr1 = _testFragmentLiteRefNFT.mint(_userAddress);
-        uint256 lr2 = _testFragmentLiteRefNFT.mint(_userAddress);
+        uint256 m1 = _testMultiNFT.mint(_user2Address, "");
+        uint256 lr1 = _testFragmentLiteRefNFT.mint(_userAddress, "");
+        uint256 lr2 = _testFragmentLiteRefNFT.mint(_userAddress, "");
         // must be registered
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentUnregistered.selector, address(_testMultiNFT)));
         _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr1);
@@ -137,7 +137,7 @@ contract PatchworkFragmentMultiTest is Test {
         vm.prank(_scopeOwner);
         _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
         vm.prank(_scopeOwner);
-        uint256 m2 = _testMultiNFT.mint(_userAddress);
+        uint256 m2 = _testMultiNFT.mint(_userAddress, "");
         // This should also work because both are owned by the same user
         vm.prank(_userAddress);
         _prot.assignNFT(address(_testMultiNFT), m2, address(_testFragmentLiteRefNFT), lr2);
@@ -145,11 +145,11 @@ contract PatchworkFragmentMultiTest is Test {
     
     function testGetAssignments() public {
         vm.startPrank(_scopeOwner);
-        uint256 m1 = _testMultiNFT.mint(_user2Address);
+        uint256 m1 = _testMultiNFT.mint(_user2Address, "");
         _testFragmentLiteRefNFT.registerReferenceAddress(address(_testMultiNFT));
         uint256[] memory liteRefIds = new uint256[](20);
         for (uint256 i = 0; i < liteRefIds.length; i++) {
-            liteRefIds[i] = _testFragmentLiteRefNFT.mint(_userAddress);
+            liteRefIds[i] = _testFragmentLiteRefNFT.mint(_userAddress, "");
             _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), liteRefIds[i]);
         }
         assertEq(20, _testMultiNFT.getAssignmentCount(m1));
@@ -183,14 +183,14 @@ contract PatchworkFragmentMultiTest is Test {
         _prot.claimScope(publicScope);
         _prot.setScopeRules(publicScope, false, false, true);
         _prot.addWhitelist(publicScope, address(multi));
-        uint256 m1 = multi.mint(publicScopeOwner);
+        uint256 m1 = multi.mint(publicScopeOwner, "");
         vm.stopPrank();
         // mow we have a multi fragment in "publicmulti" scope and another scope wants to use it - both require whitelisting
         vm.startPrank(_scopeOwner);
         _prot.setScopeRules(_scopeName, false, false, true);
         _prot.addWhitelist(_scopeName, address(_testFragmentLiteRefNFT));
         _testFragmentLiteRefNFT.registerReferenceAddress(address(multi));
-        uint256 lr1 = _testFragmentLiteRefNFT.mint(_userAddress);
+        uint256 lr1 = _testFragmentLiteRefNFT.mint(_userAddress, "");
         _prot.assignNFT(address(multi), m1, address(_testFragmentLiteRefNFT), lr1);
     }
 }

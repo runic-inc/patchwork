@@ -1,18 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
+import "./IPatchworkScoped.sol";
+
 /**
 @title Patchwork Protocol 1155 Patch Interface
 @author Runic Labs, Inc
 @notice Interface for contracts supporting Patchwork patch standard
 */
-interface IPatchwork1155Patch {
-    /**
-    @notice Get the scope this NFT claims to belong to
-    @return string the name of the scope
-    */
-    function getScopeName() external returns (string memory);
-
+interface IPatchwork1155Patch is IPatchworkScoped {
     /**
     @notice Creates a new token for the owner, representing a patch
     @param to Address of the owner of the patch token

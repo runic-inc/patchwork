@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "./IERC5192.sol";
+import "./IPatchworkScoped.sol";
 
 /** 
 @title Patchwork Protocol NFT Interface Metadata
@@ -75,7 +76,7 @@ interface PatchworkNFTInterfaceMeta {
 @author Runic Labs, Inc
 @notice Interface for contracts supporting Patchwork metadata standard
 */
-interface IPatchworkNFT is PatchworkNFTInterfaceMeta, IERC5192 {
+interface IPatchworkNFT is IPatchworkScoped, PatchworkNFTInterfaceMeta, IERC5192 {
     /**
     @notice Emitted when the freeze status is changed to frozen.
     @param tokenId The identifier for a token.
@@ -102,29 +103,23 @@ interface IPatchworkNFT is PatchworkNFTInterfaceMeta, IERC5192 {
     event SchemaChange(address indexed addr);
     
     /**
-    @notice Get the scope this NFT claims to belong to
-    @return string the name of the scope
-    */
-    function getScopeName() external returns (string memory);
-
-    /**
     @notice Returns the URI of the schema
     @return string the URI of the schema
     */
-    function schemaURI() external returns (string memory);
+    function schemaURI() external view returns (string memory);
 
     /**
     @notice Returns the metadata schema
     @return MetadataSchema the metadata schema
     */
-    function schema() external returns (MetadataSchema memory);
+    function schema() external view returns (MetadataSchema memory);
 
     /**
     @notice Returns the URI of the image associated with the given token ID
     @param tokenId ID of the token
     @return string the image URI
     */
-    function imageURI(uint256 tokenId) external returns (string memory);
+    function imageURI(uint256 tokenId) external view returns (string memory);
 
     /**
     @notice Sets permissions for a given address
@@ -147,14 +142,14 @@ interface IPatchworkNFT is PatchworkNFTInterfaceMeta, IERC5192 {
     @param slot Slot to load metadata from
     @return uint256 the raw slot data as a uint256
     */
-    function loadPackedMetadataSlot(uint256 tokenId, uint256 slot) external returns (uint256);
+    function loadPackedMetadataSlot(uint256 tokenId, uint256 slot) external view returns (uint256);
 
     /**
     @notice Returns the freeze nonce for a given token ID
     @param tokenId ID of the token
     @return nonce the nonce
     */
-    function getFreezeNonce(uint256 tokenId) external returns (uint256 nonce);
+    function getFreezeNonce(uint256 tokenId) external view returns (uint256 nonce);
 
     /**
     @notice Sets the freeze status of a token

@@ -39,7 +39,7 @@ contract PatchworkAccountPatchTest is Test {
     function testDynamics() public {
         TestDynamicArrayLiteRefNFT nft = new TestDynamicArrayLiteRefNFT(address(_prot));
         nft.registerReferenceAddress(address(0x55));
-        uint256 m = nft.mint(_userAddress);
+        uint256 m = nft.mint(_userAddress, "");
         assertEq(0, nft.getDynamicReferenceCount(m));
         for (uint256 i = 0; i < 9; i++) {
             (uint64 ref,) = nft.getLiteReference(address(0x55), i);
@@ -73,7 +73,7 @@ contract PatchworkAccountPatchTest is Test {
     function testBatchAdd() public {
         TestDynamicArrayLiteRefNFT nft = new TestDynamicArrayLiteRefNFT(address(_prot));
         nft.registerReferenceAddress(address(0x55));
-        uint256 m = nft.mint(_userAddress);
+        uint256 m = nft.mint(_userAddress, "");
         assertEq(0, nft.getDynamicReferenceCount(m));
         uint64[] memory refs = new uint64[](11);
         for (uint256 i = 0; i < 11; i++) {

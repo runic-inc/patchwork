@@ -42,7 +42,7 @@ interface IPatchworkLiteRef {
     @return id ID assigned to the address
     @return redacted Redacted status
     */
-    function getReferenceId(address addr) external returns (uint8 id, bool redacted);
+    function getReferenceId(address addr) external view returns (uint8 id, bool redacted);
 
     /**
     @notice Gets the address assigned to this id
@@ -50,7 +50,7 @@ interface IPatchworkLiteRef {
     @return addr Registered address
     @return redacted Redacted status
     */
-    function getReferenceAddress(uint8 id) external returns (address addr, bool redacted);
+    function getReferenceAddress(uint8 id) external view returns (address addr, bool redacted);
 
     /**
     @notice Redacts a reference address

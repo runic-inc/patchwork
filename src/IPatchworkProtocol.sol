@@ -210,14 +210,51 @@ interface IPatchworkProtocol {
     error DataIntegrityError(address addr, uint256 tokenId, address addr2, uint256 tokenId2);
 
     /**
-    @notice The operation is not supported
+    @notice The available balance does not satisfy the amount
     */
-    error UnsupportedOperation();
+    error InsufficientFunds();
 
+    /**
+    @notice The supplied fee is not the corret amount
+    */
+    error IncorrectFeeAmount();
+
+    /**
+    @notice Minting is not active for this address 
+    */
+    error MintNotActive();
+
+    /**
+    @notice The value could not be sent 
+    */
+    error FailedToSend();   
+    
     /**
     @notice The contract is not supported
     */
     error UnsupportedContract();
+    
+    /**
+    @notice The operation is not supported
+    */
+    error UnsupportedOperation();
+
+    /** 
+    @notice Protocol Fee Configuration
+    */
+    struct ProtocolFeeConfig {
+        uint256 mintBp;   /// mint basis points (10000 = 100%)
+        uint256 patchBp;  /// patch basis points (10000 = 100%)
+        uint256 assignBp; /// assign basis points (10000 = 100%)
+    }
+
+    /**
+    @notice Mint configuration
+    */
+    struct MintConfig {
+        uint256 flatFee; /// wei
+        bool active;     /// If the mint is active
+    }
 
     /**
     @notice Represents a defined scope within the system
@@ -266,12 +303,53 @@ interface IPatchworkProtocol {
         */
         mapping(address => bool) whitelist;
 
-        /**
-        @notice Mapped list of unique patches associated with this scope
-        @dev Hash of the patch mapped to a boolean indicating its uniqueness
-        */
-        mapping(bytes32 => bool) uniquePatches;
+        mapping(address => MintConfig) mintConfigurations;
+
+        mapping(address => uint256) patchFees;
+
+        mapping(address => uint256) assignFees;
+
+        uint256 balance;
+
+        mapping(address => bool) bankers;
     }
+
+    function setMintConfiguration(address addr, MintConfig memory config) external;
+
+    function getMintConfiguration(address addr) external view returns (MintConfig memory config);
+
+    function setPatchFee(address addr, uint256 baseFee) external;
+
+    function getPatchFee(address addr) external view returns (uint256 baseFee);
+
+    function setAssignFee(address fragmentAddress, uint256 baseFee) external;
+
+    function getAssignFee(address fragmentAddress) external view returns (uint256 baseFee);
+
+    function addBanker(string memory scopeName, address addr) external;
+
+    function removeBanker(string memory scopeName, address addr) external;
+
+    // TODO nonreentrant
+    function withdraw(string memory scopeName, uint256 amount) external;
+
+    function balanceOf(string memory scopeName) external view returns (uint256 balance);
+
+    function mint(address to, address nft, bytes calldata data) external payable returns (uint256 tokenId);
+    
+    function mintBatch(address to, address nft, bytes calldata data, uint256 quantity) external payable returns (uint256[] memory tokenIds);
+
+    function setProtocolFeeConfig(ProtocolFeeConfig memory config) external;
+
+    function getProtocolFeeConfig() external view returns (ProtocolFeeConfig memory config);
+
+    function addProtocolBanker(address addr) external;
+
+    function removeProtocolBanker(address addr) external;
+
+    function withdrawFromProtocol(uint256 balance) external;
+
+    function balanceOfProtocol() external view returns (uint256 balance);
 
     /**
     @notice Emitted when a fragment is assigned
@@ -398,6 +476,80 @@ interface IPatchworkProtocol {
     event ScopeWhitelistRemove(string scopeName, address indexed actor, address indexed addr);
 
     /**
+    @notice Emitted when a mint is configured
+    @param scopeName The name of the scope
+    @param nft The address of the NFT that is mintable
+    @param config The mint configuration
+    */
+    event MintConfigure(string scopeName, address indexed actor, address indexed nft, MintConfig config);
+
+    /**
+    @notice Emitted when a banker is added to a scope
+    @param scopeName The name of the scope
+    @param actor The address responsible for the action
+    @param banker The banker that was added
+    */
+    event ScopeBankerAdd(string scopeName, address indexed actor, address indexed banker);
+
+    /**
+    @notice Emitted when a banker is removed from a scope
+    @param scopeName The name of the scope
+    @param actor The address responsible for the action
+    @param banker The banker that was removed
+    */
+    event ScopeBankerRemove(string scopeName, address indexed actor, address indexed banker);
+    
+    /**
+    @notice Emitted when a withdrawl is made from a scope
+    @param scopeName The name of the scope
+    @param actor The address responsible for the action
+    @param amount The amount withdrawn
+    */    
+    event ScopeWithdraw(string scopeName, address indexed actor, uint256 amount);
+
+    /**
+    @notice Emitted when a banker is added to the protocol
+    @param actor The address responsible for the action
+    @param banker The banker that was added
+    */
+    event ProtocolBankerAdd(address indexed actor, address indexed banker);
+
+    /**
+    @notice Emitted when a banker is removed from the protocol
+    @param actor The address responsible for the action
+    @param banker The banker that was removed
+    */
+    event ProtocolBankerRemove(address indexed actor, address indexed banker);
+
+    /**
+    @notice Emitted when a withdrawl is made from the protocol
+    @param actor The address responsible for the action
+    @param amount The amount withdrawn
+    */
+    event ProtocolWithdraw(address indexed actor, uint256 amount);
+
+    /**
+    @notice Emitted on mint
+    @param actor The address responsible for the action
+    @param scopeName The scope of the NFT
+    @param to The receipient of the mint
+    @param nft The nft minted
+    @param data The data used to mint
+    */
+    event Mint(address indexed actor, string scopeName, address indexed to, address indexed nft, bytes data);
+
+    /**
+    @notice Emitted on batch mint
+    @param actor The address responsible for the action
+    @param scopeName The scope of the NFT
+    @param to The receipient of the mint
+    @param nft The nft minted
+    @param data The data used to mint
+    @param quantity The quantity minted
+    */
+    event MintBatch(address indexed actor, string scopeName, address indexed to, address indexed nft, bytes data, uint256 quantity);
+
+    /**
     @notice Claim a scope
     @param scopeName the name of the scope
     */
@@ -428,14 +580,14 @@ interface IPatchworkProtocol {
     @param scopeName Name of the scope
     @return ownerElect Address of the scope's owner-elect
     */
-    function getScopeOwnerElect(string calldata scopeName) external returns (address ownerElect);
+    function getScopeOwnerElect(string calldata scopeName) external view returns (address ownerElect);
 
     /**
     @notice Get owner of a scope
     @param scopeName Name of the scope
     @return owner Address of the scope owner
     */
-    function getScopeOwner(string calldata scopeName) external returns (address owner);
+    function getScopeOwner(string calldata scopeName) external view returns (address owner);
 
     /**
     @notice Add an operator to a scope
@@ -482,7 +634,11 @@ interface IPatchworkProtocol {
     @param patchAddress Address of the IPatchworkPatch to mint
     @return tokenId Token ID of the newly created patch
     */
-    function createPatch(address owner, address originalNFTAddress, uint originalNFTTokenId, address patchAddress) external returns (uint256 tokenId);
+    function createPatch(address owner, address originalNFTAddress, uint originalNFTTokenId, address patchAddress) external payable returns (uint256 tokenId);
+
+    // patch, patch1155, patchAccount
+    // assign, assign, assignBatch, assignBatch (also rename in base NFTs?)
+    // mint, mintBatch
 
     /**
     @notice Create a new 1155 patch
@@ -492,7 +648,7 @@ interface IPatchworkProtocol {
     @param patchAddress Address of the IPatchworkPatch to mint
     @return tokenId Token ID of the newly created patch
     */
-    function create1155Patch(address to, address originalNFTAddress, uint originalNFTTokenId, address originalAccount, address patchAddress) external returns (uint256 tokenId);
+    function create1155Patch(address to, address originalNFTAddress, uint originalNFTTokenId, address originalAccount, address patchAddress) external payable returns (uint256 tokenId);
     
     /**
     @notice Create a new account patch
@@ -501,7 +657,7 @@ interface IPatchworkProtocol {
     @param patchAddress Address of the IPatchworkPatch to mint
     @return tokenId Token ID of the newly created patch
     */
-    function createAccountPatch(address owner, address originalAddress, address patchAddress) external returns (uint256 tokenId);
+    function createAccountPatch(address owner, address originalAddress, address patchAddress) external payable returns (uint256 tokenId);
 
     /**
     @notice Assigns an NFT relation to have an IPatchworkLiteRef form a LiteRef to a IPatchworkAssignableNFT
@@ -510,7 +666,7 @@ interface IPatchworkProtocol {
     @param target The IPatchworkLiteRef address to hold the reference to the fragment
     @param targetTokenId The IPatchworkLiteRef Token ID to hold the reference to the fragment
     */
-    function assignNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) external;
+    function assignNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) external payable;
 
     /**
     @notice Assigns an NFT relation to have an IPatchworkLiteRef form a LiteRef to a IPatchworkAssignableNFT
@@ -520,7 +676,7 @@ interface IPatchworkProtocol {
     @param targetTokenId The IPatchworkLiteRef Token ID to hold the reference to the fragment
     @param targetMetadataId The metadata ID on the target NFT to store the reference in
     */
-    function assignNFTDirect(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) external;
+    function assignNFTDirect(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) external payable;
 
     /**
     @notice Assign multiple NFT fragments to a target NFT in batch
@@ -529,7 +685,7 @@ interface IPatchworkProtocol {
     @param target The address of the target IPatchworkLiteRef NFT
     @param targetTokenId The token ID of the target IPatchworkLiteRef NFT
     */
-    function batchAssignNFT(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId) external;
+    function batchAssignNFT(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId) external payable;
 
     /**
     @notice Assign multiple NFT fragments to a target NFT in batch
@@ -539,7 +695,7 @@ interface IPatchworkProtocol {
     @param targetTokenId The token ID of the target IPatchworkLiteRef NFT
     @param targetMetadataId The metadata ID on the target NFT to store the references in
     */
-    function batchAssignNFTDirect(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId, uint256 targetMetadataId) external;
+    function batchAssignNFTDirect(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId, uint256 targetMetadataId) external payable;
 
     /**
     @notice Unassign a NFT fragment from a target NFT

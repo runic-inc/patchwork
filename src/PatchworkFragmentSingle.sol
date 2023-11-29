@@ -25,7 +25,7 @@ abstract contract PatchworkFragmentSingle is PatchworkNFT, IPatchworkSingleAssig
     /**
     @dev See {IPatchworkNFT-getScopeName}
     */
-    function getScopeName() public view virtual override (IPatchworkAssignableNFT, PatchworkNFT) returns (string memory) {
+    function getScopeName() public view virtual override (PatchworkNFT, IPatchworkScoped) returns (string memory) {
         return _scopeName;
     }
 
