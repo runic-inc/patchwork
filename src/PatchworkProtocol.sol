@@ -348,11 +348,11 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     }
 
     /**
-    @dev See {IPatchworkProtocol-createPatch}
+    @dev See {IPatchworkProtocol-patch}
     */
-    function createPatch(address owner, address originalNFTAddress, uint originalNFTTokenId, address patchAddress) external payable returns (uint256 tokenId) {
-        IPatchworkPatch patch = IPatchworkPatch(patchAddress);
-        string memory scopeName = patch.getScopeName();
+    function patch(address owner, address originalNFTAddress, uint originalNFTTokenId, address patchAddress) external payable returns (uint256 tokenId) {
+        IPatchworkPatch patch_ = IPatchworkPatch(patchAddress);
+        string memory scopeName = patch_.getScopeName();
         // mint a Patch that is soulbound to the originalNFT using the contract address at patchAddress which must support Patchwork metadata
         Scope storage scope = _mustHaveScope(scopeName);
         _mustBeWhitelisted(scopeName, scope, patchAddress);
@@ -370,17 +370,17 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
             revert AlreadyPatched(originalNFTAddress, originalNFTTokenId, patchAddress);
         }
         _uniquePatches[_hash] = true;
-        tokenId = patch.mintPatch(owner, originalNFTAddress, originalNFTTokenId);
+        tokenId = patch_.mintPatch(owner, originalNFTAddress, originalNFTTokenId);
         emit Patch(owner, originalNFTAddress, originalNFTTokenId, patchAddress, tokenId);
         return tokenId;
     }
 
    /**
-    @dev See {IPatchworkProtocol-create1155Patch}
+    @dev See {IPatchworkProtocol-patch1155}
     */
-    function create1155Patch(address to, address originalNFTAddress, uint originalNFTTokenId, address originalAccount, address patchAddress) external payable returns (uint256 tokenId) {
-        IPatchwork1155Patch patch = IPatchwork1155Patch(patchAddress);
-        string memory scopeName = patch.getScopeName();
+    function patch1155(address to, address originalNFTAddress, uint originalNFTTokenId, address originalAccount, address patchAddress) external payable returns (uint256 tokenId) {
+        IPatchwork1155Patch patch_ = IPatchwork1155Patch(patchAddress);
+        string memory scopeName = patch_.getScopeName();
         // mint a Patch that is soulbound to the originalNFT using the contract address at patchAddress which must support Patchwork metadata
         Scope storage scope = _mustHaveScope(scopeName);
         _mustBeWhitelisted(scopeName, scope, patchAddress);
@@ -398,16 +398,16 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
             revert ERC1155AlreadyPatched(originalNFTAddress, originalNFTTokenId, originalAccount, patchAddress);
         }
         _uniquePatches[_hash] = true;
-        tokenId = patch.mintPatch(to, originalNFTAddress, originalNFTTokenId, originalAccount);
+        tokenId = patch_.mintPatch(to, originalNFTAddress, originalNFTTokenId, originalAccount);
         emit ERC1155Patch(to, originalNFTAddress, originalNFTTokenId, originalAccount, patchAddress, tokenId);
         return tokenId;
     }
     /**
-    @dev See {IPatchworkProtocol-createAccountPatch}
+    @dev See {IPatchworkProtocol-patchAccount}
     */
-    function createAccountPatch(address owner, address originalAddress, address patchAddress) external payable returns (uint256 tokenId) {
-        IPatchworkAccountPatch patch = IPatchworkAccountPatch(patchAddress);
-        string memory scopeName = patch.getScopeName();
+    function patchAccount(address owner, address originalAddress, address patchAddress) external payable returns (uint256 tokenId) {
+        IPatchworkAccountPatch patch_ = IPatchworkAccountPatch(patchAddress);
+        string memory scopeName = patch_.getScopeName();
         // mint a Patch that is soulbound to the originalNFT using the contract address at patchAddress which must support Patchwork metadata
         Scope storage scope = _mustHaveScope(scopeName);
         _mustBeWhitelisted(scopeName, scope, patchAddress);
@@ -425,7 +425,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
             revert AccountAlreadyPatched(originalAddress, patchAddress);
         }
         _uniquePatches[_hash] = true;
-        tokenId = patch.mintPatch(owner, originalAddress);
+        tokenId = patch_.mintPatch(owner, originalAddress);
         emit AccountPatch(owner, originalAddress, patchAddress, tokenId);
         return tokenId;
     }
@@ -455,35 +455,35 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     }
 
     /**
-    @dev See {IPatchworkProtocol-assignNFT}
+    @dev See {IPatchworkProtocol-assign}
     */
-    function assignNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) public payable mustNotBeFrozen(target, targetTokenId) {
+    function assign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) public payable mustNotBeFrozen(target, targetTokenId) {
         address targetOwner = IERC721(target).ownerOf(targetTokenId);
         uint64 ref = _doAssign(fragment, fragmentTokenId, target, targetTokenId, targetOwner);
         IPatchworkLiteRef(target).addReference(targetTokenId, ref);
     }
 
     /**
-    @dev See {IPatchworkProtocol-assignNFTDirect}
+    @dev See {IPatchworkProtocol-assign}
     */
-    function assignNFTDirect(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) public payable mustNotBeFrozen(target, targetTokenId) {
+    function assign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) public payable mustNotBeFrozen(target, targetTokenId) {
         address targetOwner = IERC721(target).ownerOf(targetTokenId);
         uint64 ref = _doAssign(fragment, fragmentTokenId, target, targetTokenId, targetOwner);
         IPatchworkLiteRef(target).addReferenceDirect(targetTokenId, ref, targetMetadataId);
     }
 
     /**
-    @dev See {IPatchworkProtocol-batchAssignNFT}
+    @dev See {IPatchworkProtocol-assignBatch}
     */
-    function batchAssignNFT(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId) public payable mustNotBeFrozen(target, targetTokenId) {
+    function assignBatch(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId) public payable mustNotBeFrozen(target, targetTokenId) {
         (uint64[] memory refs, ) = _batchAssignCommon(fragments, tokenIds, target, targetTokenId);
         IPatchworkLiteRef(target).batchAddReferences(targetTokenId, refs);
     }
 
     /**
-    @dev See {IPatchworkProtocol-batchAssignNFTDirect}
+    @dev See {IPatchworkProtocol-assignBatch}
     */
-    function batchAssignNFTDirect(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId, uint256 targetMetadataId) public payable mustNotBeFrozen(target, targetTokenId) {
+    function assignBatch(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId, uint256 targetMetadataId) public payable mustNotBeFrozen(target, targetTokenId) {
         (uint64[] memory refs, ) = _batchAssignCommon(fragments, tokenIds, target, targetTokenId);
         IPatchworkLiteRef(target).batchAddReferencesDirect(targetTokenId, refs, targetMetadataId);
     }
@@ -572,16 +572,16 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     }
 
     /**
-    @dev See {IPatchworkProtocol-unassignNFT}
+    @dev See {IPatchworkProtocol-unassign}
     */
-    function unassignNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) public mustNotBeFrozen(target, targetTokenId) {
+    function unassign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) public mustNotBeFrozen(target, targetTokenId) {
         _unassignNFT(fragment, fragmentTokenId, target, targetTokenId, false, 0);
     }
 
     /**
-    @dev See {IPatchworkProtocol-unassignNFTDirect}
+    @dev See {IPatchworkProtocol-unassign}
     */
-    function unassignNFTDirect(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) public mustNotBeFrozen(target, targetTokenId) {
+    function unassign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) public mustNotBeFrozen(target, targetTokenId) {
         _unassignNFT(fragment, fragmentTokenId, target, targetTokenId, true, targetMetadataId);
     }
 
@@ -591,9 +591,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     function _unassignNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, bool isDirect, uint256 targetMetadataId) private {
         if (IERC165(fragment).supportsInterface(type(IPatchworkMultiAssignableNFT).interfaceId)) {
             if (isDirect) {
-                unassignMultiNFTDirect(fragment, fragmentTokenId, target, targetTokenId, targetMetadataId);
+                unassignMulti(fragment, fragmentTokenId, target, targetTokenId, targetMetadataId);
             } else {
-                unassignMultiNFT(fragment, fragmentTokenId, target, targetTokenId);
+                unassignMulti(fragment, fragmentTokenId, target, targetTokenId);
             }
         } else if (IERC165(fragment).supportsInterface(type(IPatchworkSingleAssignableNFT).interfaceId)) {
             (address _target, uint256 _targetTokenId) = IPatchworkSingleAssignableNFT(fragment).getAssignedTo(fragmentTokenId);
@@ -601,9 +601,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
                 revert FragmentNotAssignedToTarget(fragment, fragmentTokenId, target, targetTokenId);
             }
             if (isDirect) {
-                unassignSingleNFTDirect(fragment, fragmentTokenId, targetMetadataId);
+                unassignSingle(fragment, fragmentTokenId, targetMetadataId);
             } else {
-                unassignSingleNFT(fragment, fragmentTokenId);
+                unassignSingle(fragment, fragmentTokenId);
             }
         } else {
             revert UnsupportedContract();
@@ -611,16 +611,16 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     }
 
     /**
-    @dev See {IPatchworkProtocol-unassignMultiNFT}
+    @dev See {IPatchworkProtocol-unassignMulti}
     */
-    function unassignMultiNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) public mustNotBeFrozen(target, targetTokenId) {
+    function unassignMulti(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) public mustNotBeFrozen(target, targetTokenId) {
         _unassignMultiCommon(fragment, fragmentTokenId, target, targetTokenId, false, 0);
     }
 
     /**
-    @dev See {IPatchworkProtocol-unassignMultiNFTDirect}
+    @dev See {IPatchworkProtocol-unassignMulti}
     */
-    function unassignMultiNFTDirect(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) public mustNotBeFrozen(target, targetTokenId) {
+    function unassignMulti(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) public mustNotBeFrozen(target, targetTokenId) {
         _unassignMultiCommon(fragment, fragmentTokenId, target, targetTokenId, true, targetMetadataId);
     }
 
@@ -638,16 +638,16 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     }
 
     /**
-    @dev See {IPatchworkProtocol-unassignSingleNFT}
+    @dev See {IPatchworkProtocol-unassignSingle}
     */
-    function unassignSingleNFT(address fragment, uint fragmentTokenId) public mustNotBeFrozen(fragment, fragmentTokenId) {
+    function unassignSingle(address fragment, uint fragmentTokenId) public mustNotBeFrozen(fragment, fragmentTokenId) {
         _unassignSingleCommon(fragment, fragmentTokenId, false, 0);
     }
 
     /**
-    @dev See {IPatchworkProtocol-unassignSingleNFTDirect}
+    @dev See {IPatchworkProtocol-unassignSingle}
     */
-    function unassignSingleNFTDirect(address fragment, uint fragmentTokenId, uint256 targetMetadataId) public mustNotBeFrozen(fragment, fragmentTokenId) {
+    function unassignSingle(address fragment, uint fragmentTokenId, uint256 targetMetadataId) public mustNotBeFrozen(fragment, fragmentTokenId) {
         _unassignSingleCommon(fragment, fragmentTokenId, true, targetMetadataId);
     }
 

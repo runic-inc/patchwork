@@ -63,19 +63,19 @@ contract PatchworkFragmentMultiTest is Test {
         uint256 lr3 = _testFragmentLiteRefNFT.mint(_userAddress, "");
         // must be registered
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentUnregistered.selector, address(_testMultiNFT)));
-        _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr1);
+        _prot.assign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr1);
         // happy path
         _testFragmentLiteRefNFT.registerReferenceAddress(address(_testMultiNFT));
-        _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr1);
+        _prot.assign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr1);
         assertTrue(_testMultiNFT.isAssignedTo(m1, address(_testFragmentLiteRefNFT), lr1));
-        _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
+        _prot.assign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
         assertTrue(_testMultiNFT.isAssignedTo(m1, address(_testFragmentLiteRefNFT), lr2));
-        _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr3);
+        _prot.assign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr3);
         assertTrue(_testMultiNFT.isAssignedTo(m1, address(_testFragmentLiteRefNFT), lr3));
         assertEq(_testMultiNFT.ownerOf(m1), _user2Address);
         // don't allow duplicate
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentAlreadyAssigned.selector, address(_testMultiNFT), m1));
-        _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
+        _prot.assign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
         // Don't allow duplicate (direct on NFT contract)
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentAlreadyAssigned.selector, address(_testMultiNFT), m1));
         _testMultiNFT.assign(m1, address(_testFragmentLiteRefNFT), lr2);
@@ -83,33 +83,33 @@ contract PatchworkFragmentMultiTest is Test {
         vm.stopPrank();
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _userAddress));
         vm.prank(_userAddress);
-        _prot.unassignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
+        _prot.unassign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _user2Address));
         vm.prank(_user2Address);
-        _prot.unassignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
+        _prot.unassign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, address(500)));
         vm.prank(address(500));
-        _prot.unassignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
+        _prot.unassign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
         vm.startPrank(_scopeOwner);
         // test unassign
-        _prot.unassignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
+        _prot.unassign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
         assertFalse(_testMultiNFT.isAssignedTo(m1, address(_testFragmentLiteRefNFT), lr2));
-        _prot.unassignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr1);
+        _prot.unassign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr1);
         assertFalse(_testMultiNFT.isAssignedTo(m1, address(_testFragmentLiteRefNFT), lr1));
-        _prot.unassignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr3);
+        _prot.unassign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr3);
         assertFalse(_testMultiNFT.isAssignedTo(m1, address(_testFragmentLiteRefNFT), lr3));
         // not assigned
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentNotAssignedToTarget.selector, address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2));
-        _prot.unassignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
+        _prot.unassign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
         // not assigned (direct to contract)
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentNotAssigned.selector, address(_testMultiNFT), m1));
        _testMultiNFT.unassign(m1, address(_testFragmentLiteRefNFT), lr2);
         // test reassign
-        _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
+        _prot.assign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
         assertTrue(_testMultiNFT.isAssignedTo(m1, address(_testFragmentLiteRefNFT), lr2));
-        _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr3);
+        _prot.assign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr3);
         assertTrue(_testMultiNFT.isAssignedTo(m1, address(_testFragmentLiteRefNFT), lr3));
-        _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr1);
+        _prot.assign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr1);
         assertTrue(_testMultiNFT.isAssignedTo(m1, address(_testFragmentLiteRefNFT), lr1));
     }
 
@@ -122,7 +122,7 @@ contract PatchworkFragmentMultiTest is Test {
         uint256 lr2 = _testFragmentLiteRefNFT.mint(_userAddress, "");
         // must be registered
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentUnregistered.selector, address(_testMultiNFT)));
-        _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr1);
+        _prot.assign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr1);
         // happy path
         _testFragmentLiteRefNFT.registerReferenceAddress(address(_testMultiNFT));
         // as scope owner, should not revert. Only as user if they don't match, but they should work if they match.
@@ -130,17 +130,17 @@ contract PatchworkFragmentMultiTest is Test {
         vm.stopPrank();
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _user2Address));
         vm.prank(_user2Address);
-        _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr1);
+        _prot.assign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr1);
         // target owner should be able to assign to their target as well as the scope owner
         vm.prank(_userAddress);
-        _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr1);
+        _prot.assign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr1);
         vm.prank(_scopeOwner);
-        _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
+        _prot.assign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);
         vm.prank(_scopeOwner);
         uint256 m2 = _testMultiNFT.mint(_userAddress, "");
         // This should also work because both are owned by the same user
         vm.prank(_userAddress);
-        _prot.assignNFT(address(_testMultiNFT), m2, address(_testFragmentLiteRefNFT), lr2);
+        _prot.assign(address(_testMultiNFT), m2, address(_testFragmentLiteRefNFT), lr2);
     }
     
     function testGetAssignments() public {
@@ -150,7 +150,7 @@ contract PatchworkFragmentMultiTest is Test {
         uint256[] memory liteRefIds = new uint256[](20);
         for (uint256 i = 0; i < liteRefIds.length; i++) {
             liteRefIds[i] = _testFragmentLiteRefNFT.mint(_userAddress, "");
-            _prot.assignNFT(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), liteRefIds[i]);
+            _prot.assign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), liteRefIds[i]);
         }
         assertEq(20, _testMultiNFT.getAssignmentCount(m1));
         IPatchworkMultiAssignableNFT.Assignment[] memory page1 = _testMultiNFT.getAssignments(m1, 0, 8);
@@ -191,6 +191,6 @@ contract PatchworkFragmentMultiTest is Test {
         _prot.addWhitelist(_scopeName, address(_testFragmentLiteRefNFT));
         _testFragmentLiteRefNFT.registerReferenceAddress(address(multi));
         uint256 lr1 = _testFragmentLiteRefNFT.mint(_userAddress, "");
-        _prot.assignNFT(address(multi), m1, address(_testFragmentLiteRefNFT), lr1);
+        _prot.assign(address(multi), m1, address(_testFragmentLiteRefNFT), lr1);
     }
 }

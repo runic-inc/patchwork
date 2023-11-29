@@ -634,11 +634,7 @@ interface IPatchworkProtocol {
     @param patchAddress Address of the IPatchworkPatch to mint
     @return tokenId Token ID of the newly created patch
     */
-    function createPatch(address owner, address originalNFTAddress, uint originalNFTTokenId, address patchAddress) external payable returns (uint256 tokenId);
-
-    // patch, patch1155, patchAccount
-    // assign, assign, assignBatch, assignBatch (also rename in base NFTs?)
-    // mint, mintBatch
+    function patch(address owner, address originalNFTAddress, uint originalNFTTokenId, address patchAddress) external payable returns (uint256 tokenId);
 
     /**
     @notice Create a new 1155 patch
@@ -648,7 +644,7 @@ interface IPatchworkProtocol {
     @param patchAddress Address of the IPatchworkPatch to mint
     @return tokenId Token ID of the newly created patch
     */
-    function create1155Patch(address to, address originalNFTAddress, uint originalNFTTokenId, address originalAccount, address patchAddress) external payable returns (uint256 tokenId);
+    function patch1155(address to, address originalNFTAddress, uint originalNFTTokenId, address originalAccount, address patchAddress) external payable returns (uint256 tokenId);
     
     /**
     @notice Create a new account patch
@@ -657,45 +653,45 @@ interface IPatchworkProtocol {
     @param patchAddress Address of the IPatchworkPatch to mint
     @return tokenId Token ID of the newly created patch
     */
-    function createAccountPatch(address owner, address originalAddress, address patchAddress) external payable returns (uint256 tokenId);
+    function patchAccount(address owner, address originalAddress, address patchAddress) external payable returns (uint256 tokenId);
 
     /**
-    @notice Assigns an NFT relation to have an IPatchworkLiteRef form a LiteRef to a IPatchworkAssignableNFT
+    @notice Assigns a relation to have an IPatchworkLiteRef form a LiteRef to a IPatchworkAssignableNFT
     @param fragment The IPatchworkAssignableNFT address to assign
     @param fragmentTokenId The IPatchworkAssignableNFT Token ID to assign
     @param target The IPatchworkLiteRef address to hold the reference to the fragment
     @param targetTokenId The IPatchworkLiteRef Token ID to hold the reference to the fragment
     */
-    function assignNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) external payable;
+    function assign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) external payable;
 
     /**
-    @notice Assigns an NFT relation to have an IPatchworkLiteRef form a LiteRef to a IPatchworkAssignableNFT
+    @notice Assigns a relation to have an IPatchworkLiteRef form a LiteRef to a IPatchworkAssignableNFT
     @param fragment The IPatchworkAssignableNFT address to assign
     @param fragmentTokenId The IPatchworkAssignableNFT Token ID to assign
     @param target The IPatchworkLiteRef address to hold the reference to the fragment
     @param targetTokenId The IPatchworkLiteRef Token ID to hold the reference to the fragment
     @param targetMetadataId The metadata ID on the target NFT to store the reference in
     */
-    function assignNFTDirect(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) external payable;
+    function assign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) external payable;
 
     /**
-    @notice Assign multiple NFT fragments to a target NFT in batch
+    @notice Assign multiple fragments to a target in batch
     @param fragments The array of addresses of the fragment IPatchworkAssignableNFTs
     @param tokenIds The array of token IDs of the fragment IPatchworkAssignableNFTs
-    @param target The address of the target IPatchworkLiteRef NFT
-    @param targetTokenId The token ID of the target IPatchworkLiteRef NFT
+    @param target The address of the target IPatchworkLiteRef 
+    @param targetTokenId The token ID of the target IPatchworkLiteRef 
     */
-    function batchAssignNFT(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId) external payable;
+    function assignBatch(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId) external payable;
 
     /**
-    @notice Assign multiple NFT fragments to a target NFT in batch
+    @notice Assign multiple NFT fragments to a target in batch
     @param fragments The array of addresses of the fragment IPatchworkAssignableNFTs
     @param tokenIds The array of token IDs of the fragment IPatchworkAssignableNFTs
-    @param target The address of the target IPatchworkLiteRef NFT
-    @param targetTokenId The token ID of the target IPatchworkLiteRef NFT
-    @param targetMetadataId The metadata ID on the target NFT to store the references in
+    @param target The address of the target IPatchworkLiteRef 
+    @param targetTokenId The token ID of the target IPatchworkLiteRef 
+    @param targetMetadataId The metadata ID on the target to store the references in
     */
-    function batchAssignNFTDirect(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId, uint256 targetMetadataId) external payable;
+    function assignBatch(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId, uint256 targetMetadataId) external payable;
 
     /**
     @notice Unassign a NFT fragment from a target NFT
@@ -703,7 +699,16 @@ interface IPatchworkProtocol {
     @param fragmentTokenId The IPatchworkSingleAssignableNFT token ID of the fragment NFT
     @dev reverts if fragment is not an IPatchworkSingleAssignableNFT
     */
-    function unassignSingleNFT(address fragment, uint fragmentTokenId) external;
+    function unassignSingle(address fragment, uint fragmentTokenId) external;
+    
+    /**
+    @notice Unassign a NFT fragment from a target NFT
+    @param fragment The IPatchworkSingleAssignableNFT address of the fragment NFT
+    @param fragmentTokenId The IPatchworkSingleAssignableNFT token ID of the fragment NFT
+    @param targetMetadataId The metadata ID on the target NFT to unassign from
+    @dev reverts if fragment is not an IPatchworkSingleAssignableNFT
+    */
+    function unassignSingle(address fragment, uint fragmentTokenId, uint256 targetMetadataId) external;
 
     /**
     @notice Unassigns a multi NFT relation
@@ -713,25 +718,7 @@ interface IPatchworkProtocol {
     @param targetTokenId The IPatchworkLiteRef Token ID which holds a reference to the fragment
     @dev reverts if fragment is not an IPatchworkMultiAssignableNFT
     */
-    function unassignMultiNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) external;
-
-    /**
-    @notice Unassigns an NFT relation (single or multi)
-    @param fragment The IPatchworkAssignableNFT address to unassign
-    @param fragmentTokenId The IPatchworkAssignableNFT Token ID to unassign
-    @param target The IPatchworkLiteRef address which holds a reference to the fragment
-    @param targetTokenId The IPatchworkLiteRef Token ID which holds a reference to the fragment
-    */
-    function unassignNFT(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) external;
-
-    /**
-    @notice Unassign a NFT fragment from a target NFT
-    @param fragment The IPatchworkSingleAssignableNFT address of the fragment NFT
-    @param fragmentTokenId The IPatchworkSingleAssignableNFT token ID of the fragment NFT
-    @param targetMetadataId The metadata ID on the target NFT to unassign from
-    @dev reverts if fragment is not an IPatchworkSingleAssignableNFT
-    */
-    function unassignSingleNFTDirect(address fragment, uint fragmentTokenId, uint256 targetMetadataId) external;
+    function unassignMulti(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) external;
 
     /**
     @notice Unassigns a multi NFT relation
@@ -742,7 +729,16 @@ interface IPatchworkProtocol {
     @param targetMetadataId The metadata ID on the target NFT to unassign from
     @dev reverts if fragment is not an IPatchworkMultiAssignableNFT
     */
-    function unassignMultiNFTDirect(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) external;
+    function unassignMulti(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) external;
+
+    /**
+    @notice Unassigns an NFT relation (single or multi)
+    @param fragment The IPatchworkAssignableNFT address to unassign
+    @param fragmentTokenId The IPatchworkAssignableNFT Token ID to unassign
+    @param target The IPatchworkLiteRef address which holds a reference to the fragment
+    @param targetTokenId The IPatchworkLiteRef Token ID which holds a reference to the fragment
+    */
+    function unassign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) external;
 
     /**
     @notice Unassigns an NFT relation (single or multi)
@@ -752,7 +748,7 @@ interface IPatchworkProtocol {
     @param targetTokenId The IPatchworkLiteRef Token ID which holds a reference to the fragment
     @param targetMetadataId The metadata ID on the target NFT to unassign from
     */
-    function unassignNFTDirect(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) external;
+    function unassign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) external;
 
     /**
     @notice Apply transfer rules and actions of a specific token from one address to another

@@ -59,14 +59,14 @@ contract PatchworkAccountPatchTest is Test {
         TestAccountPatchNFT testAccountPatchNFT = new TestAccountPatchNFT(address(_prot), false, false);
         // User patching is off, not authorized
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _defaultUser));
-        _prot.createAccountPatch(_userAddress, _user2Address, address(testAccountPatchNFT));
+        _prot.patchAccount(_userAddress, _user2Address, address(testAccountPatchNFT));
         vm.prank(_scopeOwner);
-        uint256 tokenId = _prot.createAccountPatch(_userAddress, _user2Address, address(testAccountPatchNFT));
+        uint256 tokenId = _prot.patchAccount(_userAddress, _user2Address, address(testAccountPatchNFT));
         assertEq(_userAddress, testAccountPatchNFT.ownerOf(tokenId));
         // Duplicate should fail
         vm.prank(_scopeOwner);
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.AccountAlreadyPatched.selector, _user2Address, address(testAccountPatchNFT)));
-        _prot.createAccountPatch(_userAddress, _user2Address, address(testAccountPatchNFT));
+        _prot.patchAccount(_userAddress, _user2Address, address(testAccountPatchNFT));
         // Test transfer
         vm.prank(_userAddress);
         testAccountPatchNFT.transferFrom(_userAddress, address(55), tokenId);
@@ -81,9 +81,9 @@ contract PatchworkAccountPatchTest is Test {
         TestAccountPatchNFT testAccountPatchNFT = new TestAccountPatchNFT(address(_prot), true, false);
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.MintNotAllowed.selector, _userAddress));
         vm.prank(_scopeOwner);
-        _prot.createAccountPatch(_userAddress, _user2Address, address(testAccountPatchNFT));
+        _prot.patchAccount(_userAddress, _user2Address, address(testAccountPatchNFT));
         vm.prank(_scopeOwner);
-        uint256 tokenId = _prot.createAccountPatch(_userAddress, _userAddress, address(testAccountPatchNFT));
+        uint256 tokenId = _prot.patchAccount(_userAddress, _userAddress, address(testAccountPatchNFT));
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.TransferNotAllowed.selector, address(testAccountPatchNFT), tokenId));
         vm.prank(_userAddress);
         testAccountPatchNFT.transferFrom(_userAddress, address(55), tokenId);
@@ -96,14 +96,14 @@ contract PatchworkAccountPatchTest is Test {
         vm.prank(_scopeOwner);
         TestAccountPatchNFT testAccountPatchNFT = new TestAccountPatchNFT(address(_prot), false, false);
         // User patching is on
-        _prot.createAccountPatch(_userAddress, _user2Address, address(testAccountPatchNFT));
+        _prot.patchAccount(_userAddress, _user2Address, address(testAccountPatchNFT));
     }
 
     function testReverseLookups() public {
         vm.startPrank(_scopeOwner);
         TestAccountPatchNFT testAccountPatchNFT = new TestAccountPatchNFT(address(_prot), false, true);
         // User patching is on
-        uint256 pId = _prot.createAccountPatch(_userAddress, _user2Address, address(testAccountPatchNFT));
+        uint256 pId = _prot.patchAccount(_userAddress, _user2Address, address(testAccountPatchNFT));
         assertEq(pId, testAccountPatchNFT.getTokenIdForOriginalAccount(_user2Address));
         // disabled case
         TestAccountPatchNFT testAccountPatchNFT2 = new TestAccountPatchNFT(address(_prot), false, false);
