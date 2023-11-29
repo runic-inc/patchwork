@@ -12,11 +12,11 @@ interface IPatchworkPatch is IPatchworkScoped {
     /**
     @notice Creates a new token for the owner, representing a patch
     @param owner Address of the owner of the token
-    @param originalNFTAddress Address of the original NFT
-    @param originalNFTTokenId ID of the original NFT token
+    @param originalAddress Address of the original 721
+    @param originalTokenId The original 721's tokenId
     @return tokenId ID of the newly minted token
     */
-    function mintPatch(address owner, address originalNFTAddress, uint256 originalNFTTokenId) external returns (uint256 tokenId);
+    function mintPatch(address owner, address originalAddress, uint256 originalTokenId) external returns (uint256 tokenId);
 
     /**
     @notice Updates the real underlying ownership of a token in storage (if different from current)
@@ -34,9 +34,9 @@ interface IPatchworkPatch is IPatchworkScoped {
     /**
     @notice Returns the token ID (if it exists) for an NFT that may have been patched
     @dev Requires reverse storage enabled
-    @param originalNFTAddress Address of the original NFT
-    @param originalNFTTokenId ID of the original NFT token
+    @param originalAddress Address of the original 721
+    @param originalTokenId The original 721's tokenId
     @return tokenId ID of the newly minted token
     */
-    function getTokenIdForOriginalNFT(address originalNFTAddress, uint256 originalNFTTokenId) external view returns (uint256 tokenId);
+    function getTokenIdForOriginal721(address originalAddress, uint256 originalTokenId) external view returns (uint256 tokenId);
 }

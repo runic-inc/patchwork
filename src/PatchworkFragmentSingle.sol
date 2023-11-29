@@ -1,17 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "./PatchworkNFT.sol";
-import "./IPatchworkSingleAssignableNFT.sol";
-
-// TODO create a patch fragment implementation where ownership is weak for fragments
-// TODO change the patchworkCompatible to make that work
+import "./Patchwork721.sol";
+import "./IPatchworkSingleAssignable.sol";
 
 /**
 @title PatchworkFragmentSingle
-@dev base implementation of a Single-relation Fragment is IPatchworkSingleAssignableNFT
+@dev base implementation of a Single-relation Fragment is IPatchworkSingleAssignable
 */
-abstract contract PatchworkFragmentSingle is PatchworkNFT, IPatchworkSingleAssignableNFT {
+abstract contract PatchworkFragmentSingle is Patchwork721, IPatchworkSingleAssignable {
  
     /// Represents an assignment of a token from an external NFT contract to a token in this contract.
     struct Assignment {
@@ -23,9 +20,9 @@ abstract contract PatchworkFragmentSingle is PatchworkNFT, IPatchworkSingleAssig
     mapping(uint256 => Assignment) internal _assignments;
 
     /**
-    @dev See {IPatchworkNFT-getScopeName}
+    @dev See {IPatchwork721-getScopeName}
     */
-    function getScopeName() public view virtual override (PatchworkNFT, IPatchworkScoped) returns (string memory) {
+    function getScopeName() public view virtual override (Patchwork721, IPatchworkScoped) returns (string memory) {
         return _scopeName;
     }
 
@@ -33,8 +30,8 @@ abstract contract PatchworkFragmentSingle is PatchworkNFT, IPatchworkSingleAssig
     @dev See {IERC165-supportsInterface}
     */
     function supportsInterface(bytes4 interfaceID) public view virtual override returns (bool) {
-        return interfaceID == type(IPatchworkAssignableNFT).interfaceId ||
-        interfaceID == type(IPatchworkSingleAssignableNFT).interfaceId ||
+        return interfaceID == type(IPatchworkAssignable).interfaceId ||
+        interfaceID == type(IPatchworkSingleAssignable).interfaceId ||
         super.supportsInterface(interfaceID); 
     }
 
@@ -122,7 +119,7 @@ abstract contract PatchworkFragmentSingle is PatchworkNFT, IPatchworkSingleAssig
     }
 
     /**
-    @dev See {IPatchworkNFT-locked}
+    @dev See {IPatchwork721-locked}
     */
     function locked(uint256 tokenId) public view virtual override returns (bool) {
         // Locked when assigned (implicit) or if explicitly locked
@@ -130,7 +127,7 @@ abstract contract PatchworkFragmentSingle is PatchworkNFT, IPatchworkSingleAssig
     }
 
     /**
-    @dev See {IPatchworkNFT-setLocked}
+    @dev See {IPatchwork721-setLocked}
     */
     function setLocked(uint256 tokenId, bool locked_) public virtual override {
         if (msg.sender != ownerOf(tokenId)) {

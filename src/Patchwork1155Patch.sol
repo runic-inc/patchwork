@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "./PatchworkNFT.sol";
+import "./Patchwork721.sol";
 import "./IPatchwork1155Patch.sol";
 
 /**
 @title Patchwork1155Patch
 @dev Base implementation of IPatchwork1155Patch
-@dev It extends the functionalities of PatchworkNFT and implements the IPatchwork1155Patch interface.
+@dev It extends the functionalities of Patchwork721 and implements the IPatchwork1155Patch interface.
 */
-abstract contract Patchwork1155Patch is PatchworkNFT, IPatchwork1155Patch {
+abstract contract Patchwork1155Patch is Patchwork721, IPatchwork1155Patch {
 
     struct PatchCanonical {
         address addr;
@@ -32,32 +32,32 @@ abstract contract Patchwork1155Patch is PatchworkNFT, IPatchwork1155Patch {
     }
 
     /**
-    @dev See {IPatchworkNFT-getScopeName}
+    @dev See {IPatchwork721-getScopeName}
     */
-    function getScopeName() public view virtual override(PatchworkNFT, IPatchworkScoped) returns (string memory) {
+    function getScopeName() public view virtual override(Patchwork721, IPatchworkScoped) returns (string memory) {
         return _scopeName;
     }
 
     /**
     @notice stores a patch
     @param tokenId the tokenId of the patch
-    @param originalNFTAddress the address of the original ERC-1155 we are patching
-    @param originalNFTTokenId the tokenId of the original ERC-1155 we are patching
+    @param originalAddress the address of the original ERC-1155 we are patching
+    @param originalTokenId the tokenId of the original ERC-1155 we are patching
     @param withReverse store reverse lookup
     @param account the account of the ERC-1155 we are patching
     */
-    function _storePatch(uint256 tokenId, address originalNFTAddress, uint256 originalNFTTokenId, address account, bool withReverse) internal virtual {
-        _patchedAddresses[tokenId] = PatchCanonical(originalNFTAddress, originalNFTTokenId, account);
+    function _storePatch(uint256 tokenId, address originalAddress, uint256 originalTokenId, address account, bool withReverse) internal virtual {
+        _patchedAddresses[tokenId] = PatchCanonical(originalAddress, originalTokenId, account);
         if (withReverse) {
-            _patchedAddressesRev[keccak256(abi.encodePacked(originalNFTAddress, originalNFTTokenId, account))] = tokenId;
+            _patchedAddressesRev[keccak256(abi.encodePacked(originalAddress, originalTokenId, account))] = tokenId;
         }
     }
 
     /**
-    @dev See {IPatchwork1155Patch-getTokenIdForOriginalNFT}
+    @dev See {IPatchwork1155Patch-getTokenIdForOriginal1155}
     */
-    function getTokenIdForOriginalNFT(address originalNFTAddress, uint256 originalNFTTokenId, address originalAccount) public view virtual returns (uint256 tokenId) {
-        return _patchedAddressesRev[keccak256(abi.encodePacked(originalNFTAddress, originalNFTTokenId, originalAccount))];
+    function getTokenIdForOriginal1155(address originalAddress, uint256 originalTokenId, address originalAccount) public view virtual returns (uint256 tokenId) {
+        return _patchedAddressesRev[keccak256(abi.encodePacked(originalAddress, originalTokenId, originalAccount))];
     }
 
     /**

@@ -13,7 +13,7 @@ contract TestAccountPatchNFT is PatchworkAccountPatch {
         uint256 thing;
     }
 
-    constructor(address manager_, bool sameOwnerModel_, bool reverseEnabled_) PatchworkNFT("testscope", "TestAccountPatchNFT", "TPLR", msg.sender, manager_) {
+    constructor(address manager_, bool sameOwnerModel_, bool reverseEnabled_) Patchwork721("testscope", "TestAccountPatchNFT", "TPLR", msg.sender, manager_) {
         _sameOwnerModel = sameOwnerModel_;
         _reverseEnabled = reverseEnabled_;
     }

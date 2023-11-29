@@ -2,46 +2,46 @@
 pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "./IPatchworkNFT.sol";
+import "./IPatchwork721.sol";
 import "./IERC4906.sol";
 import "./IPatchworkProtocol.sol";
 
 /**
-@title PatchworkNFT Abstract Contract
-@dev This abstract contract defines the core functionalities for the PatchworkNFT.
-     It inherits from the standard ERC721, as well as the IPatchworkNFT and IERC4906 interfaces.
+@title Patchwork721 Abstract Contract
+@dev This abstract contract defines the core functionalities for the Patchwork721.
+     It inherits from the standard ERC721, as well as the IPatchwork721 and IERC4906 interfaces.
 */
-abstract contract PatchworkNFT is ERC721, IPatchworkNFT, IERC4906 {
+abstract contract Patchwork721 is ERC721, IPatchwork721, IERC4906 {
 
-    /// @dev The scope name for the NFT.
+    /// @dev The scope name of this 721.
     string internal _scopeName;
 
     /// @dev The address that denotes the owner of the contract.
     address internal _owner;
 
-    /// @dev The address that manages the NFTs (PatchworkProtocol).
+    /// @dev Our manager (PatchworkProtocol).
     address internal _manager;
 
     /// @dev A mapping to keep track of permissions for each address.
     mapping(address => uint256) internal _permissionsAllow;
 
-    /// @dev A mapping for storing metadata associated with each NFT token ID.
+    /// @dev A mapping for storing metadata associated with each token ID.
     mapping(uint256 => uint256[]) internal _metadataStorage;
 
-    /// @dev A mapping for storing freeze nonces of each NFT token ID.
+    /// @dev A mapping for storing freeze nonces of each token ID.
     mapping(uint256 => uint256) internal _freezeNonces;
 
-    /// @dev A mapping indicating whether a specific NFT token ID is frozen.
+    /// @dev A mapping indicating whether a specific token ID is frozen.
     mapping(uint256 => bool) internal _freezes;
 
-    /// @dev A mapping indicating whether a specific NFT token ID is locked.
+    /// @dev A mapping indicating whether a specific token ID is locked.
     mapping(uint256 => bool) internal _locks;
 
     /**
-     * @notice Creates a new instance of the PatchworkNFT contract with the provided parameters.
-     * @param scopeName_ The scope name for the NFT.
-     * @param name_ The ERC-721 name for the NFT.
-     * @param symbol_ The ERC-721 symbol for the NFT.
+     * @notice Creates a new instance of the Patchwork721 contract with the provided parameters.
+     * @param scopeName_ The scope name.
+     * @param name_ The ERC-721 name.
+     * @param symbol_ The ERC-721 symbol.
      * @param owner_ The address that will be set as the owner.
      * @param manager_ The address that will be set as the manager (PatchworkProtocol).
      */
@@ -58,24 +58,38 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT, IERC4906 {
     }
 
     /**
-    @dev See {IPatchworkNFT-getScopeName}
+    @dev See {IPatchwork721-getScopeName}
     */
     function getScopeName() public view virtual returns (string memory) {
         return _scopeName;
     }
 
     /**
-    @dev See {IPatchworkNFT-storePackedMetadataSlot}
+    @dev See {IPatchwork721-storePackedMetadataSlot}
     */
     function storePackedMetadataSlot(uint256 tokenId, uint256 slot, uint256 data) public virtual mustHaveTokenWriteAuth(tokenId) {
         _metadataStorage[tokenId][slot] = data;
     }
 
     /**
-    @dev See {IPatchworkNFT-loadPackedMetadataSlot}
+    @dev See {IPatchwork721-storePackedMetadata}
+    */
+    function storePackedMetadata(uint256 tokenId, uint256[] memory data) public virtual mustHaveTokenWriteAuth(tokenId) {
+         _metadataStorage[tokenId] = data;
+    }
+
+    /**
+    @dev See {IPatchwork721-loadPackedMetadataSlot}
     */
     function loadPackedMetadataSlot(uint256 tokenId, uint256 slot) public virtual view returns (uint256) {
         return _metadataStorage[tokenId][slot];
+    }
+
+    /**
+    @dev See {IPatchwork721-loadPackedMetadata}
+    */
+    function loadPackedMetadata(uint256 tokenId) public virtual view returns (uint256[] memory) {
+        return _metadataStorage[tokenId];
     }
 
     // Does msg.sender have permission to write to our top level storage?
@@ -89,7 +103,7 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT, IERC4906 {
     }
 
     /**
-    @dev See {IPatchworkNFT-setPermissions}
+    @dev See {IPatchwork721-setPermissions}
     */
     function setPermissions(address to, uint256 permissions) public virtual mustHaveWriteAuth {
         _permissionsAllow[to] = permissions;
@@ -100,7 +114,7 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT, IERC4906 {
     @dev See {IERC165-supportsInterface}
     */
     function supportsInterface(bytes4 interfaceID) public view virtual override(ERC721, IERC165) returns (bool) {
-        return interfaceID == type(IPatchworkNFT).interfaceId ||
+        return interfaceID == type(IPatchwork721).interfaceId ||
             interfaceID == type(IERC5192).interfaceId ||
             interfaceID == type(IERC4906).interfaceId ||    
             ERC721.supportsInterface(interfaceID);
@@ -158,14 +172,14 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT, IERC4906 {
     }
 
     /**
-    @dev See {IPatchworkNFT-getFreezeNonce}
+    @dev See {IPatchwork721-getFreezeNonce}
     */
     function getFreezeNonce(uint256 tokenId) public view virtual returns (uint256 nonce) {
         return _freezeNonces[tokenId];
     }
 
     /**
-    @dev See {IPatchworkNFT-setFrozen}
+    @dev See {IPatchwork721-setFrozen}
     */
     function setFrozen(uint256 tokenId, bool frozen_) public virtual mustBeTokenOwner(tokenId) {
         bool _frozen = _freezes[tokenId];
@@ -182,21 +196,21 @@ abstract contract PatchworkNFT is ERC721, IPatchworkNFT, IERC4906 {
     }
 
     /**
-    @dev See {IPatchworkNFT-frozen}
+    @dev See {IPatchwork721-frozen}
     */
     function frozen(uint256 tokenId) public view virtual returns (bool) {
         return _freezes[tokenId];
     }
 
     /**
-    @dev See {IPatchworkNFT-locked}
+    @dev See {IPatchwork721-locked}
     */
     function locked(uint256 tokenId) public view virtual returns (bool) {
         return _locks[tokenId];
     }
 
     /**
-    @dev See {IPatchworkNFT-setLocked}
+    @dev See {IPatchwork721-setLocked}
     */
     function setLocked(uint256 tokenId, bool locked_) public virtual mustBeTokenOwner(tokenId) {
         bool _locked = _locks[tokenId];

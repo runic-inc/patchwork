@@ -3,14 +3,14 @@ pragma solidity ^0.8.13;
 
 import "./IPatchworkAccountPatch.sol";
 import "./IPatchworkProtocol.sol";
-import "./PatchworkNFT.sol";
+import "./Patchwork721.sol";
 
 /**
 @title PatchworkAccountPatch
 @dev Base implementation of IPatchworkAccountPatch
-@dev It extends the functionalities of PatchworkNFT and implements the IPatchworkAccountPatch interface.
+@dev It extends the functionalities of Patchwork721 and implements the IPatchworkAccountPatch interface.
 */
-abstract contract PatchworkAccountPatch is PatchworkNFT, IPatchworkAccountPatch {
+abstract contract PatchworkAccountPatch is Patchwork721, IPatchworkAccountPatch {
     
     /// @dev Mapping from token ID to the address of the NFT that this patch is applied to.
     mapping(uint256 => address) internal _patchedAddresses;
@@ -27,9 +27,9 @@ abstract contract PatchworkAccountPatch is PatchworkNFT, IPatchworkAccountPatch 
     }
 
     /**
-    @dev See {IPatchworkNFT-getScopeName}
+    @dev See {IPatchwork721-getScopeName}
     */
-    function getScopeName() public view virtual override(PatchworkNFT, IPatchworkScoped) returns (string memory) {
+    function getScopeName() public view virtual override(Patchwork721, IPatchworkScoped) returns (string memory) {
         return _scopeName;
     }
 

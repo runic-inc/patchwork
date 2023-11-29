@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./IERC5192.sol";
 import "./IPatchworkScoped.sol";
 
 /** 
-@title Patchwork Protocol NFT Interface Metadata
+@title Patchwork Protocol Interface Metadata
 @author Runic Labs, Inc
-@notice Metadata for IPatchworkNFT and related contract interfaces
+@notice Metadata for IPatchwork721 and related contract interfaces
 */
-interface PatchworkNFTInterfaceMeta {
+interface IPatchworkMetadata {
     /**
     @notice Enumeration of possible field data types.
     @dev This defines the various basic data types for the fields.
@@ -70,13 +70,12 @@ interface PatchworkNFTInterfaceMeta {
     }
 }
 
-// TODO - Protocol assumes this is IERC721. Should we just declare it here?
 /**
-@title Patchwork Protocol NFT Interface
+@title Patchwork Protocol 721 Interface
 @author Runic Labs, Inc
 @notice Interface for contracts supporting Patchwork metadata standard
 */
-interface IPatchworkNFT is IPatchworkScoped, PatchworkNFTInterfaceMeta, IERC5192 {
+interface IPatchwork721 is IPatchworkScoped, IPatchworkMetadata, IERC5192, IERC721 {
     /**
     @notice Emitted when the freeze status is changed to frozen.
     @param tokenId The identifier for a token.
@@ -90,15 +89,15 @@ interface IPatchworkNFT is IPatchworkScoped, PatchworkNFTInterfaceMeta, IERC5192
     event Thawed(uint256 indexed tokenId);
 
     /**
-    @notice Emitted when the permissions are changed for an NFT
+    @notice Emitted when the permissions are changed
     @param to The address the permissions are assigned to
     @param permissions The permissions
     */
     event PermissionChange(address indexed to, uint256 permissions);
 
     /**
-    @notice Emitted when the schema has changed for an NFT
-    @param addr the address of the NFT
+    @notice Emitted when the schema has changed
+    @param addr the address of the Patchwork721
     */
     event SchemaChange(address indexed addr);
     
@@ -137,12 +136,26 @@ interface IPatchworkNFT is IPatchworkScoped, PatchworkNFTInterfaceMeta, IERC5192
     function storePackedMetadataSlot(uint256 tokenId, uint256 slot, uint256 data) external;
 
     /**
+    @notice Stores packed metadata for a given token ID
+    @param tokenId ID of the token
+    @param data Metadata to store
+    */
+    function storePackedMetadata(uint256 tokenId, uint256[] memory data) external;
+
+    /**
     @notice Loads packed metadata for a given token ID and slot
     @param tokenId ID of the token
     @param slot Slot to load metadata from
     @return uint256 the raw slot data as a uint256
     */
     function loadPackedMetadataSlot(uint256 tokenId, uint256 slot) external view returns (uint256);
+
+    /**
+    @notice Loads packed metadata for a given token ID
+    @param tokenId ID of the token
+    @return uint256[] the raw slot data as a uint256 array
+    */
+    function loadPackedMetadata(uint256 tokenId) external view returns (uint256[] memory);
 
     /**
     @notice Returns the freeze nonce for a given token ID

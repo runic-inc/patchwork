@@ -9,7 +9,7 @@ pragma solidity ^0.8.13;
   Has metadata as defined in totem-metadata.json
 */
 
-import "../../src/PatchworkNFT.sol";
+import "../../src/Patchwork721.sol";
 import "../../src/PatchworkLiteRef.sol";
 import "../../src/IPatchworkMintable.sol";
 import "forge-std/console.sol";
@@ -29,18 +29,18 @@ struct DynamicLiteRefs {
     mapping(uint64 => uint256) idx;
 }
 
-contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef, IPatchworkMintable {
+contract TestDynamicArrayLiteRefNFT is Patchwork721, PatchworkLiteRef, IPatchworkMintable {
 
     uint256 _nextTokenId;
 
     mapping(uint256 => DynamicLiteRefs) internal _dynamicLiterefStorage; // tokenId => indexed slots
 
-    constructor(address manager_) PatchworkNFT("testscope", "TestPatchLiteRef", "TPLR", msg.sender, manager_) PatchworkLiteRef() {
+    constructor(address manager_) Patchwork721("testscope", "TestPatchLiteRef", "TPLR", msg.sender, manager_) PatchworkLiteRef() {
     }
 
     // ERC-165
-    function supportsInterface(bytes4 interfaceID) public view virtual override(PatchworkNFT, PatchworkLiteRef) returns (bool) {
-        return PatchworkNFT.supportsInterface(interfaceID) ||
+    function supportsInterface(bytes4 interfaceID) public view virtual override(Patchwork721, PatchworkLiteRef) returns (bool) {
+        return Patchwork721.supportsInterface(interfaceID) ||
             PatchworkLiteRef.supportsInterface(interfaceID);
     }
 
@@ -55,8 +55,8 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef, IPatchwor
         _manager = manager_;
     }
 
-    function getScopeName() public view override (PatchworkNFT, IPatchworkScoped) returns (string memory scopeName) {
-        return PatchworkNFT.getScopeName();
+    function getScopeName() public view override (Patchwork721, IPatchworkScoped) returns (string memory scopeName) {
+        return Patchwork721.getScopeName();
     }
 
     function mint(address to, bytes calldata /* data */) public payable returns (uint256 tokenId) {
@@ -187,7 +187,7 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef, IPatchwor
         }
     }
 
-    function batchAddReferences(uint256 ourTokenId, uint64[] calldata _liteRefs) public override {
+    function addReferenceBatch(uint256 ourTokenId, uint64[] calldata _liteRefs) public override {
         require(_checkTokenWriteAuth(ourTokenId), "not authorized");
         // do in batches of 4 with 1 remainder pass
         DynamicLiteRefs storage store = _dynamicLiterefStorage[ourTokenId];
@@ -287,7 +287,7 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef, IPatchwor
         }
     }
 
-    function addReferenceDirect(uint256 tokenId, uint64 liteRef, uint256 targetMetadataId) public override {
+    function addReference(uint256 tokenId, uint64 liteRef, uint256 targetMetadataId) public override {
         if (targetMetadataId != 0) {
             revert("Unsupported metadata ID");
         }
@@ -295,18 +295,18 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef, IPatchwor
     }
 
 
-    function removeReferenceDirect(uint256 tokenId, uint64 liteRef, uint256 targetMetadataId) public override {
+    function removeReference(uint256 tokenId, uint64 liteRef, uint256 targetMetadataId) public override {
         if (targetMetadataId != 0) {
             revert("Unsupported metadata ID");
         }
         removeReference(tokenId, liteRef);
     }
 
-    function batchAddReferencesDirect(uint256 tokenId, uint64[] calldata liteRefs, uint256 targetMetadataId) public override {
+    function addReferenceBatch(uint256 tokenId, uint64[] calldata liteRefs, uint256 targetMetadataId) public override {
         if (targetMetadataId != 0) {
             revert("Unsupported metadata ID");
         }
-        batchAddReferences(tokenId, liteRefs);
+        addReferenceBatch(tokenId, liteRefs);
     }
 
     function loadReferenceAddressAndTokenId(uint256 ourTokenId, uint256 idx) public view returns (address addr, uint256 tokenId) {
@@ -367,8 +367,8 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef, IPatchwor
         }
     }
 
-    function _checkWriteAuth() internal override(PatchworkNFT, PatchworkLiteRef) view returns (bool allow) {
-        return PatchworkNFT._checkWriteAuth();
+    function _checkWriteAuth() internal override(Patchwork721, PatchworkLiteRef) view returns (bool allow) {
+        return Patchwork721._checkWriteAuth();
     }
 
     function burn(uint256 tokenId) public {

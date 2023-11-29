@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "./PatchworkNFT.sol";
+import "./Patchwork721.sol";
 import "./IPatchworkPatch.sol";
 
 /**
 @title PatchworkPatch
 @dev Base implementation of IPatchworkPatch
 @dev It is soul-bound to another ERC-721 and cannot be transferred or reassigned.
-@dev It extends the functionalities of PatchworkNFT and implements the IPatchworkPatch interface.
+@dev It extends the functionalities of Patchwork721 and implements the IPatchworkPatch interface.
 */
-abstract contract PatchworkPatch is PatchworkNFT, IPatchworkPatch {
+abstract contract PatchworkPatch is Patchwork721, IPatchworkPatch {
 
     /// @dev Mapping from token ID to the address of the NFT that this patch is applied to.
     mapping(uint256 => address) internal _patchedAddresses;
@@ -30,9 +30,9 @@ abstract contract PatchworkPatch is PatchworkNFT, IPatchworkPatch {
     }
 
     /**
-    @dev See {IPatchworkNFT-getScopeName}
+    @dev See {IPatchwork721-getScopeName}
     */
-    function getScopeName() public view virtual override(PatchworkNFT, IPatchworkScoped) returns (string memory) {
+    function getScopeName() public view virtual override(Patchwork721, IPatchworkScoped) returns (string memory) {
         return _scopeName;
     }
 
@@ -48,23 +48,23 @@ abstract contract PatchworkPatch is PatchworkNFT, IPatchworkPatch {
     /**
     @notice stores a patch
     @param tokenId the tokenId of the patch
-    @param originalNFTAddress the address of the original ERC-721 we are patching
-    @param originalNFTTokenId the tokenId of the original ERC-721 we are patching
+    @param originalAddress the address of the original ERC-721 we are patching
+    @param originalTokenId the tokenId of the original ERC-721 we are patching
     @param withReverse store reverse lookup
     */
-    function _storePatch(uint256 tokenId, address originalNFTAddress, uint256 originalNFTTokenId, bool withReverse) internal virtual {
-        _patchedAddresses[tokenId] = originalNFTAddress;
-        _patchedTokenIds[tokenId] = originalNFTTokenId;
+    function _storePatch(uint256 tokenId, address originalAddress, uint256 originalTokenId, bool withReverse) internal virtual {
+        _patchedAddresses[tokenId] = originalAddress;
+        _patchedTokenIds[tokenId] = originalTokenId;
         if (withReverse) {
-            _patchedAddressesRev[keccak256(abi.encodePacked(originalNFTAddress, originalNFTTokenId))] = tokenId;
+            _patchedAddressesRev[keccak256(abi.encodePacked(originalAddress, originalTokenId))] = tokenId;
         }
     }
 
     /**
-    @dev See {IPatchworkPatch-getTokenIdForOriginalNFT}
+    @dev See {IPatchworkPatch-getTokenIdForOriginal721}
     */
-    function getTokenIdForOriginalNFT(address originalNFTAddress, uint256 originalNFTTokenId) public view virtual returns (uint256 tokenId) {
-        return _patchedAddressesRev[keccak256(abi.encodePacked(originalNFTAddress, originalNFTTokenId))];
+    function getTokenIdForOriginal721(address originalAddress, uint256 originalTokenId) public view virtual returns (uint256 tokenId) {
+        return _patchedAddressesRev[keccak256(abi.encodePacked(originalAddress, originalTokenId))];
     }
 
     /**
@@ -91,7 +91,7 @@ abstract contract PatchworkPatch is PatchworkNFT, IPatchworkPatch {
 
     /**
     @dev always false because a patch cannot be locked as the ownership is inferred
-    @dev See {IPatchworkNFT-locked}
+    @dev See {IPatchwork721-locked}
     */
     function locked(uint256 /* tokenId */) public pure virtual override returns (bool) {
         return false;
@@ -99,7 +99,7 @@ abstract contract PatchworkPatch is PatchworkNFT, IPatchworkPatch {
 
     /**
     @dev always reverts because a patch cannot be locked as the ownership is inferred
-    @dev See {IPatchworkNFT-setLocked}
+    @dev See {IPatchwork721-setLocked}
     */ 
     function setLocked(uint256 /* tokenId */, bool /* locked_ */) public view virtual override {
         revert IPatchworkProtocol.CannotLockSoulboundPatch(address(this));
