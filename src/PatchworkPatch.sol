@@ -8,7 +8,7 @@ import "./IPatchworkPatch.sol";
 @title PatchworkPatch
 @dev Base implementation of IPatchworkPatch
 @dev It is soul-bound to another ERC-721 and cannot be transferred or reassigned.
-@dev It extends the functionalities of PatchworkNFT and implements the IPatchworkPatch interface.
+@dev It extends the functionalities of Patchwork721 and implements the IPatchworkPatch interface.
 */
 abstract contract PatchworkPatch is Patchwork721, IPatchworkPatch {
 
@@ -48,23 +48,23 @@ abstract contract PatchworkPatch is Patchwork721, IPatchworkPatch {
     /**
     @notice stores a patch
     @param tokenId the tokenId of the patch
-    @param originalNFTAddress the address of the original ERC-721 we are patching
-    @param originalNFTTokenId the tokenId of the original ERC-721 we are patching
+    @param originalAddress the address of the original ERC-721 we are patching
+    @param originalTokenId the tokenId of the original ERC-721 we are patching
     @param withReverse store reverse lookup
     */
-    function _storePatch(uint256 tokenId, address originalNFTAddress, uint256 originalNFTTokenId, bool withReverse) internal virtual {
-        _patchedAddresses[tokenId] = originalNFTAddress;
-        _patchedTokenIds[tokenId] = originalNFTTokenId;
+    function _storePatch(uint256 tokenId, address originalAddress, uint256 originalTokenId, bool withReverse) internal virtual {
+        _patchedAddresses[tokenId] = originalAddress;
+        _patchedTokenIds[tokenId] = originalTokenId;
         if (withReverse) {
-            _patchedAddressesRev[keccak256(abi.encodePacked(originalNFTAddress, originalNFTTokenId))] = tokenId;
+            _patchedAddressesRev[keccak256(abi.encodePacked(originalAddress, originalTokenId))] = tokenId;
         }
     }
 
     /**
-    @dev See {IPatchworkPatch-getTokenIdForOriginalNFT}
+    @dev See {IPatchworkPatch-getTokenIdForOriginal721}
     */
-    function getTokenIdForOriginalNFT(address originalNFTAddress, uint256 originalNFTTokenId) public view virtual returns (uint256 tokenId) {
-        return _patchedAddressesRev[keccak256(abi.encodePacked(originalNFTAddress, originalNFTTokenId))];
+    function getTokenIdForOriginal721(address originalAddress, uint256 originalTokenId) public view virtual returns (uint256 tokenId) {
+        return _patchedAddressesRev[keccak256(abi.encodePacked(originalAddress, originalTokenId))];
     }
 
     /**

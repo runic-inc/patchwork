@@ -41,23 +41,23 @@ abstract contract Patchwork1155Patch is Patchwork721, IPatchwork1155Patch {
     /**
     @notice stores a patch
     @param tokenId the tokenId of the patch
-    @param originalNFTAddress the address of the original ERC-1155 we are patching
-    @param originalNFTTokenId the tokenId of the original ERC-1155 we are patching
+    @param originalAddress the address of the original ERC-1155 we are patching
+    @param originalTokenId the tokenId of the original ERC-1155 we are patching
     @param withReverse store reverse lookup
     @param account the account of the ERC-1155 we are patching
     */
-    function _storePatch(uint256 tokenId, address originalNFTAddress, uint256 originalNFTTokenId, address account, bool withReverse) internal virtual {
-        _patchedAddresses[tokenId] = PatchCanonical(originalNFTAddress, originalNFTTokenId, account);
+    function _storePatch(uint256 tokenId, address originalAddress, uint256 originalTokenId, address account, bool withReverse) internal virtual {
+        _patchedAddresses[tokenId] = PatchCanonical(originalAddress, originalTokenId, account);
         if (withReverse) {
-            _patchedAddressesRev[keccak256(abi.encodePacked(originalNFTAddress, originalNFTTokenId, account))] = tokenId;
+            _patchedAddressesRev[keccak256(abi.encodePacked(originalAddress, originalTokenId, account))] = tokenId;
         }
     }
 
     /**
-    @dev See {IPatchwork1155Patch-getTokenIdForOriginalNFT}
+    @dev See {IPatchwork1155Patch-getTokenIdForOriginal1155}
     */
-    function getTokenIdForOriginalNFT(address originalNFTAddress, uint256 originalNFTTokenId, address originalAccount) public view virtual returns (uint256 tokenId) {
-        return _patchedAddressesRev[keccak256(abi.encodePacked(originalNFTAddress, originalNFTTokenId, originalAccount))];
+    function getTokenIdForOriginal1155(address originalAddress, uint256 originalTokenId, address originalAccount) public view virtual returns (uint256 tokenId) {
+        return _patchedAddressesRev[keccak256(abi.encodePacked(originalAddress, originalTokenId, originalAccount))];
     }
 
     /**

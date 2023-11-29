@@ -231,7 +231,8 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         // modify state before calling to send
         scope.balance -= amount;
         // transfer funds
-        (bool sent,) = msg.sender.call{value: amount, gas: TRANSFER_GAS_LIMIT}("");
+        // (bool sent,) = msg.sender.call{value: amount, gas: TRANSFER_GAS_LIMIT}(""); // TODO is gas limit good or bad?
+        (bool sent,) = msg.sender.call{value: amount}("");
         if (!sent) {
             revert FailedToSend();
         }
@@ -315,7 +316,8 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
             revert InsufficientFunds();
         }
         _protocolBalance -= amount;
-        (bool sent,) = msg.sender.call{value: amount, gas: TRANSFER_GAS_LIMIT}("");
+        // (bool sent,) = msg.sender.call{value: amount, gas: TRANSFER_GAS_LIMIT}(""); // TODO is gas limit good or bad?
+        (bool sent,) = msg.sender.call{value: amount}("");
         if (!sent) {
             revert FailedToSend();
         }

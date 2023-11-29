@@ -124,10 +124,10 @@ contract Patchwork1155PatchTest is Test {
         TestBase1155 base1155 = new TestBase1155();
         uint256 b = base1155.mint(_userAddress, 1, 5);
         uint256 pId = _prot.patch1155(_userAddress, address(base1155), b, _userAddress, address(test1155PatchNFT));
-        assertEq(pId, test1155PatchNFT.getTokenIdForOriginalNFT(address(base1155), b, _userAddress));
+        assertEq(pId, test1155PatchNFT.getTokenIdForOriginal1155(address(base1155), b, _userAddress));
         // testing not enabled
         Test1155PatchNFT test1155PatchNFT2 = new Test1155PatchNFT(address(_prot), false);
         // 0 is default / not-enabled
-        assertEq(0, test1155PatchNFT2.getTokenIdForOriginalNFT(address(base1155), b, _userAddress));
+        assertEq(0, test1155PatchNFT2.getTokenIdForOriginal1155(address(base1155), b, _userAddress));
     }
 }
