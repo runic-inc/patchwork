@@ -59,7 +59,7 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef, IPatchwor
         return PatchworkNFT.getScopeName();
     }
 
-    function mint(address to, bytes calldata /* data */) public returns (uint256 tokenId) {
+    function mint(address to, bytes calldata /* data */) public payable returns (uint256 tokenId) {
         tokenId = _nextTokenId;
         _nextTokenId++;
         _safeMint(to, tokenId);
@@ -67,7 +67,7 @@ contract TestDynamicArrayLiteRefNFT is PatchworkNFT, PatchworkLiteRef, IPatchwor
         _dynamicLiterefStorage[tokenId].slots = new uint256[](0);
     }
     
-    function mintBatch(address to, bytes calldata data, uint256 quantity) external returns (uint256[] memory tokenIds) {
+    function mintBatch(address to, bytes calldata data, uint256 quantity) public payable returns (uint256[] memory tokenIds) {
         tokenIds = new uint256[](quantity);
         for (uint256 i = 0; i < quantity; i++) {
             tokenIds[i] = mint(to, data);

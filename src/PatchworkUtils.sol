@@ -67,4 +67,13 @@ library PatchworkUtils {
         }
         out = string(trimmedByteArray);
     }
+
+    function convertUint16ToBytes(uint16 input) public pure returns (bytes memory) {
+        // Extract the higher and lower bytes
+        bytes1 high = bytes1(uint8(input >> 8));
+        bytes1 low = bytes1(uint8(input & 0xFF));
+
+        // Return the two bytes as a dynamic bytes array
+        return abi.encodePacked(high, low);
+    }
 }

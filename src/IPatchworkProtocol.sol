@@ -636,6 +636,10 @@ interface IPatchworkProtocol {
     */
     function createPatch(address owner, address originalNFTAddress, uint originalNFTTokenId, address patchAddress) external payable returns (uint256 tokenId);
 
+    // patch, patch1155, patchAccount
+    // assign, assign, assignBatch, assignBatch (also rename in base NFTs?)
+    // mint, mintBatch
+
     /**
     @notice Create a new 1155 patch
     @param originalNFTAddress Address of the original NFT

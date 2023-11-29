@@ -176,4 +176,8 @@ contract FeesTest is Test {
         assertEq(4500000000, _prot.balanceOf(_scopeName));
         assertEq(500000000, _prot.balanceOfProtocol());
     }
+
+    // TODO patch fees
+    // TODO assign fees
+    
 }

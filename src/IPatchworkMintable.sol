@@ -9,7 +9,7 @@ import "./IPatchworkScoped.sol";
 */
 interface IPatchworkMintable is IPatchworkScoped {
     // TODO docs
-    function mint(address to, bytes calldata data) external returns (uint256 tokenId);
+    function mint(address to, bytes calldata data) external payable returns (uint256 tokenId);
     
-    function mintBatch(address to, bytes calldata data, uint256 quantity) external returns (uint256[] memory tokenIds);
+    function mintBatch(address to, bytes calldata data, uint256 quantity) external payable returns (uint256[] memory tokenIds);
 }
