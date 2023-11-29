@@ -89,11 +89,27 @@ interface IPatchworkLiteRef {
     function addReference(uint256 tokenId, uint64 liteRef) external;
 
     /**
+    @notice Adds a reference to a token
+    @param tokenId ID of the token
+    @param liteRef LiteRef to add
+    @param targetMetadataId The metadata ID on the target to assign to
+    */
+    function addReference(uint256 tokenId, uint64 liteRef, uint256 targetMetadataId) external;
+
+    /**
     @notice Adds multiple references to a token
     @param tokenId ID of the token
     @param liteRefs Array of lite references to add
     */
-    function batchAddReferences(uint256 tokenId, uint64[] calldata liteRefs) external;
+    function addReferenceBatch(uint256 tokenId, uint64[] calldata liteRefs) external;
+
+    /**
+    @notice Adds multiple references to a token
+    @param tokenId ID of the token
+    @param liteRefs Array of lite references to add
+    @param targetMetadataId The metadata ID on the target to assign to
+    */
+    function addReferenceBatch(uint256 tokenId, uint64[] calldata liteRefs, uint256 targetMetadataId) external;
 
     /**
     @notice Removes a reference from a token
@@ -103,28 +119,12 @@ interface IPatchworkLiteRef {
     function removeReference(uint256 tokenId, uint64 liteRef) external;
 
     /**
-    @notice Adds a reference to a token
-    @param tokenId ID of the token
-    @param liteRef LiteRef to add
-    @param targetMetadataId The metadata ID on the target NFT to unassign from
-    */
-    function addReferenceDirect(uint256 tokenId, uint64 liteRef, uint256 targetMetadataId) external;
-
-    /**
-    @notice Adds multiple references to a token
-    @param tokenId ID of the token
-    @param liteRefs Array of lite references to add
-    @param targetMetadataId The metadata ID on the target NFT to unassign from
-    */
-    function batchAddReferencesDirect(uint256 tokenId, uint64[] calldata liteRefs, uint256 targetMetadataId) external;
-
-    /**
     @notice Removes a reference from a token
     @param tokenId ID of the token
     @param liteRef Lite reference to remove
-    @param targetMetadataId The metadata ID on the target NFT to unassign from
+    @param targetMetadataId The metadata ID on the target to unassign from
     */
-    function removeReferenceDirect(uint256 tokenId, uint64 liteRef, uint256 targetMetadataId) external;
+    function removeReference(uint256 tokenId, uint64 liteRef, uint256 targetMetadataId) external;
 
     /**
     @notice Loads a reference address and token ID at a given index

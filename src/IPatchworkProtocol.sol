@@ -330,7 +330,6 @@ interface IPatchworkProtocol {
 
     function removeBanker(string memory scopeName, address addr) external;
 
-    // TODO nonreentrant
     function withdraw(string memory scopeName, uint256 amount) external;
 
     function balanceOf(string memory scopeName) external view returns (uint256 balance);

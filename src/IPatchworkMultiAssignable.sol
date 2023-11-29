@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "./IPatchworkAssignableNFT.sol";
+import "./IPatchworkAssignable.sol";
 
 /**
 @title Patchwork Protocol Assignable NFT Interface
 @author Runic Labs, Inc
 @notice Interface for contracts supporting Patchwork assignment
 */
-interface IPatchworkMultiAssignableNFT is IPatchworkAssignableNFT {
+interface IPatchworkMultiAssignable is IPatchworkAssignable {
 
     struct Assignment {
         address tokenAddr;  /// The address of the external NFT contract.

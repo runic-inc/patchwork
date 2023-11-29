@@ -80,7 +80,7 @@ contract PatchworkAccountPatchTest is Test {
             (uint64 ref,) = nft.getLiteReference(address(0x55), i);
             refs[i] = ref;
         }
-        nft.batchAddReferences(m, refs);
+        nft.addReferenceBatch(m, refs);
         assertEq(11, nft.getDynamicReferenceCount(m));
 
         (, uint256[] memory tokenIds) = nft.loadDynamicReferencePage(m, 0, 3);

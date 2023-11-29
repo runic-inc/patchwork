@@ -8,7 +8,7 @@ import "./IPatchworkScoped.sol";
 @author Runic Labs, Inc
 @notice Interface for contracts supporting Patchwork assignment
 */
-interface IPatchworkAssignableNFT is IPatchworkScoped {
+interface IPatchworkAssignable is IPatchworkScoped {
     /**
     @notice Assigns a token to another
     @param ourTokenId ID of our token

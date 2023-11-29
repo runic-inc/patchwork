@@ -165,7 +165,7 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
         }
     }
 
-    function batchAddReferences(uint256 ourTokenId, uint64[] calldata /*_liteRefs*/) public view override {
+    function addReferenceBatch(uint256 ourTokenId, uint64[] calldata /*_liteRefs*/) public view override {
         require(_checkTokenWriteAuth(ourTokenId), "not authorized");
         // TODO bulk insert for fewer stores
     }
@@ -213,7 +213,7 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
         }
     }
 
-    function addReferenceDirect(uint256 tokenId, uint64 liteRef, uint256 targetMetadataId) public override {
+    function addReference(uint256 tokenId, uint64 liteRef, uint256 targetMetadataId) public override {
         if (targetMetadataId != 0) {
             revert("Unsupported metadata ID");
         }
@@ -221,18 +221,18 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
     }
 
 
-    function removeReferenceDirect(uint256 tokenId, uint64 liteRef, uint256 targetMetadataId) public override {
+    function removeReference(uint256 tokenId, uint64 liteRef, uint256 targetMetadataId) public override {
         if (targetMetadataId != 0) {
             revert("Unsupported metadata ID");
         }
         removeReference(tokenId, liteRef);
     }
 
-    function batchAddReferencesDirect(uint256 tokenId, uint64[] calldata liteRefs, uint256 targetMetadataId) public view override {
+    function addReferenceBatch(uint256 tokenId, uint64[] calldata liteRefs, uint256 targetMetadataId) public view override {
         if (targetMetadataId != 0) {
             revert("Unsupported metadata ID");
         }
-        batchAddReferences(tokenId, liteRefs);
+        addReferenceBatch(tokenId, liteRefs);
     }
     
     function loadReferenceAddressAndTokenId(uint256 ourTokenId, uint256 idx) public view returns (address addr, uint256 tokenId) {

@@ -51,8 +51,8 @@ contract PatchworkFragmentMultiTest is Test {
         assertTrue(_testMultiNFT.supportsInterface(type(IERC4906).interfaceId));
         assertTrue(_testMultiNFT.supportsInterface(type(IERC5192).interfaceId));
         assertTrue(_testMultiNFT.supportsInterface(type(IPatchworkNFT).interfaceId));
-        assertTrue(_testMultiNFT.supportsInterface(type(IPatchworkAssignableNFT).interfaceId));
-        assertTrue(_testMultiNFT.supportsInterface(type(IPatchworkMultiAssignableNFT).interfaceId));
+        assertTrue(_testMultiNFT.supportsInterface(type(IPatchworkAssignable).interfaceId));
+        assertTrue(_testMultiNFT.supportsInterface(type(IPatchworkMultiAssignable).interfaceId));
     }
 
     function testMultiAssign() public {
@@ -153,11 +153,11 @@ contract PatchworkFragmentMultiTest is Test {
             _prot.assign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), liteRefIds[i]);
         }
         assertEq(20, _testMultiNFT.getAssignmentCount(m1));
-        IPatchworkMultiAssignableNFT.Assignment[] memory page1 = _testMultiNFT.getAssignments(m1, 0, 8);
-        IPatchworkMultiAssignableNFT.Assignment[] memory page2 = _testMultiNFT.getAssignments(m1, 8, 8);
-        IPatchworkMultiAssignableNFT.Assignment[] memory page3 = _testMultiNFT.getAssignments(m1, 16, 8);
-        IPatchworkMultiAssignableNFT.Assignment[] memory page4 = _testMultiNFT.getAssignments(m1, 20, 8);
-        IPatchworkMultiAssignableNFT.Assignment[] memory page5 = _testMultiNFT.getAssignments(m1, 100, 8);
+        IPatchworkMultiAssignable.Assignment[] memory page1 = _testMultiNFT.getAssignments(m1, 0, 8);
+        IPatchworkMultiAssignable.Assignment[] memory page2 = _testMultiNFT.getAssignments(m1, 8, 8);
+        IPatchworkMultiAssignable.Assignment[] memory page3 = _testMultiNFT.getAssignments(m1, 16, 8);
+        IPatchworkMultiAssignable.Assignment[] memory page4 = _testMultiNFT.getAssignments(m1, 20, 8);
+        IPatchworkMultiAssignable.Assignment[] memory page5 = _testMultiNFT.getAssignments(m1, 100, 8);
         assertEq(8, page1.length);
         assertEq(8, page2.length);
         assertEq(4, page3.length);
@@ -170,7 +170,7 @@ contract PatchworkFragmentMultiTest is Test {
         assertEq(page3[0].tokenAddr, address(_testFragmentLiteRefNFT));
         assertEq(page3[0].tokenId, liteRefIds[16]);
         // Check non existant
-        IPatchworkMultiAssignableNFT.Assignment[] memory np1 = _testMultiNFT.getAssignments(11902381, 100, 8);
+        IPatchworkMultiAssignable.Assignment[] memory np1 = _testMultiNFT.getAssignments(11902381, 100, 8);
         assertEq(0, np1.length);
     }
 

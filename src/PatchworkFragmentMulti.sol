@@ -2,13 +2,13 @@
 pragma solidity ^0.8.13;
 
 import "./PatchworkNFT.sol";
-import "./IPatchworkMultiAssignableNFT.sol";
+import "./IPatchworkMultiAssignable.sol";
 
 /**
 @title PatchworkFragmentMulti
-@dev base implementation of a Single-relation Fragment is IPatchworkAssignableNFT
+@dev base implementation of a Single-relation Fragment is IPatchworkAssignable
 */
-abstract contract PatchworkFragmentMulti is PatchworkNFT, IPatchworkMultiAssignableNFT {
+abstract contract PatchworkFragmentMulti is PatchworkNFT, IPatchworkMultiAssignable {
 
     struct AssignmentStorage {
         mapping(bytes32 => uint256) index;
@@ -31,8 +31,8 @@ abstract contract PatchworkFragmentMulti is PatchworkNFT, IPatchworkMultiAssigna
     @dev See {IERC165-supportsInterface}
     */
     function supportsInterface(bytes4 interfaceID) public view virtual override returns (bool) {
-        return interfaceID == type(IPatchworkAssignableNFT).interfaceId ||
-        interfaceID == type(IPatchworkMultiAssignableNFT).interfaceId ||
+        return interfaceID == type(IPatchworkAssignable).interfaceId ||
+        interfaceID == type(IPatchworkMultiAssignable).interfaceId ||
         super.supportsInterface(interfaceID); 
     }
 
