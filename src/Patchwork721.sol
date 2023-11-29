@@ -72,10 +72,24 @@ abstract contract Patchwork721 is ERC721, IPatchwork721, IERC4906 {
     }
 
     /**
+    @dev See {IPatchwork721-storePackedMetadata}
+    */
+    function storePackedMetadata(uint256 tokenId, uint256[] memory data) public virtual mustHaveTokenWriteAuth(tokenId) {
+         _metadataStorage[tokenId] = data;
+    }
+
+    /**
     @dev See {IPatchwork721-loadPackedMetadataSlot}
     */
     function loadPackedMetadataSlot(uint256 tokenId, uint256 slot) public virtual view returns (uint256) {
         return _metadataStorage[tokenId][slot];
+    }
+
+    /**
+    @dev See {IPatchwork721-loadPackedMetadata}
+    */
+    function loadPackedMetadata(uint256 tokenId) public virtual view returns (uint256[] memory) {
+        return _metadataStorage[tokenId];
     }
 
     // Does msg.sender have permission to write to our top level storage?

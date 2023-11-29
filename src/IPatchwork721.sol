@@ -136,12 +136,26 @@ interface IPatchwork721 is IPatchworkScoped, IPatchworkMetadata, IERC5192, IERC7
     function storePackedMetadataSlot(uint256 tokenId, uint256 slot, uint256 data) external;
 
     /**
+    @notice Stores packed metadata for a given token ID
+    @param tokenId ID of the token
+    @param data Metadata to store
+    */
+    function storePackedMetadata(uint256 tokenId, uint256[] memory data) external;
+
+    /**
     @notice Loads packed metadata for a given token ID and slot
     @param tokenId ID of the token
     @param slot Slot to load metadata from
     @return uint256 the raw slot data as a uint256
     */
     function loadPackedMetadataSlot(uint256 tokenId, uint256 slot) external view returns (uint256);
+
+    /**
+    @notice Loads packed metadata for a given token ID
+    @param tokenId ID of the token
+    @return uint256[] the raw slot data as a uint256 array
+    */
+    function loadPackedMetadata(uint256 tokenId) external view returns (uint256[] memory);
 
     /**
     @notice Returns the freeze nonce for a given token ID
