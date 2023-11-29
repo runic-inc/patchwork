@@ -243,35 +243,35 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         return scope.balance;
     }
 
-    function mint(address to, address nft, bytes calldata data) external payable returns (uint256 tokenId) {
-        (MintConfig memory config, string memory scopeName, Scope storage scope) = _setupMint(nft);
+    function mint(address to, address mintable, bytes calldata data) external payable returns (uint256 tokenId) {
+        (MintConfig memory config, string memory scopeName, Scope storage scope) = _setupMint(mintable);
         if (msg.value != config.flatFee) {
             revert IncorrectFeeAmount();
         }
         _handleMintFee(scope);
-        tokenId = IPatchworkMintable(nft).mint(to, data);
-        emit Mint(msg.sender, scopeName, to, nft, data);
+        tokenId = IPatchworkMintable(mintable).mint(to, data);
+        emit Mint(msg.sender, scopeName, to, mintable, data);
     }
     
-    function mintBatch(address to, address nft, bytes calldata data, uint256 quantity) external payable returns (uint256[] memory tokenIds) {
-        (MintConfig memory config, string memory scopeName, Scope storage scope) = _setupMint(nft);
+    function mintBatch(address to, address mintable, bytes calldata data, uint256 quantity) external payable returns (uint256[] memory tokenIds) {
+        (MintConfig memory config, string memory scopeName, Scope storage scope) = _setupMint(mintable);
         uint256 totalFee = config.flatFee * quantity;
         if (msg.value != totalFee) {
             revert IncorrectFeeAmount();
         }
         _handleMintFee(scope);
-        tokenIds = IPatchworkMintable(nft).mintBatch(to, data, quantity);
-        emit MintBatch(msg.sender, scopeName, to, nft, data, quantity);
+        tokenIds = IPatchworkMintable(mintable).mintBatch(to, data, quantity);
+        emit MintBatch(msg.sender, scopeName, to, mintable, data, quantity);
     }
 
-    function _setupMint(address nft) internal view returns (MintConfig memory config, string memory scopeName, Scope storage scope) {
-        if (!IERC165(nft).supportsInterface(type(IPatchworkMintable).interfaceId)) {
+    function _setupMint(address mintable) internal view returns (MintConfig memory config, string memory scopeName, Scope storage scope) {
+        if (!IERC165(mintable).supportsInterface(type(IPatchworkMintable).interfaceId)) {
             revert UnsupportedContract();
         }
-        scopeName = IPatchworkMintable(nft).getScopeName();
+        scopeName = IPatchworkMintable(mintable).getScopeName();
         scope = _mustHaveScope(scopeName);
-        _mustBeWhitelisted(scopeName, scope, nft);
-        config = scope.mintConfigurations[nft];
+        _mustBeWhitelisted(scopeName, scope, mintable);
+        config = scope.mintConfigurations[mintable];
         if (!config.active) {
             revert MintNotActive();
         }
@@ -753,19 +753,19 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     /**
     @dev See {IPatchworkProtocol-updateOwnershipTree}
     */ 
-    function updateOwnershipTree(address nft, uint256 tokenId) public {
-        if (IERC165(nft).supportsInterface(type(IPatchworkLiteRef).interfaceId)) {
-            (address[] memory addresses, uint256[] memory tokenIds) = IPatchworkLiteRef(nft).loadAllStaticReferences(tokenId);
+    function updateOwnershipTree(address addr, uint256 tokenId) public {
+        if (IERC165(addr).supportsInterface(type(IPatchworkLiteRef).interfaceId)) {
+            (address[] memory addresses, uint256[] memory tokenIds) = IPatchworkLiteRef(addr).loadAllStaticReferences(tokenId);
             for (uint i = 0; i < addresses.length; i++) {
                 if (addresses[i] != address(0)) {
                     updateOwnershipTree(addresses[i], tokenIds[i]);
                 }
             }
         }
-        if (IERC165(nft).supportsInterface(type(IPatchworkSingleAssignable).interfaceId)) {
-            IPatchworkSingleAssignable(nft).updateOwnership(tokenId);
-        } else if (IERC165(nft).supportsInterface(type(IPatchworkPatch).interfaceId)) {
-            IPatchworkPatch(nft).updateOwnership(tokenId);
+        if (IERC165(addr).supportsInterface(type(IPatchworkSingleAssignable).interfaceId)) {
+            IPatchworkSingleAssignable(addr).updateOwnership(tokenId);
+        } else if (IERC165(addr).supportsInterface(type(IPatchworkPatch).interfaceId)) {
+            IPatchworkPatch(addr).updateOwnership(tokenId);
         }
     }
 
