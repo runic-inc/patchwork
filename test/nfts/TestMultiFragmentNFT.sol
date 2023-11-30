@@ -21,7 +21,7 @@ contract TestMultiFragmentNFT is PatchworkFragmentMulti, IPatchworkMintable {
     }
 
     function getScopeName() public view override (PatchworkFragmentMulti, IPatchworkScoped) returns (string memory scopeName) {
-        return Patchwork721.getScopeName();
+        return PatchworkFragmentMulti.getScopeName();
     }
 
     function mint(address to, bytes calldata /* data */) public payable returns (uint256 tokenId) {

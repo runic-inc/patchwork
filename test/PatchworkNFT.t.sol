@@ -57,6 +57,18 @@ contract PatchworkNFTTest is Test {
         assertEq(0x505050, _testPatchworkNFT.loadPackedMetadataSlot(n, 0));
     }
 
+    function testLoadStorePackedMetadata() public {
+        uint256 n = _testPatchworkNFT.mint(_userAddress, "");
+        uint256[] memory slots = _testPatchworkNFT.loadPackedMetadata(n);
+        slots[0] = 0x505050;
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _defaultUser));
+        _testPatchworkNFT.storePackedMetadata(n, slots);
+        vm.prank(_scopeOwner);
+        _testPatchworkNFT.storePackedMetadata(n, slots);
+        slots = _testPatchworkNFT.loadPackedMetadata(n);
+        assertEq(0x505050, slots[0]);
+    }
+
     function testTransferFrom() public {
         // TODO make sure these are calling checkTransfer on proto
         uint256 n = _testPatchworkNFT.mint(_userAddress, "");
