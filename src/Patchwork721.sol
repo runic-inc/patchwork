@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./IPatchwork721.sol";
 import "./IERC4906.sol";
 import "./IPatchworkProtocol.sol";
@@ -11,13 +12,10 @@ import "./IPatchworkProtocol.sol";
 @dev This abstract contract defines the core functionalities for the Patchwork721.
      It inherits from the standard ERC721, as well as the IPatchwork721 and IERC4906 interfaces.
 */
-abstract contract Patchwork721 is ERC721, IPatchwork721, IERC4906 {
+abstract contract Patchwork721 is ERC721, IPatchwork721, IERC4906, Ownable {
 
     /// @dev The scope name of this 721.
     string internal _scopeName;
-
-    /// @dev The address that denotes the owner of the contract.
-    address internal _owner;
 
     /// @dev Our manager (PatchworkProtocol).
     address internal _manager;
@@ -38,24 +36,22 @@ abstract contract Patchwork721 is ERC721, IPatchwork721, IERC4906 {
     mapping(uint256 => bool) internal _locks;
 
     /**
-     * @notice Creates a new instance of the Patchwork721 contract with the provided parameters.
-     * @param scopeName_ The scope name.
-     * @param name_ The ERC-721 name.
-     * @param symbol_ The ERC-721 symbol.
-     * @param owner_ The address that will be set as the owner.
-     * @param manager_ The address that will be set as the manager (PatchworkProtocol).
-     */
+    @notice Creates a new instance of the Patchwork721 contract with the provided parameters.
+    @dev msg.sender will be initial owner
+    @param scopeName_ The scope name.
+    @param name_ The ERC-721 name.
+    @param symbol_ The ERC-721 symbol.
+    @param manager_ The address that will be set as the manager (PatchworkProtocol).
+    */
     constructor(
         string memory scopeName_,
         string memory name_,
         string memory symbol_,
-        address owner_,
         address manager_
-    ) ERC721(name_, symbol_) {
+    ) ERC721(name_, symbol_) Ownable() {
         _scopeName = scopeName_;
-        _owner = owner_;
         _manager = manager_;
-    }
+    } 
 
     /**
     @dev See {IPatchwork721-getScopeName}
@@ -94,12 +90,12 @@ abstract contract Patchwork721 is ERC721, IPatchwork721, IERC4906 {
 
     // Does msg.sender have permission to write to our top level storage?
     function _checkWriteAuth() internal virtual view returns (bool allow) {
-        return (msg.sender == _owner);
+        return (msg.sender == owner());
     }
 
     // Does msg.sender have permission to write to this token's data?
     function _checkTokenWriteAuth(uint256 /*tokenId*/) internal virtual view returns (bool allow) {
-        return (msg.sender == _owner || msg.sender == _manager);
+        return (msg.sender == owner() || msg.sender == _manager);
     }
 
     /**

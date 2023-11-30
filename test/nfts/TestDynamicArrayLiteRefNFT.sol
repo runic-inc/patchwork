@@ -35,7 +35,7 @@ contract TestDynamicArrayLiteRefNFT is Patchwork721, PatchworkLiteRef, IPatchwor
 
     mapping(uint256 => DynamicLiteRefs) internal _dynamicLiterefStorage; // tokenId => indexed slots
 
-    constructor(address manager_) Patchwork721("testscope", "TestPatchLiteRef", "TPLR", msg.sender, manager_) PatchworkLiteRef() {
+    constructor(address manager_) Patchwork721("testscope", "TestPatchLiteRef", "TPLR", manager_) PatchworkLiteRef() {
     }
 
     // ERC-165
