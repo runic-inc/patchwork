@@ -50,6 +50,19 @@ contract FeesTest is Test {
         _prot.addProtocolBanker(_defaultUser);
         vm.prank(_patchworkOwner);
         _prot.addProtocolBanker(_user2Address);
+
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _defaultUser));
+        _prot.setProtocolFeeConfig(IPatchworkProtocol.ProtocolFeeConfig(1000, 1000, 1000));
+        vm.prank(_patchworkOwner);
+        _prot.setProtocolFeeConfig(IPatchworkProtocol.ProtocolFeeConfig(150, 150, 150));
+        IPatchworkProtocol.ProtocolFeeConfig memory feeConfig = _prot.getProtocolFeeConfig();
+        assertEq(150, feeConfig.mintBp);
+        assertEq(150, feeConfig.assignBp);
+        assertEq(150, feeConfig.patchBp);
+        vm.prank(_user2Address);
+        _prot.setProtocolFeeConfig(IPatchworkProtocol.ProtocolFeeConfig(1000, 1000, 1000));
+
+
         vm.startPrank(_scopeOwner);
         TestFragmentLiteRefNFT lr = new TestFragmentLiteRefNFT(address(_prot));
         _prot.addWhitelist(_scopeName, address(lr));
