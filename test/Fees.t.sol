@@ -62,7 +62,9 @@ contract FeesTest is Test {
         vm.prank(_user2Address);
         _prot.setProtocolFeeConfig(IPatchworkProtocol.ProtocolFeeConfig(1000, 1000, 1000));
 
-
+        vm.prank(_patchworkOwner);
+        _prot.addProtocolBanker(_defaultUser);
+        
         vm.startPrank(_scopeOwner);
         TestFragmentLiteRefNFT lr = new TestFragmentLiteRefNFT(address(_prot));
         _prot.addWhitelist(_scopeName, address(lr));
@@ -76,13 +78,17 @@ contract FeesTest is Test {
         assertEq(900000000, _prot.balanceOf(_scopeName));
         assertEq(100000000, _prot.balanceOfProtocol());
         // default user not authorized
-        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _defaultUser));
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _userAddress));
+        vm.prank(_userAddress); 
         _prot.withdrawFromProtocol(100000000);
         vm.prank(_user2Address); 
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.InsufficientFunds.selector));
         _prot.withdrawFromProtocol(500000000);
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _userAddress));
         vm.prank(_userAddress);
+        _prot.withdrawFromProtocol(50000000);
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FailedToSend.selector));
+        vm.prank(_defaultUser);
         _prot.withdrawFromProtocol(50000000);
         // banker + owner should work
         vm.prank(_user2Address); 
@@ -108,6 +114,7 @@ contract FeesTest is Test {
         _prot.addWhitelist(_scopeName, address(lr));
         _prot.setMintConfiguration(address(lr), IPatchworkProtocol.MintConfig(1000000000, true));
         _prot.addBanker(_scopeName, _user2Address);
+        _prot.addBanker(_scopeName, _defaultUser);
         vm.stopPrank();
         // mint something just to get some money in the account
         IPatchworkProtocol.MintConfig memory mc = _prot.getMintConfiguration(address(lr));
@@ -118,6 +125,9 @@ contract FeesTest is Test {
         assertEq(100000000, _prot.balanceOfProtocol());
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _userAddress));
         vm.prank(_userAddress);
+        _prot.withdraw(_scopeName, 450000000);
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FailedToSend.selector));
+        vm.prank(_defaultUser);
         _prot.withdraw(_scopeName, 450000000);
         vm.prank(_user2Address);
         _prot.withdraw(_scopeName, 450000000);
@@ -134,14 +144,36 @@ contract FeesTest is Test {
         _prot.withdraw(_scopeName, 1);
     }
 
+    function testUnsupportedContracts() public {
+        vm.startPrank(_scopeOwner);
+        TestBaseNFT tBase = new TestBaseNFT();
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
+        _prot.setMintConfiguration(address(tBase), IPatchworkProtocol.MintConfig(1000000000, true));
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
+        _prot.getMintConfiguration(address(tBase));
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
+        _prot.setPatchFee(address(tBase), 1);
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
+        _prot.getPatchFee(address(tBase));
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
+        _prot.setAssignFee(address(tBase), 1);
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
+        _prot.getAssignFee(address(tBase));
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
+        _prot.mint(_userAddress, address(tBase), "");
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
+        _prot.mintBatch(_userAddress, address(tBase), "", 5);
+    }
+
     function testMints() public {
         vm.startPrank(_scopeOwner);
-         _prot.setScopeRules(_scopeName, false, false, true);
         TestFragmentLiteRefNFT lr = new TestFragmentLiteRefNFT(address(_prot));
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.MintNotActive.selector));
+        _prot.mint(_userAddress, address(lr), "");
+        _prot.setScopeRules(_scopeName, false, false, true);
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotWhitelisted.selector, _scopeName, address(lr)));
         _prot.setMintConfiguration(address(lr), IPatchworkProtocol.MintConfig(1000000000, true));
         vm.stopPrank();
-        // mint something just to get some money in the account
         IPatchworkProtocol.MintConfig memory mc = _prot.getMintConfiguration(address(lr));
         uint256 mintCost = mc.flatFee;
         assertEq(0, mintCost); // Couldn't be set due to whitelisting
@@ -154,10 +186,11 @@ contract FeesTest is Test {
         _prot.addWhitelist(_scopeName, address(lr));
         _prot.setMintConfiguration(address(lr), IPatchworkProtocol.MintConfig(1000000000, true));
         vm.stopPrank();
-        // mint something just to get some money in the account
         mc = _prot.getMintConfiguration(address(lr));
         mintCost = mc.flatFee;
         assertEq(1000000000, mintCost);
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.IncorrectFeeAmount.selector));
+        _prot.mint{value: 50}(_userAddress, address(lr), "");
         _prot.mint{value: mintCost}(_userAddress, address(lr), "");
         assertEq(900000000, _prot.balanceOf(_scopeName));
         assertEq(100000000, _prot.balanceOfProtocol());
@@ -170,7 +203,6 @@ contract FeesTest is Test {
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotWhitelisted.selector, _scopeName, address(lr)));
         _prot.setMintConfiguration(address(lr), IPatchworkProtocol.MintConfig(1000000000, true));
         vm.stopPrank();
-        // mint something just to get some money in the account
         IPatchworkProtocol.MintConfig memory mc = _prot.getMintConfiguration(address(lr));
         uint256 mintCost = mc.flatFee;
         assertEq(0, mintCost); // Couldn't be set due to whitelisting
@@ -183,10 +215,11 @@ contract FeesTest is Test {
         _prot.addWhitelist(_scopeName, address(lr));
         _prot.setMintConfiguration(address(lr), IPatchworkProtocol.MintConfig(1000000000, true));
         vm.stopPrank();
-        // mint something just to get some money in the account
         mc = _prot.getMintConfiguration(address(lr));
         mintCost = mc.flatFee * 5;
         assertEq(5000000000, mintCost);
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.IncorrectFeeAmount.selector));
+        _prot.mintBatch{value: 50}(_userAddress, address(lr), "", 5);
         _prot.mintBatch{value: mintCost}(_userAddress, address(lr), "", 5);
         assertEq(4500000000, _prot.balanceOf(_scopeName));
         assertEq(500000000, _prot.balanceOfProtocol());
@@ -200,9 +233,6 @@ contract FeesTest is Test {
         TestPatchLiteRefNFT t721 = new TestPatchLiteRefNFT(address(_prot));
         Test1155PatchNFT t1155 = new Test1155PatchNFT(address(_prot), false);
         TestAccountPatchNFT tAccount = new TestAccountPatchNFT(address(_prot), false, false);
-
-        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
-        _prot.setPatchFee(address(tBase), 1);
         vm.stopPrank();
 
         // 721
