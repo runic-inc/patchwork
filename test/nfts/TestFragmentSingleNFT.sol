@@ -26,7 +26,7 @@ contract TestFragmentSingleNFT is PatchworkFragmentSingle {
 
     uint256 _nextTokenId;
 
-    constructor(address manager_) Patchwork721("testscope", "TestPatchFragment", "TPLR", msg.sender, manager_) PatchworkFragmentSingle() {
+    constructor(address manager_) Patchwork721("testscope", "TestPatchFragment", "TPLR", manager_) PatchworkFragmentSingle() {
     }
 
     function schemaURI() pure external override returns (string memory) {
@@ -95,7 +95,7 @@ contract TestFragmentSingleNFT is PatchworkFragmentSingle {
         return unpackMetadata(_metadataStorage[_tokenId]);
     }
 
-    function mint(address to, bytes memory data) external returns (uint256 tokenId){
+    function mint(address to, bytes memory /*data*/) external returns (uint256 tokenId){
         // Just for testing
         tokenId = _nextTokenId;
         _nextTokenId++;

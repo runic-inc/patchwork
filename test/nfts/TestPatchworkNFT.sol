@@ -12,7 +12,7 @@ contract TestPatchworkNFT is Patchwork721, IPatchworkMintable {
         uint256 thing;
     }
 
-    constructor(address manager_) Patchwork721("testscope", "TestPatchworkNFT", "TPLR", msg.sender, manager_) {
+    constructor(address manager_) Patchwork721("testscope", "TestPatchworkNFT", "TPLR", manager_) {
     }
 
     function supportsInterface(bytes4 interfaceID) public view virtual override returns (bool) {

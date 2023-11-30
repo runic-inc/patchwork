@@ -25,7 +25,7 @@ contract TestPatchNFT is PatchworkPatch {
 
     uint256 _nextTokenId;
 
-    constructor(address manager_) Patchwork721("testscope", "TestPatchLiteRef", "TPLR", msg.sender, manager_) {
+    constructor(address manager_) Patchwork721("testscope", "TestPatchLiteRef", "TPLR", manager_) {
     }
 
     function schemaURI() pure external override returns (string memory) {

@@ -27,7 +27,7 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
 
     uint256 _nextTokenId;
 
-    constructor(address manager_) Patchwork721("testscope", "TestPatchLiteRef", "TPLR", msg.sender, manager_) PatchworkLiteRef() {
+    constructor(address manager_) Patchwork721("testscope", "TestPatchLiteRef", "TPLR", manager_) PatchworkLiteRef() {
     }
 
     // ERC-165
