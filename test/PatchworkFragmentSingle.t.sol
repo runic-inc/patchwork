@@ -36,7 +36,6 @@ contract PatchworkFragmentSingleTest is Test {
         _testFragmentLiteRefNFT = new TestFragmentLiteRefNFT(address(_prot));
 
         vm.stopPrank();
-        vm.prank(_userAddress);
     }
 
     function testScopeName() public {
