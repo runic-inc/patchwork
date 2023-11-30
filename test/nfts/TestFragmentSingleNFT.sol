@@ -95,7 +95,7 @@ contract TestFragmentSingleNFT is PatchworkFragmentSingle {
         return unpackMetadata(_metadataStorage[_tokenId]);
     }
 
-    function mint(address to, bytes memory data) external returns (uint256 tokenId){
+    function mint(address to, bytes memory /*data*/) external returns (uint256 tokenId){
         // Just for testing
         tokenId = _nextTokenId;
         _nextTokenId++;
