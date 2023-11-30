@@ -8,12 +8,14 @@ import "../src/PatchworkProtocol.sol";
 import "./nfts/TestPatchLiteRefNFT.sol";
 import "./nfts/TestFragmentLiteRefNFT.sol";
 import "./nfts/TestBaseNFT.sol";
+import "./nfts/TestFragmentSingleNFT.sol";
 
 contract PatchworkNFTCombinedTest is Test {
     PatchworkProtocol _prot;
     TestBaseNFT _testBaseNFT;
     TestPatchLiteRefNFT _testPatchLiteRefNFT;
     TestFragmentLiteRefNFT _testFragmentLiteRefNFT;
+    TestFragmentSingleNFT _testFragmentSingleNFT;
 
     string _scopeName;
     address _defaultUser;
@@ -38,6 +40,7 @@ contract PatchworkNFTCombinedTest is Test {
 
         _testPatchLiteRefNFT = new TestPatchLiteRefNFT(address(_prot)); 
         _testFragmentLiteRefNFT = new TestFragmentLiteRefNFT(address(_prot));
+        _testFragmentSingleNFT = new TestFragmentSingleNFT(address(_prot));
 
         vm.stopPrank();
         vm.prank(_userAddress);
@@ -62,10 +65,14 @@ contract PatchworkNFTCombinedTest is Test {
         assertEq(address(_testFragmentLiteRefNFT), refAddr);
         assertEq(1, tokenId);
 
+        vm.prank(_scopeOwner);
+        _testPatchLiteRefNFT.registerReferenceAddress(address(_testFragmentSingleNFT));
         // test assign perms
         uint256 baseTokenId = _testBaseNFT.mint(_userAddress);
         uint256 fragmentTokenId = _testFragmentLiteRefNFT.mint(_userAddress, "");
-        assertEq(_userAddress, _testFragmentLiteRefNFT.ownerOf(fragmentTokenId)); // TODO why doesn't this cover the branch != address(0)
+        uint256 fragSingleTokenId = _testFragmentSingleNFT.mint(_userAddress, "");
+        assertEq(_userAddress, _testFragmentSingleNFT.ownerOf(fragSingleTokenId));
+        assertEq(_userAddress, _testFragmentLiteRefNFT.ownerOf(fragmentTokenId));
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _user2Address));
         vm.prank(_user2Address);
         uint256 patchTokenId = _prot.patch(_userAddress, address(_testBaseNFT), baseTokenId, address(_testPatchLiteRefNFT));
@@ -82,8 +89,11 @@ contract PatchworkNFTCombinedTest is Test {
         _prot.assign(address(_testFragmentLiteRefNFT), fragmentTokenId, address(_testPatchLiteRefNFT), patchTokenId);
 
         vm.prank(_scopeOwner);
+        _prot.assign(address(_testFragmentSingleNFT), fragSingleTokenId, address(_testPatchLiteRefNFT), patchTokenId);
+        assertEq(_userAddress, _testFragmentSingleNFT.ownerOf(fragSingleTokenId));
+        vm.prank(_scopeOwner);
         _prot.assign(address(_testFragmentLiteRefNFT), fragmentTokenId, address(_testPatchLiteRefNFT), patchTokenId);
-        assertEq(_userAddress, _testFragmentLiteRefNFT.ownerOf(fragmentTokenId)); // TODO why doesn't this cover the branch != address(0)
+        assertEq(_userAddress, _testFragmentLiteRefNFT.ownerOf(fragmentTokenId));
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentAlreadyAssigned.selector, address(_testFragmentLiteRefNFT), fragmentTokenId));
         vm.prank(_scopeOwner); // not normal to call directly but need to test the correct error
         _testFragmentLiteRefNFT.assign(fragmentTokenId, address(_testPatchLiteRefNFT), patchTokenId);

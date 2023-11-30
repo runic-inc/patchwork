@@ -147,6 +147,8 @@ contract PatchworkFragmentMultiTest is Test {
         vm.startPrank(_scopeOwner);
         uint256 m1 = _testMultiNFT.mint(_user2Address, "");
         _testFragmentLiteRefNFT.registerReferenceAddress(address(_testMultiNFT));
+        IPatchworkMultiAssignable.Assignment[] memory page0 = _testMultiNFT.getAssignments(m1, 0, 8);
+        assertEq(0, page0.length);
         uint256[] memory liteRefIds = new uint256[](20);
         for (uint256 i = 0; i < liteRefIds.length; i++) {
             liteRefIds[i] = _testFragmentLiteRefNFT.mint(_userAddress, "");

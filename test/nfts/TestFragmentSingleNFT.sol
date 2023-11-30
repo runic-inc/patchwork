@@ -10,8 +10,9 @@ pragma solidity ^0.8.13;
 */
 
 import "../../src/PatchworkPatch.sol";
+import "../../src/PatchworkFragmentSingle.sol";
 
-struct TestPatchNFTMetadata {
+struct TestFragmentSingleNFTMetadata {
     uint16 xp;
     uint8 level;
     uint16 xpLost;
@@ -21,11 +22,11 @@ struct TestPatchNFTMetadata {
     string nickname;
 }
 
-contract TestPatchNFT is PatchworkPatch {
+contract TestFragmentSingleNFT is PatchworkFragmentSingle {
 
     uint256 _nextTokenId;
 
-    constructor(address manager_) Patchwork721("testscope", "TestPatchLiteRef", "TPLR", msg.sender, manager_) {
+    constructor(address manager_) Patchwork721("testscope", "TestPatchFragment", "TPLR", msg.sender, manager_) PatchworkFragmentSingle() {
     }
 
     function schemaURI() pure external override returns (string memory) {
@@ -38,20 +39,31 @@ contract TestPatchNFT is PatchworkPatch {
         require(_checkWriteAuth());
         _manager = manager_;
     }
-
+    
+    /*
+    Hard coded prototype schema is:
+    slot 0 offset 0 = artifactIDs (spans 2) - also we need special built-in handling for < 256 bit IDs
+    slot 2 offset 0 = xp
+    slot 2 offset 16 = level
+    slot 2 offset 24 = xpLost
+    slot 2 offset 40 = stakedMade
+    slot 2 offset 56 = stakedCorrect
+    slot 2 offset 72 = evolution
+    slot 2 offset 80 = nickname
+    */
     function schema() pure external override returns (MetadataSchema memory) {
-        MetadataSchemaEntry[] memory entries = new MetadataSchemaEntry[](7);
-        entries[0] = MetadataSchemaEntry(0, 1, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 0, 0, "xp");
-        entries[1] = MetadataSchemaEntry(1, 2, FieldType.UINT8, 1, FieldVisibility.PUBLIC, 0, 16, "level");
-        entries[2] = MetadataSchemaEntry(2, 0, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 0, 24, "xpLost");
-        entries[3] = MetadataSchemaEntry(3, 0, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 0, 40, "stakedMade");
-        entries[4] = MetadataSchemaEntry(4, 0, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 0, 56, "stakedCorrect");
-        entries[5] = MetadataSchemaEntry(5, 0, FieldType.UINT8, 1, FieldVisibility.PUBLIC, 0, 72, "evolution");
-        entries[6] = MetadataSchemaEntry(6, 0, FieldType.CHAR16, 1, FieldVisibility.PUBLIC, 0, 80, "nickname");
+        MetadataSchemaEntry[] memory entries = new MetadataSchemaEntry[](8);
+        entries[1] = MetadataSchemaEntry(1, 1, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 2, 0, "xp");
+        entries[2] = MetadataSchemaEntry(2, 2, FieldType.UINT8, 1, FieldVisibility.PUBLIC, 2, 16, "level");
+        entries[3] = MetadataSchemaEntry(3, 0, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 2, 24, "xpLost");
+        entries[4] = MetadataSchemaEntry(4, 0, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 2, 40, "stakedMade");
+        entries[5] = MetadataSchemaEntry(5, 0, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 2, 56, "stakedCorrect");
+        entries[6] = MetadataSchemaEntry(6, 0, FieldType.UINT8, 1, FieldVisibility.PUBLIC, 2, 72, "evolution");
+        entries[7] = MetadataSchemaEntry(7, 0, FieldType.CHAR16, 1, FieldVisibility.PUBLIC, 2, 80, "nickname");
         return MetadataSchema(1, entries);
     }
 
-    function packMetadata(TestPatchNFTMetadata memory data) public pure returns (uint256[] memory slots) {
+    function packMetadata(TestFragmentSingleNFTMetadata memory data) public pure returns (uint256[] memory slots) {
         bytes32 nickname;
         bytes memory ns = bytes(data.nickname);
 
@@ -63,12 +75,12 @@ contract TestPatchNFT is PatchworkPatch {
         return slots;
     }
 
-    function storeMetadata(uint256 _tokenId, TestPatchNFTMetadata memory data) public {
+    function storeMetadata(uint256 _tokenId, TestFragmentSingleNFTMetadata memory data) public {
         require(_checkTokenWriteAuth(_tokenId), "not authorized");
         _metadataStorage[_tokenId] = packMetadata(data);
     }
 
-    function unpackMetadata(uint256[] memory slots) public pure returns (TestPatchNFTMetadata memory data) {
+    function unpackMetadata(uint256[] memory slots) public pure returns (TestFragmentSingleNFTMetadata memory data) {
         data.xp = uint16(slots[0]);
         data.level = uint8(slots[0] >> 16);
         data.xpLost = uint16(slots[0] >> 24);
@@ -79,29 +91,21 @@ contract TestPatchNFT is PatchworkPatch {
         return data;
     }
 
-    function loadMetadata(uint256 _tokenId) public view returns (TestPatchNFTMetadata memory data) {
+    function loadMetadata(uint256 _tokenId) public view returns (TestFragmentSingleNFTMetadata memory data) {
         return unpackMetadata(_metadataStorage[_tokenId]);
     }
 
-    function mintPatch(address owner, address originalNFTAddress, uint originalNFTTokenId) external returns (uint256 tokenId){
-        if (msg.sender != _manager) {
-            revert();
-        }
-        // require inherited ownership
-        if (IERC721(originalNFTAddress).ownerOf(originalNFTTokenId) != owner) {
-            revert IPatchworkProtocol.NotAuthorized(owner);
-        }
+    function mint(address to, bytes memory data) external returns (uint256 tokenId){
         // Just for testing
         tokenId = _nextTokenId;
         _nextTokenId++;
-        _storePatch(tokenId, originalNFTAddress, originalNFTTokenId, false);
-        _safeMint(owner, tokenId);
+        _safeMint(to, tokenId);
         _metadataStorage[tokenId] = new uint256[](1);
         return tokenId;
     }
 
     function burn(uint256 tokenId) public {
-        // test only - protocol does not currently support this as you can't mint another patch later
+        // test only
         _burn(tokenId);
     }
 }
