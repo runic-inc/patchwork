@@ -252,7 +252,7 @@ interface IPatchworkProtocol {
     @notice Mint configuration
     */
     struct MintConfig {
-        uint256 flatFee; /// wei
+        uint256 flatFee; /// fee per 1 quantity mint in wei
         bool active;     /// If the mint is active
     }
 
@@ -303,52 +303,36 @@ interface IPatchworkProtocol {
         */
         mapping(address => bool) whitelist;
 
+        /**
+        @notice Mapped list of mint configurations for this scope
+        @dev Address of the IPatchworkMintable mapped to the configuration
+        */
         mapping(address => MintConfig) mintConfigurations;
 
+        /**
+        @notice Mapped list of patch fees for this scope
+        @dev Address of a 721, 1155 or account patch mapped to the fee in wei 
+        */
         mapping(address => uint256) patchFees;
 
+        /**
+        @notice Mapped list of assign fees for this scope
+        @dev Address of an IPatchworkAssignable mapped to the fee in wei 
+        */        
         mapping(address => uint256) assignFees;
 
+        /**
+        @notice Balance in wei for this scope
+        @dev accrued in mint, patch and assign fees, may only be withdrawn by scope bankers
+        */
         uint256 balance;
 
+        /**
+        @notice Mapped list of addresses that are designated bankers for this scope 
+        @dev Address mapped to a boolean indicating if they are a banker
+        */
         mapping(address => bool) bankers;
     }
-
-    function setMintConfiguration(address addr, MintConfig memory config) external;
-
-    function getMintConfiguration(address addr) external view returns (MintConfig memory config);
-
-    function setPatchFee(address addr, uint256 baseFee) external;
-
-    function getPatchFee(address addr) external view returns (uint256 baseFee);
-
-    function setAssignFee(address fragmentAddress, uint256 baseFee) external;
-
-    function getAssignFee(address fragmentAddress) external view returns (uint256 baseFee);
-
-    function addBanker(string memory scopeName, address addr) external;
-
-    function removeBanker(string memory scopeName, address addr) external;
-
-    function withdraw(string memory scopeName, uint256 amount) external;
-
-    function balanceOf(string memory scopeName) external view returns (uint256 balance);
-
-    function mint(address to, address mintable, bytes calldata data) external payable returns (uint256 tokenId);
-    
-    function mintBatch(address to, address mintable, bytes calldata data, uint256 quantity) external payable returns (uint256[] memory tokenIds);
-
-    function setProtocolFeeConfig(ProtocolFeeConfig memory config) external;
-
-    function getProtocolFeeConfig() external view returns (ProtocolFeeConfig memory config);
-
-    function addProtocolBanker(address addr) external;
-
-    function removeProtocolBanker(address addr) external;
-
-    function withdrawFromProtocol(uint256 balance) external;
-
-    function balanceOfProtocol() external view returns (uint256 balance);
 
     /**
     @notice Emitted when a fragment is assigned
@@ -624,6 +608,142 @@ interface IPatchworkProtocol {
     @param addr Address to be removed from the whitelist
     */
     function removeWhitelist(string calldata scopeName, address addr) external;
+
+    /**
+    @notice Set the mint configuration for a given address
+    @param addr The address for which to set the mint configuration, must be IPatchworkMintable
+    @param config The mint configuration to be set
+    */
+    function setMintConfiguration(address addr, MintConfig memory config) external;
+
+    /**
+    @notice Get the mint configuration for a given address
+    @param addr The address for which to get the mint configuration
+    @return config The mint configuration of the given address
+    */
+    function getMintConfiguration(address addr) external view returns (MintConfig memory config);
+
+    /**
+    @notice Set the patch fee for a given address
+    @dev must be banker of scope claimed by addr to call
+    @param addr The address for which to set the patch fee
+    @param baseFee The patch fee to be set in wei
+    */
+    function setPatchFee(address addr, uint256 baseFee) external;
+
+    /**
+    @notice Get the patch fee for a given address
+    @param addr The address for which to get the patch fee
+    @return baseFee The patch fee of the given address in wei
+    */
+    function getPatchFee(address addr) external view returns (uint256 baseFee);
+
+    /**
+    @notice Set the assign fee for a given fragment address
+    @dev must be banker of scope claimed by fragmentAddress to call
+    @param fragmentAddress The address of the fragment for which to set the fee
+    @param baseFee The assign fee to be set in wei
+    */
+    function setAssignFee(address fragmentAddress, uint256 baseFee) external;
+
+    /**
+    @notice Get the assign fee for a given fragment address
+    @param fragmentAddress The address of the fragment for which to get the fee
+    @return baseFee The assign fee of the given fragment address in wei
+    */
+    function getAssignFee(address fragmentAddress) external view returns (uint256 baseFee);
+
+    /**
+    @notice Add a banker to a given scope
+    @dev must be owner of scope to call
+    @param scopeName The name of the scope
+    @param addr The address to be added as a banker
+    */
+    function addBanker(string memory scopeName, address addr) external;
+
+    /**
+    @notice Remove a banker from a given scope
+    @dev must be owner of scope to call
+    @param scopeName The name of the scope
+    @param addr The address to be removed as a banker
+    */
+    function removeBanker(string memory scopeName, address addr) external;
+
+    /**
+    @notice Withdraw an amount from the balance of a given scope
+    @dev must be owner of scope or banker of scope to call
+    @dev transfers to the msg.sender
+    @param scopeName The name of the scope
+    @param amount The amount to be withdrawn in wei
+    */
+    function withdraw(string memory scopeName, uint256 amount) external;
+
+    /**
+    @notice Get the balance of a given scope
+    @param scopeName The name of the scope
+    @return balance The balance of the given scope in wei
+    */
+    function balanceOf(string memory scopeName) external view returns (uint256 balance);
+
+    /**
+    @notice Mint a new token
+    @param to The address to which the token will be minted
+    @param mintable The address of the IPatchworkMintable contract
+    @param data Additional data to be passed to the minting
+    @return tokenId The ID of the minted token
+    */
+    function mint(address to, address mintable, bytes calldata data) external payable returns (uint256 tokenId);
+
+    /**
+    @notice Mint a batch of new tokens
+    @param to The address to which the tokens will be minted
+    @param mintable The address of the IPatchworkMintable contract
+    @param data Additional data to be passed to the minting
+    @param quantity The number of tokens to mint
+    @return tokenIds An array of the IDs of the minted tokens
+    */
+    function mintBatch(address to, address mintable, bytes calldata data, uint256 quantity) external payable returns (uint256[] memory tokenIds);
+
+    /**
+    @notice Set the protocol fee configuration
+    @dev must be protocol owner or banker to call
+    @param config The protocol fee configuration to be set
+    */
+    function setProtocolFeeConfig(ProtocolFeeConfig memory config) external;
+
+    /**
+    @notice Get the current protocol fee configuration
+    @return config The current protocol fee configuration
+    */
+    function getProtocolFeeConfig() external view returns (ProtocolFeeConfig memory config);
+
+    /**
+    @notice Add a banker to the protocol
+    @dev must be protocol owner to call
+    @param addr The address to be added as a protocol banker
+    */
+    function addProtocolBanker(address addr) external;
+
+    /**
+    @notice Remove a banker from the protocol
+    @dev must be protocol owner to call
+    @param addr The address to be removed as a protocol banker
+    */
+    function removeProtocolBanker(address addr) external;
+
+    /**
+    @notice Withdraw a specified amount from the protocol balance
+    @dev must be protocol owner or banker to call
+    @dev transfers to the msg.sender
+    @param balance The amount to be withdrawn in wei
+    */
+    function withdrawFromProtocol(uint256 balance) external;
+
+    /**
+    @notice Get the current balance of the protocol
+    @return balance The balance of the protocol in wei
+    */
+    function balanceOfProtocol() external view returns (uint256 balance);
 
     /**
     @notice Create a new patch

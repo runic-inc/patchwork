@@ -36,18 +36,26 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     */
     mapping(bytes32 => bool) _uniquePatches;
 
+    /// Balance of the protocol
     uint256 _protocolBalance;
 
+    /**
+    @notice protocol bankers
+    @dev Map of addresses authorized to set fees and withdraw funds for the protocol
+    @dev Does not allow for scope balance withdrawl
+    */
     mapping(address => bool) _protocolBankers;
 
+    /// Current protocol fee configuration
     ProtocolFeeConfig _protocolFeeConfig;
 
     // TODO overrides?
     mapping(string => ProtocolFeeConfig) _scopeFeeOverrides; // scope-based fee overrides
-    mapping(address => uint256) _addressBpOverride;
 
+    // TODO maybe not necessary
     uint256 public constant TRANSFER_GAS_LIMIT = 5000;
 
+    /// Constructor
     constructor() Ownable() ReentrancyGuard() {}
 
     /**
@@ -147,6 +155,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         emit ScopeRuleChange(scopeName, msg.sender, allowUserPatch, allowUserAssign, requireWhitelist);
     }
 
+    /**
+    @dev See {IPatchworkProtocol-setMintConfiguration}
+    */
     function setMintConfiguration(address addr, MintConfig memory config) public {
         if (!IERC165(addr).supportsInterface(type(IPatchworkMintable).interfaceId)) {
             revert UnsupportedContract();
@@ -160,6 +171,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         emit MintConfigure(scopeName, msg.sender, addr, config);
     }
 
+    /**
+    @dev See {IPatchworkProtocol-getMintConfiguration}
+    */
     function getMintConfiguration(address addr) public view returns (MintConfig memory config) {
         if (!IERC165(addr).supportsInterface(type(IPatchworkMintable).interfaceId)) {
             revert UnsupportedContract();
@@ -168,6 +182,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         return scope.mintConfigurations[addr];
     }
 
+    /**
+    @dev See {IPatchworkProtocol-setPatchFee}
+    */
     function setPatchFee(address addr, uint256 baseFee) public {
         if (!IERC165(addr).supportsInterface(type(IPatchworkScoped).interfaceId)) {
             revert UnsupportedContract();
@@ -179,6 +196,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         scope.patchFees[addr] = baseFee;
     }
 
+    /**
+    @dev See {IPatchworkProtocol-getPatchFee}
+    */
     function getPatchFee(address addr) public view returns (uint256 baseFee) {
         if (!IERC165(addr).supportsInterface(type(IPatchworkScoped).interfaceId)) {
             revert UnsupportedContract();
@@ -187,6 +207,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         return scope.patchFees[addr];
     }
 
+    /**
+    @dev See {IPatchworkProtocol-setAssignFee}
+    */
     function setAssignFee(address fragmentAddress, uint256 baseFee) public {
         if (!IERC165(fragmentAddress).supportsInterface(type(IPatchworkScoped).interfaceId)) {
             revert UnsupportedContract();
@@ -198,6 +221,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         scope.assignFees[fragmentAddress] = baseFee;
     }
 
+    /**
+    @dev See {IPatchworkProtocol-getAssignFee}
+    */
     function getAssignFee(address fragmentAddress) public view returns (uint256 baseFee) {
         if (!IERC165(fragmentAddress).supportsInterface(type(IPatchworkScoped).interfaceId)) {
             revert UnsupportedContract();
@@ -206,6 +232,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         return scope.assignFees[fragmentAddress];
     }
 
+    /**
+    @dev See {IPatchworkProtocol-addBanker}
+    */
     function addBanker(string memory scopeName, address addr) public {
         Scope storage scope = _mustHaveScope(scopeName);
         _mustBeOwnerOrOperator(scope);
@@ -213,6 +242,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         emit ScopeBankerAdd(scopeName, msg.sender, addr);
     }
 
+    /**
+    @dev See {IPatchworkProtocol-removeBanker}
+    */
     function removeBanker(string memory scopeName, address addr) public {
         Scope storage scope = _mustHaveScope(scopeName);
         _mustBeOwnerOrOperator(scope);
@@ -220,6 +252,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         emit ScopeBankerRemove(scopeName, msg.sender, addr);
     }
 
+    /**
+    @dev See {IPatchworkProtocol-withdraw}
+    */
     function withdraw(string memory scopeName, uint256 amount) public nonReentrant {
         Scope storage scope = _mustHaveScope(scopeName);
         if (msg.sender != scope.owner && !scope.bankers[msg.sender]) {
@@ -239,11 +274,17 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         emit ScopeWithdraw(scopeName, msg.sender, amount);
     }
 
+    /**
+    @dev See {IPatchworkProtocol-balanceOf}
+    */
     function balanceOf(string memory scopeName) public view returns (uint256 balance) {
         Scope storage scope = _mustHaveScope(scopeName);
         return scope.balance;
     }
 
+    /**
+    @dev See {IPatchworkProtocol-mint}
+    */
     function mint(address to, address mintable, bytes calldata data) external payable returns (uint256 tokenId) {
         (MintConfig memory config, string memory scopeName, Scope storage scope) = _setupMint(mintable);
         if (msg.value != config.flatFee) {
@@ -254,6 +295,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         emit Mint(msg.sender, scopeName, to, mintable, data);
     }
     
+    /**
+    @dev See {IPatchworkProtocol-mintBatch}
+    */
     function mintBatch(address to, address mintable, bytes calldata data, uint256 quantity) external payable returns (uint256[] memory tokenIds) {
         (MintConfig memory config, string memory scopeName, Scope storage scope) = _setupMint(mintable);
         uint256 totalFee = config.flatFee * quantity;
@@ -265,6 +309,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         emit MintBatch(msg.sender, scopeName, to, mintable, data, quantity);
     }
 
+    /// Common to mints
     function _setupMint(address mintable) internal view returns (MintConfig memory config, string memory scopeName, Scope storage scope) {
         if (!IERC165(mintable).supportsInterface(type(IPatchworkMintable).interfaceId)) {
             revert UnsupportedContract();
@@ -278,6 +323,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         }
     }
 
+    /// Common to mints
     function _handleMintFee(Scope storage scope) internal {
         // Account for 100% of the message value
         if (msg.value != 0) {
@@ -287,6 +333,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         }
     }
 
+    /**
+    @dev See {IPatchworkProtocol-setProtocolFeeConfig}
+    */
     function setProtocolFeeConfig(ProtocolFeeConfig memory config) public {
         if (msg.sender != owner() && _protocolBankers[msg.sender] == false) {
             revert NotAuthorized(msg.sender);
@@ -294,20 +343,32 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         _protocolFeeConfig = config;
     }
 
+    /**
+    @dev See {IPatchworkProtocol-getProtocolFeeConfig}
+    */
     function getProtocolFeeConfig() public view returns (ProtocolFeeConfig memory config) {
         return _protocolFeeConfig;
     }
 
+    /**
+    @dev See {IPatchworkProtocol-addProtocolBanker}
+    */
     function addProtocolBanker(address addr) external onlyOwner {
         _protocolBankers[addr] = true;
         emit ProtocolBankerAdd(msg.sender, addr);
     }
 
+    /**
+    @dev See {IPatchworkProtocol-removeProtocolBanker}
+    */
     function removeProtocolBanker(address addr) external onlyOwner {
         delete _protocolBankers[addr];
         emit ProtocolBankerRemove(msg.sender, addr);
     }
 
+    /**
+    @dev See {IPatchworkProtocol-withdrawFromProtocol}
+    */
     function withdrawFromProtocol(uint256 amount) external nonReentrant {
         if (msg.sender != owner() && _protocolBankers[msg.sender] == false) {
             revert NotAuthorized(msg.sender);
@@ -407,6 +468,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         emit ERC1155Patch(to, originalAddress, originalTokenId, originalAccount, patchAddress, tokenId);
         return tokenId;
     }
+
     /**
     @dev See {IPatchworkProtocol-patchAccount}
     */
@@ -437,6 +499,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         return tokenId;
     }
 
+    /// common to patches
     function _handlePatchFee(Scope storage scope, address patchAddress) private {
         uint256 patchFee = scope.patchFees[patchAddress];
         if (msg.value != patchFee) {
@@ -449,6 +512,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         }
     }
 
+    // common to assigns
     function _handleAssignFee(Scope storage scope, address fragmentAddress) private {
         uint256 assignFee = scope.assignFees[fragmentAddress];
         if (msg.value != assignFee) {
