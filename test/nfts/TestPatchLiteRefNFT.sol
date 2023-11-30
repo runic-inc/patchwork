@@ -221,10 +221,8 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
     }
 
 
-    function removeReference(uint256 tokenId, uint64 liteRef, uint256 targetMetadataId) public override {
-        if (targetMetadataId != 0) {
-            revert("Unsupported metadata ID");
-        }
+    function removeReference(uint256 tokenId, uint64 liteRef, uint256 /*targetMetadataId*/) public override {
+        // Work with any given metadataId just for coverage testing
         removeReference(tokenId, liteRef);
     }
 

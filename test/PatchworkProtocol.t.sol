@@ -10,6 +10,7 @@ import "./nfts/TestFragmentLiteRefNFT.sol";
 import "./nfts/TestBaseNFT.sol";
 import "./nfts/TestPatchworkNFT.sol";
 import "./nfts/TestMultiFragmentNFT.sol";
+import "./nfts/TestPatchNFT.sol";
 
 contract PatchworkProtocolTest is Test {
     event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
@@ -344,7 +345,7 @@ contract PatchworkProtocolTest is Test {
         vm.prank(_user2Address);
         _prot.unassignSingle(address(_testFragmentLiteRefNFT), fragmentTokenId);
         vm.startPrank(_userAddress);
-        _prot.unassignSingle(address(_testFragmentLiteRefNFT), fragmentTokenId, 0);
+        _prot.unassignSingle(address(_testFragmentLiteRefNFT), fragmentTokenId, 1);
         // not currently assigned
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentNotAssigned.selector, address(_testFragmentLiteRefNFT), fragmentTokenId));
         _prot.unassignSingle(address(_testFragmentLiteRefNFT), fragmentTokenId);
@@ -689,15 +690,16 @@ contract PatchworkProtocolTest is Test {
         assertEq(_user2Address, _testFragmentLiteRefNFT.unassignedOwnerOf(fragment3));
 
         // test with patch
+        TestPatchNFT patch = new TestPatchNFT(address(_prot));
         uint256 _testBaseNFTTokenId = _testBaseNFT.mint(_userAddress);
         vm.prank(_scopeOwner);
-        uint256 patchTokenId = _prot.patch(_userAddress, address(_testBaseNFT), _testBaseNFTTokenId, address(_testPatchLiteRefNFT));
+        uint256 patchTokenId = _prot.patch(_userAddress, address(_testBaseNFT), _testBaseNFTTokenId, address(patch));
         vm.prank(_userAddress);
         _testBaseNFT.transferFrom(_userAddress, _user2Address, _testBaseNFTTokenId);
-        assertEq(_user2Address, _testPatchLiteRefNFT.ownerOf(patchTokenId));
-        assertEq(_userAddress, _testPatchLiteRefNFT.unpatchedOwnerOf(patchTokenId));
-        _prot.updateOwnershipTree(address(_testPatchLiteRefNFT), patchTokenId);
-        assertEq(_user2Address, _testPatchLiteRefNFT.unpatchedOwnerOf(patchTokenId));
+        assertEq(_user2Address, patch.ownerOf(patchTokenId));
+        assertEq(_userAddress, patch.unpatchedOwnerOf(patchTokenId));
+        _prot.updateOwnershipTree(address(patch), patchTokenId);
+        assertEq(_user2Address, patch.unpatchedOwnerOf(patchTokenId));
     }
 
     function testLocks() public {
@@ -812,9 +814,9 @@ contract PatchworkProtocolTest is Test {
         assertEq(2, _testPatchLiteRefNFT.getFreezeNonce(patchTokenId));
         vm.startPrank(_scopeOwner);       
         // Now Id2 -> Id1 -> Id, unassign Id2 from Id1
-        _prot.unassignSingle(address(_testFragmentLiteRefNFT), fragment2);
+        _prot.unassignSingle(address(_testFragmentLiteRefNFT), fragment2, 0);
         vm.stopPrank();
-        vm.startPrank(_scopeOwner);       
+        vm.startPrank(_scopeOwner);
         // Unassign Id1 from patch
         _prot.unassignSingle(address(_testFragmentLiteRefNFT), fragment1);
         vm.stopPrank();
