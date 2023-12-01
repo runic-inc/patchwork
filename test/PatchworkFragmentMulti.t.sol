@@ -194,5 +194,13 @@ contract PatchworkFragmentMultiTest is Test {
         _testFragmentLiteRefNFT.registerReferenceAddress(address(multi));
         uint256 lr1 = _testFragmentLiteRefNFT.mint(_userAddress, "");
         _prot.assign(address(multi), m1, address(_testFragmentLiteRefNFT), lr1);
+        vm.stopPrank();
+        // fragment scope can not unassign
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, publicScopeOwner));
+        vm.prank(publicScopeOwner);
+        _prot.unassign(address(multi), m1, address(_testFragmentLiteRefNFT), lr1);
+        // target scope can unassign
+        vm.prank(_scopeOwner);
+        _prot.unassign(address(multi), m1, address(_testFragmentLiteRefNFT), lr1);
     }
 }
