@@ -248,6 +248,16 @@ interface IPatchworkProtocol {
         uint256 assignBp; /// assign basis points (10000 = 100%)
     }
 
+    /** 
+    @notice Protocol Fee Override
+    */
+    struct ProtocolFeeOverride {
+        uint256 mintBp;   /// mint basis points (10000 = 100%)
+        uint256 patchBp;  /// patch basis points (10000 = 100%)
+        uint256 assignBp; /// assign basis points (10000 = 100%)
+        bool active; /// true for present
+    }
+
     /**
     @notice Mint configuration
     */
@@ -716,6 +726,19 @@ interface IPatchworkProtocol {
     @return config The current protocol fee configuration
     */
     function getProtocolFeeConfig() external view returns (ProtocolFeeConfig memory config);
+
+    /**
+    @notice Set the protocol fee override for a scope
+    @dev must be protocol owner or banker to call
+    @param config The protocol fee configuration to be set
+    */
+    function setScopeFeeOverride(string memory scopeName, ProtocolFeeOverride memory config) external;
+
+    /**
+    @notice Get the protocol fee override for a scope
+    @return config The current protocol fee override
+    */
+    function getScopeFeeOverride(string memory scopeName) external view returns (ProtocolFeeOverride memory config);
 
     /**
     @notice Add a banker to the protocol

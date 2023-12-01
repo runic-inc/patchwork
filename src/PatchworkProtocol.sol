@@ -63,8 +63,8 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     /// Current protocol fee configuration
     ProtocolFeeConfig _protocolFeeConfig;
 
-    // TODO overrides?
-    mapping(string => ProtocolFeeConfig) _scopeFeeOverrides; // scope-based fee overrides
+    /// scope-based fee overrides
+    mapping(string => ProtocolFeeOverride) _scopeFeeOverrides; 
 
     // TODO maybe not necessary
     uint256 public constant TRANSFER_GAS_LIMIT = 5000;
@@ -304,7 +304,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         if (msg.value != config.flatFee) {
             revert IncorrectFeeAmount();
         }
-        _handleMintFee(scope);
+        _handleMintFee(scopeName, scope);
         tokenId = IPatchworkMintable(mintable).mint(to, data);
         emit Mint(msg.sender, scopeName, to, mintable, data);
     }
@@ -318,7 +318,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         if (msg.value != totalFee) {
             revert IncorrectFeeAmount();
         }
-        _handleMintFee(scope);
+        _handleMintFee(scopeName, scope);
         tokenIds = IPatchworkMintable(mintable).mintBatch(to, data, quantity);
         emit MintBatch(msg.sender, scopeName, to, mintable, data, quantity);
     }
@@ -338,10 +338,17 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     }
 
     /// Common to mints
-    function _handleMintFee(Scope storage scope) internal {
+    function _handleMintFee(string memory scopeName, Scope storage scope) internal {
         // Account for 100% of the message value
         if (msg.value != 0) {
-            uint256 protocolFee = msg.value * _protocolFeeConfig.mintBp / 10000;
+            uint256 mintBp;
+            ProtocolFeeOverride storage feeOverride = _scopeFeeOverrides[scopeName];
+            if (feeOverride.active) {
+                mintBp = feeOverride.mintBp;
+            } else {
+                mintBp = _protocolFeeConfig.mintBp;
+            }
+            uint256 protocolFee = msg.value * mintBp / 10000;
             _protocolBalance += protocolFee;
             scope.balance += msg.value - protocolFee;
         }
@@ -350,10 +357,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     /**
     @dev See {IPatchworkProtocol-setProtocolFeeConfig}
     */
-    function setProtocolFeeConfig(ProtocolFeeConfig memory config) public {
-        if (msg.sender != owner() && _protocolBankers[msg.sender] == false) {
-            revert NotAuthorized(msg.sender);
-        }
+    function setProtocolFeeConfig(ProtocolFeeConfig memory config) public onlyProtoOwnerBanker {
         _protocolFeeConfig = config;
     }
 
@@ -362,6 +366,24 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     */
     function getProtocolFeeConfig() public view returns (ProtocolFeeConfig memory config) {
         return _protocolFeeConfig;
+    }
+
+    /**
+    @dev See {IPatchworkProtocol-setScopeFeeOverride}
+    */
+    function setScopeFeeOverride(string memory scopeName, ProtocolFeeOverride memory config) public onlyProtoOwnerBanker {
+        if (!config.active) {
+            delete _scopeFeeOverrides[scopeName];
+        } else {
+            _scopeFeeOverrides[scopeName] = config;
+        }
+    }
+
+    /**
+    @dev See {IPatchworkProtocol-getScopeFeeOverride}
+    */
+    function getScopeFeeOverride(string memory scopeName) public view returns (ProtocolFeeOverride memory config) {
+        return _scopeFeeOverrides[scopeName];
     }
 
     /**
@@ -383,10 +405,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     /**
     @dev See {IPatchworkProtocol-withdrawFromProtocol}
     */
-    function withdrawFromProtocol(uint256 amount) external nonReentrant {
-        if (msg.sender != owner() && _protocolBankers[msg.sender] == false) {
-            revert NotAuthorized(msg.sender);
-        }
+    function withdrawFromProtocol(uint256 amount) external nonReentrant onlyProtoOwnerBanker {
         if (amount > _protocolBalance) {
             revert InsufficientFunds();
         }
@@ -441,7 +460,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         } else {
             revert NotAuthorized(msg.sender);
         }
-        _handlePatchFee(scope, patchAddress);
+        _handlePatchFee(scopeName, scope, patchAddress);
         // limit this to one unique patch (originalAddress+TokenID+patchAddress)
         bytes32 _hash = keccak256(abi.encodePacked(originalAddress, originalTokenId, patchAddress));
         if (_uniquePatches[_hash]) {
@@ -479,7 +498,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         } else {
             revert NotAuthorized(msg.sender);
         }
-        _handlePatchFee(scope, patchAddress);
+        _handlePatchFee(scopeName, scope, patchAddress);
         // limit this to one unique patch (originalAddress+TokenID+patchAddress)
         bytes32 _hash = keccak256(abi.encodePacked(originalAddress, originalTokenId, originalAccount, patchAddress));
         if (_uniquePatches[_hash]) {
@@ -517,7 +536,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         } else {
             revert NotAuthorized(msg.sender);
         }
-        _handlePatchFee(scope, patchAddress);
+        _handlePatchFee(scopeName, scope, patchAddress);
         // limit this to one unique patch (originalAddress+TokenID+patchAddress)
         bytes32 _hash = keccak256(abi.encodePacked(originalAddress, patchAddress));
         if (_uniquePatches[_hash]) {
@@ -538,26 +557,40 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     }
 
     /// common to patches
-    function _handlePatchFee(Scope storage scope, address patchAddress) private {
+    function _handlePatchFee(string memory scopeName, Scope storage scope, address patchAddress) private {
         uint256 patchFee = scope.patchFees[patchAddress];
         if (msg.value != patchFee) {
             revert IncorrectFeeAmount();
         }
         if (msg.value > 0) {
-            uint256 protocolFee = msg.value * _protocolFeeConfig.patchBp / 10000;
+            uint256 patchBp;
+            ProtocolFeeOverride storage feeOverride = _scopeFeeOverrides[scopeName];
+            if (feeOverride.active) {
+                patchBp = feeOverride.patchBp;
+            } else {
+                patchBp = _protocolFeeConfig.patchBp;
+            }
+            uint256 protocolFee = msg.value * patchBp / 10000;
             _protocolBalance += protocolFee;
             scope.balance += msg.value - protocolFee;
         }
     }
 
     // common to assigns
-    function _handleAssignFee(Scope storage scope, address fragmentAddress) private {
+    function _handleAssignFee(string memory scopeName, Scope storage scope, address fragmentAddress) private {
         uint256 assignFee = scope.assignFees[fragmentAddress];
         if (msg.value != assignFee) {
             revert IncorrectFeeAmount();
         }
         if (msg.value > 0) {
-            uint256 protocolFee = msg.value * _protocolFeeConfig.assignBp / 10000;
+            uint256 assignBp;
+            ProtocolFeeOverride storage feeOverride = _scopeFeeOverrides[scopeName];
+            if (feeOverride.active) {
+                assignBp = feeOverride.assignBp;
+            } else {
+                assignBp = _protocolFeeConfig.assignBp;
+            }
+            uint256 protocolFee = msg.value * assignBp / 10000;
             _protocolBalance += protocolFee;
             scope.balance += msg.value - protocolFee;
         }
@@ -639,7 +672,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
             string memory fragmentScopeName = assignable.getScopeName();
             Scope storage fragmentScope = _mustHaveScope(fragmentScopeName);
             _mustBeWhitelisted(fragmentScopeName, fragmentScope, fragment);
-            _handleAssignFee(fragmentScope, fragment);
+            _handleAssignFee(fragmentScopeName, fragmentScope, fragment);
         }
         if (targetScope.owner == msg.sender || targetScope.operators[msg.sender]) {
             // all good
