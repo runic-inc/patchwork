@@ -318,4 +318,70 @@ contract FeesTest is Test {
         _prot.assign{value: 1 ether}(address(nft), n2, address(nft), n1);
         _prot.assign{value: _prot.getAssignFee(address(nft))}(address(nft), n2, address(nft), n1);
     }
+
+    function testFeeOverrides() public {
+        vm.startPrank(_scopeOwner);
+        _prot.setScopeRules(_scopeName, false, false, true);
+        TestBaseNFT tBase = new TestBaseNFT();
+        TestPatchLiteRefNFT t721 = new TestPatchLiteRefNFT(address(_prot));
+        TestFragmentLiteRefNFT fragLr = new TestFragmentLiteRefNFT(address(_prot));
+        _prot.addWhitelist(_scopeName, address(tBase));
+        _prot.addWhitelist(_scopeName, address(t721));
+        _prot.addWhitelist(_scopeName, address(fragLr));
+        _prot.setMintConfiguration(address(fragLr), IPatchworkProtocol.MintConfig(1000000000, true));
+        // Scope owner cannot set fee overrides for anyone
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _scopeOwner));
+        _prot.setScopeFeeOverride(_scopeName, IPatchworkProtocol.ProtocolFeeOverride(100, 100, 100, true)); // 1%
+
+        IPatchworkProtocol.ProtocolFeeOverride memory protFee = _prot.getScopeFeeOverride(_scopeName);
+        assertEq(false, protFee.active);
+        assertEq(0, protFee.mintBp);
+        assertEq(0, protFee.assignBp);
+        assertEq(0, protFee.patchBp);
+
+        vm.stopPrank();
+        vm.prank(_patchworkOwner);
+        _prot.setScopeFeeOverride(_scopeName, IPatchworkProtocol.ProtocolFeeOverride(100, 100, 100, true)); // 1%
+        vm.prank(_patchworkOwner);
+        _prot.addProtocolBanker(_user2Address);
+        vm.prank(_user2Address);
+        _prot.setScopeFeeOverride(_scopeName, IPatchworkProtocol.ProtocolFeeOverride(100, 100, 100, true)); // 1%
+        protFee = _prot.getScopeFeeOverride(_scopeName);
+        assertEq(true, protFee.active);
+        assertEq(100, protFee.mintBp);
+        assertEq(100, protFee.assignBp);
+        assertEq(100, protFee.patchBp);
+
+        vm.startPrank(_scopeOwner);
+        _prot.mint{value: 1000000000}(_userAddress, address(fragLr), "");
+
+        assertEq(990000000, _prot.balanceOf(_scopeName));
+        assertEq(10000000, _prot.balanceOfProtocol());
+
+        fragLr.registerReferenceAddress(address(fragLr));
+        _prot.setAssignFee(address(fragLr), 1000000000);
+        uint256 n1 = fragLr.mint(_userAddress, "");
+        uint256 n2 = fragLr.mint(_userAddress, "");
+        _prot.assign{value: _prot.getAssignFee(address(fragLr))}(address(fragLr), n2, address(fragLr), n1);
+
+        assertEq(1980000000, _prot.balanceOf(_scopeName));
+        assertEq(20000000, _prot.balanceOfProtocol());
+
+        _prot.setPatchFee(address(t721), 1000000000);
+        uint256 tId = tBase.mint(_userAddress);
+        _prot.patch{value: _prot.getPatchFee(address(t721))}(_userAddress, address(tBase), tId, address(t721));
+
+        assertEq(2970000000, _prot.balanceOf(_scopeName));
+        assertEq(30000000, _prot.balanceOfProtocol());
+
+        vm.stopPrank();
+        vm.prank(_patchworkOwner);
+        _prot.setScopeFeeOverride(_scopeName, IPatchworkProtocol.ProtocolFeeOverride(0, 0, 0, false)); // 1%
+        protFee = _prot.getScopeFeeOverride(_scopeName);
+        assertEq(false, protFee.active);
+        assertEq(0, protFee.mintBp);
+        assertEq(0, protFee.assignBp);
+        assertEq(0, protFee.patchBp);
+   
+    }
 }
