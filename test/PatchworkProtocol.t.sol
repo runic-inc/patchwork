@@ -901,4 +901,14 @@ contract PatchworkProtocolTest is Test {
         (uint64 lr2,) = _testFragmentLiteRefNFT.getLiteReference(address(testFrag2), frag2);
         assertEq(lr1, lr2);
     }
+
+     function testBurn() public {
+        // *burned* can only be called from the patch burning it
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _defaultUser));
+        _prot.patchBurned(address(1), 1, address(2));
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _defaultUser));
+        _prot.patchBurned1155(address(1), 1, address(3), address(2));
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _defaultUser));
+        _prot.patchBurnedAccount(address(1), address(2));
+     }
 }

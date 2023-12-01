@@ -458,7 +458,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     */
     function patchBurned(address originalAddress, uint originalTokenId, address patchAddress) external onlyFrom(patchAddress) {
         bytes32 _hash = keccak256(abi.encodePacked(originalAddress, originalTokenId, patchAddress));
-        delete _uniqueHashes[_hash];
+        delete _uniquePatches[_hash];
     }
 
     /**
@@ -496,7 +496,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     */
     function patchBurned1155(address originalAddress, uint originalTokenId, address originalAccount, address patchAddress) external onlyFrom(patchAddress) {
         bytes32 _hash = keccak256(abi.encodePacked(originalAddress, originalTokenId, originalAccount, patchAddress));
-        delete _uniqueHashes[_hash];
+        delete _uniquePatches[_hash];
     }
     
     /**
@@ -534,7 +534,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     */
     function patchBurnedAccount(address originalAddress, address patchAddress) external onlyFrom(patchAddress) {
         bytes32 _hash = keccak256(abi.encodePacked(originalAddress, patchAddress));
-        delete _uniqueHashes[_hash];
+        delete _uniquePatches[_hash];
     }
 
     /// common to patches
