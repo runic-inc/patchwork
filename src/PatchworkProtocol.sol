@@ -771,10 +771,10 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     */
     function _unassignMultiCommon(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, bool isDirect, uint256 targetMetadataId) private {
         IPatchworkMultiAssignable assignable = IPatchworkMultiAssignable(fragment);
-        string memory scopeName = assignable.getScopeName();
         if (!assignable.isAssignedTo(fragmentTokenId, target, targetTokenId)) {
             revert FragmentNotAssignedToTarget(fragment, fragmentTokenId, target, targetTokenId);
         }
+        string memory scopeName = IPatchworkScoped(target).getScopeName();
         _doUnassign(fragment, fragmentTokenId, target, targetTokenId, isDirect, targetMetadataId, scopeName);
         assignable.unassign(fragmentTokenId, target, targetTokenId);
     }
@@ -798,11 +798,11 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     */
     function _unassignSingleCommon(address fragment, uint fragmentTokenId, bool isDirect, uint256 targetMetadataId) private {
         IPatchworkSingleAssignable assignable = IPatchworkSingleAssignable(fragment);
-        string memory scopeName = assignable.getScopeName();
         (address target, uint256 targetTokenId) = assignable.getAssignedTo(fragmentTokenId);
         if (target == address(0)) {
             revert FragmentNotAssigned(fragment, fragmentTokenId);
         }
+        string memory scopeName = IPatchworkScoped(target).getScopeName();
         _doUnassign(fragment, fragmentTokenId, target, targetTokenId, isDirect, targetMetadataId, scopeName);
         assignable.unassign(fragmentTokenId);
     }
@@ -813,7 +813,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @param fragmentTokenId the IPatchworkAssignable's tokenId
     @param target the IPatchworkLiteRef target's address
     @param targetTokenId the IPatchworkLiteRef target's tokenId
-    @param scopeName the name of the assignable's scope
+    @param scopeName the name of the target's scope
     */
     function _doUnassign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, bool direct, uint256 targetMetadataId, string memory scopeName) private {
         Scope storage scope = _mustHaveScope(scopeName);
@@ -842,7 +842,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
             IPatchworkLiteRef(target).removeReference(targetTokenId, ref);
         }
 
-        emit Unassign(IERC721(target).ownerOf(targetTokenId), fragment, fragmentTokenId, target, targetTokenId);
+        emit Unassign(IERC721(fragment).ownerOf(fragmentTokenId), fragment, fragmentTokenId, target, targetTokenId);
     }
 
     /**
