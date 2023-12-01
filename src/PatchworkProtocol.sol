@@ -472,7 +472,15 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         return tokenId;
     }
 
-   /**
+    /**
+    @dev See {IPatchworkProtocol-patchBurned}
+    */
+    function patchBurned(address originalAddress, uint originalTokenId, address patchAddress) external onlyFrom(patchAddress) {
+        bytes32 _hash = keccak256(abi.encodePacked(originalAddress, originalTokenId, patchAddress));
+        delete _uniquePatches[_hash];
+    }
+
+    /**
     @dev See {IPatchworkProtocol-patch1155}
     */
     function patch1155(address to, address originalAddress, uint originalTokenId, address originalAccount, address patchAddress) external payable returns (uint256 tokenId) {
@@ -503,6 +511,14 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     }
 
     /**
+    @dev See {IPatchworkProtocol-patchBurned1155}
+    */
+    function patchBurned1155(address originalAddress, uint originalTokenId, address originalAccount, address patchAddress) external onlyFrom(patchAddress) {
+        bytes32 _hash = keccak256(abi.encodePacked(originalAddress, originalTokenId, originalAccount, patchAddress));
+        delete _uniquePatches[_hash];
+    }
+    
+    /**
     @dev See {IPatchworkProtocol-patchAccount}
     */
     function patchAccount(address owner, address originalAddress, address patchAddress) external payable returns (uint256 tokenId) {
@@ -530,6 +546,14 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         tokenId = patch_.mintPatch(owner, originalAddress);
         emit AccountPatch(owner, originalAddress, patchAddress, tokenId);
         return tokenId;
+    }
+
+    /**
+    @dev See {IPatchworkProtocol-patchBurnedAccount}
+    */
+    function patchBurnedAccount(address originalAddress, address patchAddress) external onlyFrom(patchAddress) {
+        bytes32 _hash = keccak256(abi.encodePacked(originalAddress, patchAddress));
+        delete _uniquePatches[_hash];
     }
 
     /// common to patches
@@ -986,9 +1010,16 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         }
         return false;
     }
-
+    
     modifier onlyProtoOwnerBanker() {
         if (msg.sender != owner() && _protocolBankers[msg.sender] == false) {
+            revert NotAuthorized(msg.sender);
+        }
+        _;
+    }
+
+    modifier onlyFrom(address addr) {
+        if (msg.sender != addr) {
             revert NotAuthorized(msg.sender);
         }
         _;

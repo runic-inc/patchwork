@@ -114,8 +114,10 @@ contract Patchwork1155PatchTest is Test {
         Test1155PatchNFT test1155PatchNFT = new Test1155PatchNFT(address(_prot), false);
         TestBase1155 base1155 = new TestBase1155();
         uint256 b = base1155.mint(_userAddress, 1, 5);
-        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedOperation.selector));
-        test1155PatchNFT.burn(b);
+        uint256 pId = _prot.patch1155(_userAddress, address(base1155), b, _userAddress, address(test1155PatchNFT));
+        test1155PatchNFT.burn(pId);
+        // Should be able to re-patch now
+        pId = _prot.patch1155(_userAddress, address(base1155), b, _userAddress, address(test1155PatchNFT));
     }
 
     function testReverseLookups() public {

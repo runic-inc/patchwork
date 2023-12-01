@@ -71,8 +71,10 @@ contract PatchworkAccountPatchTest is Test {
         vm.prank(_userAddress);
         testAccountPatchNFT.transferFrom(_userAddress, address(55), tokenId);
         vm.prank(address(55));
-        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedOperation.selector));
         testAccountPatchNFT.burn(tokenId);
+        // Should be able to re-patch now
+        vm.prank(_scopeOwner);
+        tokenId = _prot.patchAccount(_userAddress, _user2Address, address(testAccountPatchNFT));
     }
 
     function testAccountPatchSameOwner() public {
