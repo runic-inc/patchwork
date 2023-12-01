@@ -756,6 +756,15 @@ interface IPatchworkProtocol {
     function patch(address owner, address originalAddress, uint originalTokenId, address patchAddress) external payable returns (uint256 tokenId);
 
     /**
+    @notice Callback for when a patch is burned
+    @dev can only be called from the patchAddress
+    @param originalAddress Address of the original 721
+    @param originalTokenId Token ID of the original 721
+    @param patchAddress Address of the IPatchworkPatch to mint
+    */
+    function patchBurned(address originalAddress, uint originalTokenId, address patchAddress) external;
+
+    /**
     @notice Create a new 1155 patch
     @param originalAddress Address of the original 1155
     @param originalTokenId Token ID of the original 1155
@@ -766,6 +775,16 @@ interface IPatchworkProtocol {
     function patch1155(address to, address originalAddress, uint originalTokenId, address originalAccount, address patchAddress) external payable returns (uint256 tokenId);
     
     /**
+    @notice Callback for when an 1155 patch is burned
+    @dev can only be called from the patchAddress
+    @param originalAddress Address of the original 1155
+    @param originalTokenId Token ID of the original 1155
+    @param originalAccount Address of the account to patch
+    @param patchAddress Address of the IPatchworkPatch to mint
+    */
+    function patchBurned1155(address originalAddress, uint originalTokenId, address originalAccount, address patchAddress) external;
+
+    /**
     @notice Create a new account patch
     @param owner The owner of the patch
     @param originalAddress Address of the original account
@@ -773,6 +792,14 @@ interface IPatchworkProtocol {
     @return tokenId Token ID of the newly created patch
     */
     function patchAccount(address owner, address originalAddress, address patchAddress) external payable returns (uint256 tokenId);
+
+    /**
+    @notice Callback for when an account patch is burned
+    @dev can only be called from the patchAddress
+    @param originalAddress Address of the original 1155
+    @param patchAddress Address of the IPatchworkPatch to mint
+    */
+    function patchBurnedAccount(address originalAddress, address patchAddress) external;
 
     /**
     @notice Assigns a relation to have an IPatchworkLiteRef form a LiteRef to a IPatchworkAssignable
