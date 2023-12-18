@@ -933,4 +933,11 @@ interface IPatchworkProtocol {
     @param tokenId The ID of the token whose ownership tree needs to be updated
     */
     function updateOwnershipTree(address addr, uint256 tokenId) external;
+
+    /**
+    @notice Clear supported interface memoization for the msg.sender
+    @dev use this if you use an upgradeable contract that may add or remove ERC165 supportsInterface signatures
+    @param sig The interfaceId of the type to clear
+    */
+    function clearSupportedInterface(bytes4 sig) external;
 }
