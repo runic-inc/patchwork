@@ -61,6 +61,7 @@ contract PatchworkFragmentMultiTest is Test {
         uint256 lr1 = _testFragmentLiteRefNFT.mint(_userAddress, "");
         uint256 lr2 = _testFragmentLiteRefNFT.mint(_userAddress, "");
         uint256 lr3 = _testFragmentLiteRefNFT.mint(_userAddress, "");
+        uint256 lr4 = _testFragmentLiteRefNFT.mint(_userAddress, "");
         // must be registered
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentUnregistered.selector, address(_testMultiNFT)));
         _prot.assign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr1);
@@ -72,6 +73,8 @@ contract PatchworkFragmentMultiTest is Test {
         assertTrue(_testMultiNFT.isAssignedTo(m1, address(_testFragmentLiteRefNFT), lr2));
         _prot.assign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr3);
         assertTrue(_testMultiNFT.isAssignedTo(m1, address(_testFragmentLiteRefNFT), lr3));
+        _prot.assign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr4);
+        assertTrue(_testMultiNFT.isAssignedTo(m1, address(_testFragmentLiteRefNFT), lr4));
         assertEq(_testMultiNFT.ownerOf(m1), _user2Address);
         // don't allow duplicate
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentAlreadyAssigned.selector, address(_testMultiNFT), m1));
@@ -98,6 +101,8 @@ contract PatchworkFragmentMultiTest is Test {
         assertFalse(_testMultiNFT.isAssignedTo(m1, address(_testFragmentLiteRefNFT), lr1));
         _prot.unassign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr3);
         assertFalse(_testMultiNFT.isAssignedTo(m1, address(_testFragmentLiteRefNFT), lr3));
+        _prot.unassign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr4);
+        assertFalse(_testMultiNFT.isAssignedTo(m1, address(_testFragmentLiteRefNFT), lr4));
         // not assigned
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentNotAssignedToTarget.selector, address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2));
         _prot.unassign(address(_testMultiNFT), m1, address(_testFragmentLiteRefNFT), lr2);

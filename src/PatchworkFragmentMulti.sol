@@ -64,7 +64,9 @@ abstract contract PatchworkFragmentMulti is Patchwork721, IPatchworkMultiAssigna
         Assignment[] storage assignments = store.assignments;
         if (assignments.length > 1) {
             // move the last element of the array into this index
-            assignments[index] = assignments[assignments.length-1];
+            Assignment storage a = assignments[assignments.length-1];
+            assignments[index] = a;
+            store.index[keccak256(abi.encodePacked(a.tokenAddr, a.tokenId))] = index;
         }
         // shorten the array by 1
         assignments.pop();
