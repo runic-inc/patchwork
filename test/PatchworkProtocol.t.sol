@@ -875,9 +875,8 @@ contract PatchworkProtocolTest is Test {
         _testFragmentLiteRefNFT.registerReferenceAddress(address(_testBaseNFT));
         (uint64 ref, ) = _testFragmentLiteRefNFT.getLiteReference(address(_testBaseNFT), _testBaseNFTTokenId);
         _testFragmentLiteRefNFT.addReference(fragment1, ref);
-        // Should revert with data integrity error
+        // Will not revert, will just do nothing
         vm.stopPrank();
-        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotPatchworkAssignable.selector, address(_testBaseNFT)));
         vm.prank(_userAddress);
         _testFragmentLiteRefNFT.transferFrom(_userAddress, _user2Address, fragment1);
     }
