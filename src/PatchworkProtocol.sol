@@ -986,8 +986,6 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
 
     
     function _supportsInterface(address addr, bytes4 sig) private returns (bool ret) {
-        return IERC165(addr).supportsInterface(sig);
-        /*
         bytes32 _hash = keccak256(abi.encodePacked(addr, sig));
         uint8 support = _supportedInterfaceCache[_hash];
         if (support == 1) {
@@ -995,14 +993,14 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         } else if (support == 2) {
             return false;
         } else {
-            bool s = IERC165(addr).supportsInterface(sig);
-            if (s) {
+            ret = IERC165(addr).supportsInterface(sig);
+            if (ret) {
                 _supportedInterfaceCache[_hash] = 1;
             } else {
                 _supportedInterfaceCache[_hash] = 2;
             }
+            return ret;
         }
-        */
     }
 
     function clearSupportedInterface(bytes4 sig) external {
