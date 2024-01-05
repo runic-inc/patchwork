@@ -984,7 +984,6 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         return false;
     }
 
-    
     function _supportsInterface(address addr, bytes4 sig) private returns (bool ret) {
         bytes32 _hash = keccak256(abi.encodePacked(addr, sig));
         uint8 support = _supportedInterfaceCache[_hash];
