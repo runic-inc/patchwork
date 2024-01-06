@@ -66,7 +66,11 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     /// scope-based fee overrides
     mapping(string => ProtocolFeeOverride) private _scopeFeeOverrides; 
 
+    /// Supported interface cache
     mapping(bytes32 => uint8) private _supportedInterfaceCache;
+
+    /// Scope name cache
+    mapping(address => string) private _scopeNameCache;
 
     // TODO maybe not necessary
     uint256 public constant TRANSFER_GAS_LIMIT = 5000;
@@ -175,8 +179,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-setMintConfiguration}
     */
     function setMintConfiguration(address addr, MintConfig memory config) public {
-        IPatchworkMintable mintable = IPatchworkMintable(addr);
-        string memory scopeName = mintable.getScopeName();
+        string memory scopeName = _getScopeName(addr);
         Scope storage scope = _mustHaveScope(scopeName);
         _mustBeWhitelisted(scopeName, scope, addr);
         _mustBeOwnerOrOperator(scope);
@@ -188,7 +191,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-getMintConfiguration}
     */
     function getMintConfiguration(address addr) public view returns (MintConfig memory config) {
-        Scope storage scope = _mustHaveScope(IPatchworkMintable(addr).getScopeName());
+        Scope storage scope = _mustHaveScope(_getScopeNameViewOnly(addr));
         return scope.mintConfigurations[addr];
     }
 
@@ -196,7 +199,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-setPatchFee}
     */
     function setPatchFee(address addr, uint256 baseFee) public {
-        string memory scopeName = IPatchworkScoped(addr).getScopeName();
+        string memory scopeName = _getScopeName(addr);
         Scope storage scope = _mustHaveScope(scopeName);
         _mustBeWhitelisted(scopeName, scope, addr);
         _mustBeOwnerOrOperator(scope);
@@ -207,7 +210,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-getPatchFee}
     */
     function getPatchFee(address addr) public view returns (uint256 baseFee) {
-        Scope storage scope = _mustHaveScope(IPatchworkScoped(addr).getScopeName());
+        Scope storage scope = _mustHaveScope(_getScopeNameViewOnly(addr));
         return scope.patchFees[addr];
     }
 
@@ -215,7 +218,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-setAssignFee}
     */
     function setAssignFee(address fragmentAddress, uint256 baseFee) public {
-        string memory scopeName = IPatchworkScoped(fragmentAddress).getScopeName();
+        string memory scopeName = _getScopeName(fragmentAddress);
         Scope storage scope = _mustHaveScope(scopeName);
         _mustBeWhitelisted(scopeName, scope, fragmentAddress);
         _mustBeOwnerOrOperator(scope);
@@ -226,7 +229,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-getAssignFee}
     */
     function getAssignFee(address fragmentAddress) public view returns (uint256 baseFee) {
-        Scope storage scope = _mustHaveScope(IPatchworkScoped(fragmentAddress).getScopeName());
+        Scope storage scope = _mustHaveScope(_getScopeNameViewOnly(fragmentAddress));
         return scope.assignFees[fragmentAddress];
     }
 
@@ -309,7 +312,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
 
     /// Common to mints
     function _setupMint(address mintable) internal view returns (MintConfig memory config, string memory scopeName, Scope storage scope) {
-        scopeName = IPatchworkMintable(mintable).getScopeName();
+        scopeName = _getScopeNameViewOnly(mintable);
         scope = _mustHaveScope(scopeName);
         _mustBeWhitelisted(scopeName, scope, mintable);
         config = scope.mintConfigurations[mintable];
@@ -428,7 +431,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     */
     function patch(address owner, address originalAddress, uint originalTokenId, address patchAddress) external payable returns (uint256 tokenId) {
         IPatchworkPatch patch_ = IPatchworkPatch(patchAddress);
-        string memory scopeName = patch_.getScopeName();
+        string memory scopeName = _getScopeName(patchAddress);
         Scope storage scope = _mustHaveScope(scopeName);
         _mustBeWhitelisted(scopeName, scope, patchAddress);
         if (scope.owner == msg.sender || scope.operators[msg.sender]) {
@@ -463,7 +466,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     */
     function patch1155(address to, address originalAddress, uint originalTokenId, address originalAccount, address patchAddress) external payable returns (uint256 tokenId) {
         IPatchwork1155Patch patch_ = IPatchwork1155Patch(patchAddress);
-        string memory scopeName = patch_.getScopeName();
+        string memory scopeName = _getScopeName(patchAddress);
         Scope storage scope = _mustHaveScope(scopeName);
         _mustBeWhitelisted(scopeName, scope, patchAddress);
         if (scope.owner == msg.sender || scope.operators[msg.sender]) {
@@ -498,7 +501,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     */
     function patchAccount(address owner, address originalAddress, address patchAddress) external payable returns (uint256 tokenId) {
         IPatchworkAccountPatch patch_ = IPatchworkAccountPatch(patchAddress);
-        string memory scopeName = patch_.getScopeName();
+        string memory scopeName = _getScopeName(patchAddress);
         Scope storage scope = _mustHaveScope(scopeName);
         _mustBeWhitelisted(scopeName, scope, patchAddress);
         if (scope.owner == msg.sender || scope.operators[msg.sender]) {
@@ -636,12 +639,12 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
             revert Locked(fragment, fragmentTokenId);
         }
         // Use the target's scope for general permission and check the fragment for detailed permissions
-        string memory targetScopeName = IPatchwork721(target).getScopeName();
+        string memory targetScopeName = _getScopeName(target);
         Scope storage targetScope = _mustHaveScope(targetScopeName);
         _mustBeWhitelisted(targetScopeName, targetScope, target);
         {
             // Whitelist check, these variables do not need to stay in the function level stack
-            string memory fragmentScopeName = assignable.getScopeName();
+            string memory fragmentScopeName = _getScopeName(fragment);
             Scope storage fragmentScope = _mustHaveScope(fragmentScopeName);
             _mustBeWhitelisted(fragmentScopeName, fragmentScope, fragment);
             _handleAssignFee(fragmentScopeName, fragmentScope, fragment);
@@ -746,7 +749,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         if (!assignable.isAssignedTo(fragmentTokenId, target, targetTokenId)) {
             revert FragmentNotAssignedToTarget(fragment, fragmentTokenId, target, targetTokenId);
         }
-        string memory scopeName = IPatchworkScoped(target).getScopeName();
+        string memory scopeName = _getScopeName(target);
         _doUnassign(fragment, fragmentTokenId, target, targetTokenId, isDirect, targetMetadataId, scopeName);
         assignable.unassign(fragmentTokenId, target, targetTokenId);
     }
@@ -774,7 +777,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         if (target == address(0)) {
             revert FragmentNotAssigned(fragment, fragmentTokenId);
         }
-        string memory scopeName = IPatchworkScoped(target).getScopeName();
+        string memory scopeName = _getScopeName(target);
         _doUnassign(fragment, fragmentTokenId, target, targetTokenId, isDirect, targetMetadataId, scopeName);
         assignable.unassign(fragmentTokenId);
     }
@@ -984,6 +987,13 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         return false;
     }
 
+    /**
+    @notice Memoizing wrapper for IERC165 supportsInterface()
+    @dev use clearSupportedInterface(sig) from the addr to clear if supported interfaces changes
+    @param addr Address to check
+    @param sig Signature to check at address
+    @return ret return value of IERC165(addr).supportsInterface(sig)
+    */
     function _supportsInterface(address addr, bytes4 sig) private returns (bool ret) {
         bytes32 _hash = keccak256(abi.encodePacked(addr, sig));
         uint8 support = _supportedInterfaceCache[_hash];
@@ -1002,8 +1012,37 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         }
     }
 
+    /**
+    @dev See {IPatchworkProtocol-clearSupportedInterface}
+    */ 
     function clearSupportedInterface(bytes4 sig) external {
        delete _supportedInterfaceCache[keccak256(abi.encodePacked(msg.sender, sig))];
+    }
+
+    /**
+    @notice Memoizing wrapper for IPatchworkScoped.getScopeName()
+    @param addr Address to check
+    @return scopeName return value of IPatchworkScoped(addr).getScopeName()
+    */
+    function _getScopeName(address addr) private returns (string memory scopeName) {
+        scopeName = _scopeNameCache[addr];
+        if (bytes(scopeName).length == 0) {
+            scopeName = IPatchworkScoped(addr).getScopeName();
+            _scopeNameCache[addr] = scopeName;
+        }
+    }
+
+    /**
+    @notice Memoized view-only wrapper for IPatchworkScoped.getScopeName()
+    @dev required to get optimized result from view-only functions, does not memoize result if not already memoized
+    @param addr Address to check
+    @return scopeName return value of IPatchworkScoped(addr).getScopeName()
+    */
+    function _getScopeNameViewOnly(address addr) private view returns (string memory scopeName) {
+        scopeName = _scopeNameCache[addr];
+        if (bytes(scopeName).length == 0) {
+            scopeName = IPatchworkScoped(addr).getScopeName();
+        }
     }
 
     modifier onlyProtoOwnerBanker() {

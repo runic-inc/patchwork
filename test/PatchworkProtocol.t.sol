@@ -271,11 +271,10 @@ contract PatchworkProtocolTest is Test {
         _prot.setScopeRules(_scopeName, false, false, false);
         _prot.assign(address(_testFragmentLiteRefNFT), fragmentTokenId1, address(_testFragmentLiteRefNFT), fragmentTokenId2);
         _prot.assign(address(_testMultiFragmentNFT), multi1, address(_testFragmentLiteRefNFT), fragmentTokenId2);
+        // Memoization will prevent the scope change from taking effect.
         _testFragmentLiteRefNFT.setScopeName("foo");
         _testMultiFragmentNFT.setScopeName("foo");
-        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.ScopeDoesNotExist.selector, "foo"));
         _prot.unassign(address(_testFragmentLiteRefNFT), fragmentTokenId1, address(_testFragmentLiteRefNFT), fragmentTokenId2);
-        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.ScopeDoesNotExist.selector, "foo"));
         _prot.unassign(address(_testMultiFragmentNFT), multi1, address(_testFragmentLiteRefNFT), fragmentTokenId2, 0);
     }
 
