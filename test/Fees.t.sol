@@ -147,21 +147,21 @@ contract FeesTest is Test {
     function testUnsupportedContracts() public {
         vm.startPrank(_scopeOwner);
         TestBaseNFT tBase = new TestBaseNFT();
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
         _prot.setMintConfiguration(address(tBase), IPatchworkProtocol.MintConfig(1000000000, true));
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
         _prot.getMintConfiguration(address(tBase));
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
         _prot.setPatchFee(address(tBase), 1);
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
         _prot.getPatchFee(address(tBase));
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
         _prot.setAssignFee(address(tBase), 1);
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
         _prot.getAssignFee(address(tBase));
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
         _prot.mint(_userAddress, address(tBase), "");
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
         _prot.mintBatch(_userAddress, address(tBase), "", 5);
     }
 
@@ -269,11 +269,11 @@ contract FeesTest is Test {
 
         // patch wrong types
         vm.startPrank(_scopeOwner);
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
         _prot.patch(_userAddress, address(tBase), 2, address(t1155));
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
         _prot.patch1155(_userAddress, address(tBase1155), 3, address(0), address(t721));
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.UnsupportedContract.selector));
         _prot.patchAccount(_userAddress, _user2Address, address(t721));
     }
 
