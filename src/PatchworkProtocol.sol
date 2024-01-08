@@ -42,29 +42,29 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @notice unique references
     @dev A hash of target + targetTokenId + literef provides uniqueness
     */
-    mapping(bytes32 => bool) _liteRefs;
+    mapping(bytes32 => bool) private _liteRefs;
 
     /**
     @notice unique patches
     @dev Hash of the patch mapped to a boolean indicating its uniqueness
     */
-    mapping(bytes32 => bool) _uniquePatches;
+    mapping(bytes32 => bool) private _uniquePatches;
 
     /// Balance of the protocol
-    uint256 _protocolBalance;
+    uint256 private _protocolBalance;
 
     /**
     @notice protocol bankers
     @dev Map of addresses authorized to set fees and withdraw funds for the protocol
     @dev Does not allow for scope balance withdrawl
     */
-    mapping(address => bool) _protocolBankers;
+    mapping(address => bool) private _protocolBankers;
 
     /// Current protocol fee configuration
-    ProtocolFeeConfig _protocolFeeConfig;
+    ProtocolFeeConfig private _protocolFeeConfig;
 
     /// scope-based fee overrides
-    mapping(string => ProtocolFeeOverride) _scopeFeeOverrides; 
+    mapping(string => ProtocolFeeOverride) private _scopeFeeOverrides; 
 
     /// Scope name cache
     mapping(address => string) private _scopeNameCache;
