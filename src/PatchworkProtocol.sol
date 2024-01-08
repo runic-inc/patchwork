@@ -374,6 +374,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         emit ProtocolFeeConfigPropose(config);
     }
 
+    /**
+    @dev See {IPatchworkProtocol-commitProtocolFeeConfig}
+    */
     function commitProtocolFeeConfig() public onlyProtoOwnerBanker {
         if (_proposedProtocolFeeConfigTimestamp == 0) {
             revert NoProposedFeeSet();
@@ -381,7 +384,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         if (block.timestamp > _proposedProtocolFeeConfigTimestamp + FEE_CHANGE_TIMELOCK) {
             _protocolFeeConfig = _proposedProtocolFeeConfig;
             _proposedProtocolFeeConfigTimestamp = 0;
-            // TODO emit event
+            emit ProtocolFeeConfigCommit(_protocolFeeConfig);
         } else {
             revert TimelockNotElapsed();
         }

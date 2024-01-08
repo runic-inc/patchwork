@@ -558,6 +558,11 @@ interface IPatchworkProtocol {
     event ProtocolFeeConfigPropose(ProtocolFeeConfig config);
 
     /**
+    @notice Emitted on protocol fee config committed
+    */
+    event ProtocolFeeConfigCommit(ProtocolFeeConfig config);
+
+    /**
     @notice Claim a scope
     @param scopeName the name of the scope
     */
