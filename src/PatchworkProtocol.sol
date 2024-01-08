@@ -42,32 +42,29 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @notice unique references
     @dev A hash of target + targetTokenId + literef provides uniqueness
     */
-    mapping(bytes32 => bool) private _liteRefs;
+    mapping(bytes32 => bool) _liteRefs;
 
     /**
     @notice unique patches
     @dev Hash of the patch mapped to a boolean indicating its uniqueness
     */
-    mapping(bytes32 => bool) private _uniquePatches;
+    mapping(bytes32 => bool) _uniquePatches;
 
     /// Balance of the protocol
-    uint256 private _protocolBalance;
+    uint256 _protocolBalance;
 
     /**
     @notice protocol bankers
     @dev Map of addresses authorized to set fees and withdraw funds for the protocol
     @dev Does not allow for scope balance withdrawl
     */
-    mapping(address => bool) private _protocolBankers;
+    mapping(address => bool) _protocolBankers;
 
     /// Current protocol fee configuration
-    ProtocolFeeConfig private _protocolFeeConfig;
+    ProtocolFeeConfig _protocolFeeConfig;
 
     /// scope-based fee overrides
-    mapping(string => ProtocolFeeOverride) private _scopeFeeOverrides; 
-
-    /// Supported interface cache
-    mapping(bytes32 => uint8) private _supportedInterfaceCache;
+    mapping(string => ProtocolFeeOverride) _scopeFeeOverrides; 
 
     /// Scope name cache
     mapping(address => string) private _scopeNameCache;
@@ -179,6 +176,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-setMintConfiguration}
     */
     function setMintConfiguration(address addr, MintConfig memory config) public {
+        if (!IERC165(addr).supportsInterface(type(IPatchworkMintable).interfaceId)) {
+            revert UnsupportedContract();
+        }
         string memory scopeName = _getScopeName(addr);
         Scope storage scope = _mustHaveScope(scopeName);
         _mustBeWhitelisted(scopeName, scope, addr);
@@ -191,6 +191,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-getMintConfiguration}
     */
     function getMintConfiguration(address addr) public view returns (MintConfig memory config) {
+        if (!IERC165(addr).supportsInterface(type(IPatchworkMintable).interfaceId)) {
+            revert UnsupportedContract();
+        }
         Scope storage scope = _mustHaveScope(_getScopeNameViewOnly(addr));
         return scope.mintConfigurations[addr];
     }
@@ -199,6 +202,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-setPatchFee}
     */
     function setPatchFee(address addr, uint256 baseFee) public {
+        if (!IERC165(addr).supportsInterface(type(IPatchworkScoped).interfaceId)) {
+            revert UnsupportedContract();
+        }
         string memory scopeName = _getScopeName(addr);
         Scope storage scope = _mustHaveScope(scopeName);
         _mustBeWhitelisted(scopeName, scope, addr);
@@ -210,6 +216,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-getPatchFee}
     */
     function getPatchFee(address addr) public view returns (uint256 baseFee) {
+        if (!IERC165(addr).supportsInterface(type(IPatchworkScoped).interfaceId)) {
+            revert UnsupportedContract();
+        }
         Scope storage scope = _mustHaveScope(_getScopeNameViewOnly(addr));
         return scope.patchFees[addr];
     }
@@ -218,6 +227,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-setAssignFee}
     */
     function setAssignFee(address fragmentAddress, uint256 baseFee) public {
+        if (!IERC165(fragmentAddress).supportsInterface(type(IPatchworkScoped).interfaceId)) {
+            revert UnsupportedContract();
+        }
         string memory scopeName = _getScopeName(fragmentAddress);
         Scope storage scope = _mustHaveScope(scopeName);
         _mustBeWhitelisted(scopeName, scope, fragmentAddress);
@@ -229,6 +241,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-getAssignFee}
     */
     function getAssignFee(address fragmentAddress) public view returns (uint256 baseFee) {
+        if (!IERC165(fragmentAddress).supportsInterface(type(IPatchworkScoped).interfaceId)) {
+            revert UnsupportedContract();
+        }
         Scope storage scope = _mustHaveScope(_getScopeNameViewOnly(fragmentAddress));
         return scope.assignFees[fragmentAddress];
     }
@@ -312,6 +327,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
 
     /// Common to mints
     function _setupMint(address mintable) internal view returns (MintConfig memory config, string memory scopeName, Scope storage scope) {
+        if (!IERC165(mintable).supportsInterface(type(IPatchworkMintable).interfaceId)) {
+            revert UnsupportedContract();
+        }
         scopeName = _getScopeNameViewOnly(mintable);
         scope = _mustHaveScope(scopeName);
         _mustBeWhitelisted(scopeName, scope, mintable);
@@ -430,6 +448,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-patch}
     */
     function patch(address owner, address originalAddress, uint originalTokenId, address patchAddress) external payable returns (uint256 tokenId) {
+        if (!IERC165(patchAddress).supportsInterface(type(IPatchworkPatch).interfaceId)) {
+            revert UnsupportedContract();
+        }
         IPatchworkPatch patch_ = IPatchworkPatch(patchAddress);
         string memory scopeName = _getScopeName(patchAddress);
         Scope storage scope = _mustHaveScope(scopeName);
@@ -465,6 +486,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-patch1155}
     */
     function patch1155(address to, address originalAddress, uint originalTokenId, address originalAccount, address patchAddress) external payable returns (uint256 tokenId) {
+        if (!IERC165(patchAddress).supportsInterface(type(IPatchwork1155Patch).interfaceId)) {
+            revert UnsupportedContract();
+        }
         IPatchwork1155Patch patch_ = IPatchwork1155Patch(patchAddress);
         string memory scopeName = _getScopeName(patchAddress);
         Scope storage scope = _mustHaveScope(scopeName);
@@ -500,6 +524,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-patchAccount}
     */
     function patchAccount(address owner, address originalAddress, address patchAddress) external payable returns (uint256 tokenId) {
+        if (!IERC165(patchAddress).supportsInterface(type(IPatchworkAccountPatch).interfaceId)) {
+            revert UnsupportedContract();
+        }
         IPatchworkAccountPatch patch_ = IPatchworkAccountPatch(patchAddress);
         string memory scopeName = _getScopeName(patchAddress);
         Scope storage scope = _mustHaveScope(scopeName);
@@ -706,13 +733,13 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev Common function to handle unassignments.
     */
     function _unassign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, bool isDirect, uint256 targetMetadataId) private {
-        if (_supportsInterface(fragment, type(IPatchworkMultiAssignable).interfaceId)) {
+        if (IERC165(fragment).supportsInterface(type(IPatchworkMultiAssignable).interfaceId)) {
             if (isDirect) {
                 unassignMulti(fragment, fragmentTokenId, target, targetTokenId, targetMetadataId);
             } else {
                 unassignMulti(fragment, fragmentTokenId, target, targetTokenId);
             }
-        } else if (_supportsInterface(fragment, type(IPatchworkSingleAssignable).interfaceId)) {
+        } else if (IERC165(fragment).supportsInterface(type(IPatchworkSingleAssignable).interfaceId)) {
             (address _target, uint256 _targetTokenId) = IPatchworkSingleAssignable(fragment).getAssignedTo(fragmentTokenId);
             if (target != _target || _targetTokenId != targetTokenId) {
                 revert FragmentNotAssignedToTarget(fragment, fragmentTokenId, target, targetTokenId);
@@ -825,22 +852,22 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     */
     function applyTransfer(address from, address to, uint256 tokenId) public {
         address nft = msg.sender;
-        if (_supportsInterface(nft, type(IPatchworkSingleAssignable).interfaceId)) {
+        if (IERC165(nft).supportsInterface(type(IPatchworkSingleAssignable).interfaceId)) {
             IPatchworkSingleAssignable assignable = IPatchworkSingleAssignable(nft);
             (address addr,) = assignable.getAssignedTo(tokenId);
             if (addr != address(0)) {
                 revert TransferBlockedByAssignment(nft, tokenId);
             }
         }
-        if (_supportsInterface(nft, type(IPatchworkPatch).interfaceId)) {
+        if (IERC165(nft).supportsInterface(type(IPatchworkPatch).interfaceId)) {
             revert TransferNotAllowed(nft, tokenId);
         }
-        if (_supportsInterface(nft, type(IPatchwork721).interfaceId)) {
+        if (IERC165(nft).supportsInterface(type(IPatchwork721).interfaceId)) {
             if (IPatchwork721(nft).locked(tokenId)) {
                 revert Locked(nft, tokenId);
             }
         }
-        if (_supportsInterface(nft, type(IPatchworkLiteRef).interfaceId)) {
+        if (IERC165(nft).supportsInterface(type(IPatchworkLiteRef).interfaceId)) {
             (address[] memory addresses, uint256[] memory tokenIds) = IPatchworkLiteRef(nft).loadAllStaticReferences(tokenId);
             for (uint i = 0; i < addresses.length; i++) {
                 if (addresses[i] != address(0)) {
@@ -851,17 +878,16 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     }
 
     function _applyAssignedTransfer(address nft, address from, address to, uint256 tokenId, address assignedTo_, uint256 assignedToTokenId_) private {
-        if (_supportsInterface(nft, type(IPatchworkSingleAssignable).interfaceId)) {
-            IPatchworkSingleAssignable singleAssignable = IPatchworkSingleAssignable(nft);
-            (address assignedTo, uint256 assignedToTokenId) = singleAssignable.getAssignedTo(tokenId);
-            // 2-way Check the assignment to prevent spoofing
-            if (assignedTo_ != assignedTo || assignedToTokenId_ != assignedToTokenId) {
-                revert DataIntegrityError(assignedTo_, assignedToTokenId_, assignedTo, assignedToTokenId);
-            }
-            singleAssignable.onAssignedTransfer(from, to, tokenId);
+        if (!IERC165(nft).supportsInterface(type(IPatchworkSingleAssignable).interfaceId)) {
+            revert NotPatchworkAssignable(nft);
         }
-
-        if (_supportsInterface(nft, type(IPatchworkLiteRef).interfaceId)) {
+        (address assignedTo, uint256 assignedToTokenId) = IPatchworkSingleAssignable(nft).getAssignedTo(tokenId);
+        // 2-way Check the assignment to prevent spoofing
+        if (assignedTo_ != assignedTo || assignedToTokenId_ != assignedToTokenId) {
+            revert DataIntegrityError(assignedTo_, assignedToTokenId_, assignedTo, assignedToTokenId);
+        }
+        IPatchworkSingleAssignable(nft).onAssignedTransfer(from, to, tokenId);
+        if (IERC165(nft).supportsInterface(type(IPatchworkLiteRef).interfaceId)) {
             address nft_ = nft; // local variable prevents optimizer stack issue in v0.8.18
             (address[] memory addresses, uint256[] memory tokenIds) = IPatchworkLiteRef(nft).loadAllStaticReferences(tokenId);
             for (uint i = 0; i < addresses.length; i++) {
@@ -876,7 +902,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-updateOwnershipTree}
     */ 
     function updateOwnershipTree(address addr, uint256 tokenId) public {
-        if (_supportsInterface(addr, type(IPatchworkLiteRef).interfaceId)) {
+        if (IERC165(addr).supportsInterface(type(IPatchworkLiteRef).interfaceId)) {
             (address[] memory addresses, uint256[] memory tokenIds) = IPatchworkLiteRef(addr).loadAllStaticReferences(tokenId);
             for (uint i = 0; i < addresses.length; i++) {
                 if (addresses[i] != address(0)) {
@@ -884,9 +910,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
                 }
             }
         }
-        if (_supportsInterface(addr, type(IPatchworkSingleAssignable).interfaceId)) {
+        if (IERC165(addr).supportsInterface(type(IPatchworkSingleAssignable).interfaceId)) {
             IPatchworkSingleAssignable(addr).updateOwnership(tokenId);
-        } else if (_supportsInterface(addr, type(IPatchworkPatch).interfaceId)) {
+        } else if (IERC165(addr).supportsInterface(type(IPatchworkPatch).interfaceId)) {
             IPatchworkPatch(addr).updateOwnership(tokenId);
         }
     }
@@ -957,12 +983,12 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @param tokenId the tokenId of nft
     @return frozen if the nft or an owner up the tree is frozen
     */
-    function _isFrozen(address nft, uint256 tokenId) private returns (bool frozen) {
-        if (_supportsInterface(nft, type(IPatchwork721).interfaceId)) {
+    function _isFrozen(address nft, uint256 tokenId) private view returns (bool frozen) {
+        if (IERC165(nft).supportsInterface(type(IPatchwork721).interfaceId)) {
             if (IPatchwork721(nft).frozen(tokenId)) {
                 return true;
             }
-            if (_supportsInterface(nft, type(IPatchworkSingleAssignable).interfaceId)) {
+            if (IERC165(nft).supportsInterface(type(IPatchworkSingleAssignable).interfaceId)) {
                 (address assignedAddr, uint256 assignedTokenId) = IPatchworkSingleAssignable(nft).getAssignedTo(tokenId);
                 if (assignedAddr != address(0)) {
                     return _isFrozen(assignedAddr, assignedTokenId);
@@ -978,45 +1004,13 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @param tokenId the tokenId of nft
     @return locked if the nft is locked
     */
-    function _isLocked(address nft, uint256 tokenId) private returns (bool locked) {
-        if (_supportsInterface(nft, type(IPatchwork721).interfaceId)) {
+    function _isLocked(address nft, uint256 tokenId) private view returns (bool locked) {
+        if (IERC165(nft).supportsInterface(type(IPatchwork721).interfaceId)) {
             if (IPatchwork721(nft).locked(tokenId)) {
                 return true;
             }
         }
         return false;
-    }
-
-    /**
-    @notice Memoizing wrapper for IERC165 supportsInterface()
-    @dev use clearSupportedInterface(sig) from the addr to clear if supported interfaces changes
-    @param addr Address to check
-    @param sig Signature to check at address
-    @return ret return value of IERC165(addr).supportsInterface(sig)
-    */
-    function _supportsInterface(address addr, bytes4 sig) private returns (bool ret) {
-        bytes32 _hash = keccak256(abi.encodePacked(addr, sig));
-        uint8 support = _supportedInterfaceCache[_hash];
-        if (support == 1) {
-            return true;
-        } else if (support == 2) {
-            return false;
-        } else {
-            ret = IERC165(addr).supportsInterface(sig);
-            if (ret) {
-                _supportedInterfaceCache[_hash] = 1;
-            } else {
-                _supportedInterfaceCache[_hash] = 2;
-            }
-            return ret;
-        }
-    }
-
-    /**
-    @dev See {IPatchworkProtocol-clearSupportedInterface}
-    */ 
-    function clearSupportedInterface(bytes4 sig) external {
-       delete _supportedInterfaceCache[keccak256(abi.encodePacked(msg.sender, sig))];
     }
 
     /**
