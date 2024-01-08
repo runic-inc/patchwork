@@ -239,6 +239,16 @@ interface IPatchworkProtocol {
     */
     error UnsupportedOperation();
 
+    /**
+    @notice No proposed fee is set 
+    */
+    error NoProposedFeeSet();
+
+    /**
+    @notice Timelock has not elapsed
+    */
+    error TimelockNotElapsed();
+
     /** 
     @notice Protocol Fee Configuration
     */
@@ -543,6 +553,11 @@ interface IPatchworkProtocol {
     event MintBatch(address indexed actor, string scopeName, address indexed to, address indexed mintable, bytes data, uint256 quantity);
 
     /**
+    @notice Emitted on protocol fee config proposed
+    */
+    event ProtocolFeeConfigPropose(ProtocolFeeConfig config);
+
+    /**
     @notice Claim a scope
     @param scopeName the name of the scope
     */
@@ -715,11 +730,19 @@ interface IPatchworkProtocol {
     function mintBatch(address to, address mintable, bytes calldata data, uint256 quantity) external payable returns (uint256[] memory tokenIds);
 
     /**
-    @notice Set the protocol fee configuration
+    @notice Proposes a protocol fee configuration
     @dev must be protocol owner or banker to call
+    @dev configuration does not apply until commitProtocolFeeConfig is called
     @param config The protocol fee configuration to be set
     */
-    function setProtocolFeeConfig(ProtocolFeeConfig memory config) external;
+    function proposeProtocolFeeConfig(ProtocolFeeConfig memory config) external;
+
+    /**
+    @notice Commits the current proposed protocol fee configuration
+    @dev must be protocol owner or banker to call
+    @dev may only be called after timelock has passed
+    */
+    function commitProtocolFeeConfig() external;
 
     /**
     @notice Get the current protocol fee configuration

@@ -35,7 +35,10 @@ contract FeesTest is Test {
         vm.prank(_patchworkOwner);
         _prot = new PatchworkProtocol();
         vm.prank(_patchworkOwner);
-        _prot.setProtocolFeeConfig(IPatchworkProtocol.ProtocolFeeConfig(1000, 1000, 1000)); // 10%, 10%, 10%
+        _prot.proposeProtocolFeeConfig(IPatchworkProtocol.ProtocolFeeConfig(1000, 1000, 1000)); // 10%, 10%, 10%
+        skip(20000000);
+        vm.prank(_patchworkOwner);
+        _prot.commitProtocolFeeConfig();
 
         vm.startPrank(_scopeOwner);
         _scopeName = "testscope";
@@ -52,15 +55,16 @@ contract FeesTest is Test {
         _prot.addProtocolBanker(_user2Address);
 
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _defaultUser));
-        _prot.setProtocolFeeConfig(IPatchworkProtocol.ProtocolFeeConfig(1000, 1000, 1000));
+        _prot.proposeProtocolFeeConfig(IPatchworkProtocol.ProtocolFeeConfig(1000, 1000, 1000));
+        // TODO
         vm.prank(_patchworkOwner);
-        _prot.setProtocolFeeConfig(IPatchworkProtocol.ProtocolFeeConfig(150, 150, 150));
+        _prot.proposeProtocolFeeConfig(IPatchworkProtocol.ProtocolFeeConfig(150, 150, 150));
         IPatchworkProtocol.ProtocolFeeConfig memory feeConfig = _prot.getProtocolFeeConfig();
         assertEq(150, feeConfig.mintBp);
         assertEq(150, feeConfig.assignBp);
         assertEq(150, feeConfig.patchBp);
         vm.prank(_user2Address);
-        _prot.setProtocolFeeConfig(IPatchworkProtocol.ProtocolFeeConfig(1000, 1000, 1000));
+        _prot.proposeProtocolFeeConfig(IPatchworkProtocol.ProtocolFeeConfig(1000, 1000, 1000));
 
         vm.prank(_patchworkOwner);
         _prot.addProtocolBanker(_defaultUser);
@@ -382,6 +386,5 @@ contract FeesTest is Test {
         assertEq(0, protFee.mintBp);
         assertEq(0, protFee.assignBp);
         assertEq(0, protFee.patchBp);
-   
     }
 }

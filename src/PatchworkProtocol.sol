@@ -63,11 +63,20 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     /// Current protocol fee configuration
     ProtocolFeeConfig private _protocolFeeConfig;
 
+    /// Proposed protocol fee configuration
+    ProtocolFeeConfig private _proposedProtocolFeeConfig;
+
+    /// Timestamp of proposed protocol fee config change
+    uint256 private _proposedProtocolFeeConfigTimestamp;
+
     /// scope-based fee overrides
     mapping(string => ProtocolFeeOverride) private _scopeFeeOverrides; 
 
     /// Scope name cache
     mapping(address => string) private _scopeNameCache;
+
+    /// How much time must elapse before a fee change can be committed (1209600 = 2 weeks)
+    uint256 public constant FEE_CHANGE_TIMELOCK = 1209600; 
 
     // TODO maybe not necessary
     uint256 public constant TRANSFER_GAS_LIMIT = 5000;
@@ -357,10 +366,25 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     }
 
     /**
-    @dev See {IPatchworkProtocol-setProtocolFeeConfig}
+    @dev See {IPatchworkProtocol-proposeProtocolFeeConfig}
     */
-    function setProtocolFeeConfig(ProtocolFeeConfig memory config) public onlyProtoOwnerBanker {
-        _protocolFeeConfig = config;
+    function proposeProtocolFeeConfig(ProtocolFeeConfig memory config) public onlyProtoOwnerBanker {
+        _proposedProtocolFeeConfig = config;
+        _proposedProtocolFeeConfigTimestamp = block.timestamp;
+        emit ProtocolFeeConfigPropose(config);
+    }
+
+    function commitProtocolFeeConfig() public onlyProtoOwnerBanker {
+        if (_proposedProtocolFeeConfigTimestamp == 0) {
+            revert NoProposedFeeSet();
+        }
+        if (block.timestamp > _proposedProtocolFeeConfigTimestamp + FEE_CHANGE_TIMELOCK) {
+            _protocolFeeConfig = _proposedProtocolFeeConfig;
+            _proposedProtocolFeeConfigTimestamp = 0;
+            // TODO emit event
+        } else {
+            revert TimelockNotElapsed();
+        }
     }
 
     /**
