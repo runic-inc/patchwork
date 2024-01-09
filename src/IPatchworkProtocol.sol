@@ -269,6 +269,15 @@ interface IPatchworkProtocol {
     }
 
     /**
+    @notice Proposal to change a fee configuration for either protocol or scope override
+    */
+    struct ProposedProtocolFeeConfig {
+        ProtocolFeeConfig config;
+        uint256 timestamp;
+        bool active; /// Used to enable/disable overrides - ignored for protocol
+    }
+
+    /**
     @notice Mint configuration
     */
     struct MintConfig {
@@ -563,6 +572,16 @@ interface IPatchworkProtocol {
     event ProtocolFeeConfigCommit(ProtocolFeeConfig config);
 
     /**
+    @notice Emitted on scope fee config override proposed
+    */
+    event ScopeFeeOverridePropose(ProtocolFeeOverride config);
+
+    /**
+    @notice Emitted on scope fee config override committed
+    */
+    event ScopeFeeOverrideCommit(ProtocolFeeOverride config);
+
+    /**
     @notice Claim a scope
     @param scopeName the name of the scope
     */
@@ -756,11 +775,18 @@ interface IPatchworkProtocol {
     function getProtocolFeeConfig() external view returns (ProtocolFeeConfig memory config);
 
     /**
-    @notice Set the protocol fee override for a scope
+    @notice Proposes a protocol fee override for a scope
     @dev must be protocol owner or banker to call
-    @param config The protocol fee configuration to be set
+    @param config The protocol fee override configuration to be set
     */
-    function setScopeFeeOverride(string memory scopeName, ProtocolFeeOverride memory config) external;
+    function proposeScopeFeeOverride(string memory scopeName, ProtocolFeeOverride memory config) external;
+
+    /**
+    @notice Commits the current proposed protocol fee override configuration for a scope
+    @dev must be protocol owner or banker to call
+    @dev may only be called after timelock has passed
+    */
+    function commitScopeFeeOverride(string memory scopeName) external;
 
     /**
     @notice Get the protocol fee override for a scope

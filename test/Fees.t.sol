@@ -87,7 +87,7 @@ contract FeesTest is Test {
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NoProposedFeeSet.selector));
         vm.prank(_patchworkOwner);
         _prot.commitProtocolFeeConfig();
-        
+
         vm.prank(_user2Address);
         _prot.proposeProtocolFeeConfig(IPatchworkProtocol.ProtocolFeeConfig(1000, 1000, 1000));
 
@@ -369,7 +369,7 @@ contract FeesTest is Test {
         _prot.setMintConfiguration(address(fragLr), IPatchworkProtocol.MintConfig(1000000000, true));
         // Scope owner cannot set fee overrides for anyone
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _scopeOwner));
-        _prot.setScopeFeeOverride(_scopeName, IPatchworkProtocol.ProtocolFeeOverride(100, 100, 100, true)); // 1%
+        _prot.proposeScopeFeeOverride(_scopeName, IPatchworkProtocol.ProtocolFeeOverride(100, 100, 100, true)); // 1%
 
         IPatchworkProtocol.ProtocolFeeOverride memory protFee = _prot.getScopeFeeOverride(_scopeName);
         assertEq(false, protFee.active);
@@ -378,12 +378,36 @@ contract FeesTest is Test {
         assertEq(0, protFee.patchBp);
 
         vm.stopPrank();
+
         vm.prank(_patchworkOwner);
-        _prot.setScopeFeeOverride(_scopeName, IPatchworkProtocol.ProtocolFeeOverride(100, 100, 100, true)); // 1%
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NoProposedFeeSet.selector));
+        _prot.commitScopeFeeOverride(_scopeName);
+
+        vm.prank(_patchworkOwner);
+        _prot.proposeScopeFeeOverride(_scopeName, IPatchworkProtocol.ProtocolFeeOverride(100, 100, 100, true)); // 1%
+        protFee = _prot.getScopeFeeOverride(_scopeName);
+        assertEq(false, protFee.active);
+        assertEq(0, protFee.mintBp);
+        assertEq(0, protFee.assignBp);
+        assertEq(0, protFee.patchBp);
+
+        vm.prank(_patchworkOwner);
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.TimelockNotElapsed.selector));
+        _prot.commitScopeFeeOverride(_scopeName);
+        skip(2000000);
+        vm.prank(_scopeOwner);
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _scopeOwner));
+        _prot.commitScopeFeeOverride(_scopeName);
+        vm.prank(_patchworkOwner);
+        _prot.commitScopeFeeOverride(_scopeName);
+        vm.prank(_patchworkOwner);
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NoProposedFeeSet.selector));
+        _prot.commitScopeFeeOverride(_scopeName);
+
         vm.prank(_patchworkOwner);
         _prot.addProtocolBanker(_user2Address);
         vm.prank(_user2Address);
-        _prot.setScopeFeeOverride(_scopeName, IPatchworkProtocol.ProtocolFeeOverride(100, 100, 100, true)); // 1%
+        _prot.proposeScopeFeeOverride(_scopeName, IPatchworkProtocol.ProtocolFeeOverride(100, 100, 100, true)); // 1%
         protFee = _prot.getScopeFeeOverride(_scopeName);
         assertEq(true, protFee.active);
         assertEq(100, protFee.mintBp);
@@ -414,7 +438,10 @@ contract FeesTest is Test {
 
         vm.stopPrank();
         vm.prank(_patchworkOwner);
-        _prot.setScopeFeeOverride(_scopeName, IPatchworkProtocol.ProtocolFeeOverride(0, 0, 0, false)); // 1%
+        _prot.proposeScopeFeeOverride(_scopeName, IPatchworkProtocol.ProtocolFeeOverride(0, 0, 0, false)); // 1%
+        skip(2000000);
+        vm.prank(_patchworkOwner);
+        _prot.commitScopeFeeOverride(_scopeName);
         protFee = _prot.getScopeFeeOverride(_scopeName);
         assertEq(false, protFee.active);
         assertEq(0, protFee.mintBp);

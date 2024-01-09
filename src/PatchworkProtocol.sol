@@ -64,10 +64,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     ProtocolFeeConfig private _protocolFeeConfig;
 
     /// Proposed protocol fee configuration
-    ProtocolFeeConfig private _proposedProtocolFeeConfig;
-
-    /// Timestamp of proposed protocol fee config change
-    uint256 private _proposedProtocolFeeConfigTimestamp;
+    mapping(string => ProposedProtocolFeeConfig) private _proposedProtocolFeeConfigs;
 
     /// scope-based fee overrides
     mapping(string => ProtocolFeeOverride) private _scopeFeeOverrides; 
@@ -372,8 +369,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-proposeProtocolFeeConfig}
     */
     function proposeProtocolFeeConfig(ProtocolFeeConfig memory config) public onlyProtoOwnerBanker {
-        _proposedProtocolFeeConfig = config;
-        _proposedProtocolFeeConfigTimestamp = block.timestamp;
+        _proposedProtocolFeeConfigs[""] = ProposedProtocolFeeConfig(config, block.timestamp, true);
         emit ProtocolFeeConfigPropose(config);
     }
 
@@ -381,16 +377,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-commitProtocolFeeConfig}
     */
     function commitProtocolFeeConfig() public onlyProtoOwnerBanker {
-        if (_proposedProtocolFeeConfigTimestamp == 0) {
-            revert NoProposedFeeSet();
-        }
-        if (block.timestamp > _proposedProtocolFeeConfigTimestamp + FEE_CHANGE_TIMELOCK) {
-            _protocolFeeConfig = _proposedProtocolFeeConfig;
-            _proposedProtocolFeeConfigTimestamp = 0;
-            emit ProtocolFeeConfigCommit(_protocolFeeConfig);
-        } else {
-            revert TimelockNotElapsed();
-        }
+        (ProtocolFeeConfig memory config, /* bool active */) = _commitFeeOverride("");
+        _protocolFeeConfig = config;
+        emit ProtocolFeeConfigCommit(_protocolFeeConfig);
     }
 
     /**
@@ -401,14 +390,45 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     }
 
     /**
-    @dev See {IPatchworkProtocol-setScopeFeeOverride}
+    @dev See {IPatchworkProtocol-proposeScopeFeeOverride}
     */
-    function setScopeFeeOverride(string memory scopeName, ProtocolFeeOverride memory config) public onlyProtoOwnerBanker {
-        if (!config.active) {
+    function proposeScopeFeeOverride(string memory scopeName, ProtocolFeeOverride memory config) public onlyProtoOwnerBanker {
+        _proposedProtocolFeeConfigs[scopeName] = ProposedProtocolFeeConfig(
+            ProtocolFeeConfig(config.mintBp, config.patchBp, config.assignBp), block.timestamp, config.active);
+        emit ScopeFeeOverridePropose(config);
+    }
+
+    /**
+    @dev See {IPatchworkProtocol-commitScopeFeeOverride}
+    */
+    function commitScopeFeeOverride(string memory scopeName) public onlyProtoOwnerBanker {
+        (ProtocolFeeConfig memory config, bool active) = _commitFeeOverride(scopeName);
+        ProtocolFeeOverride memory feeOverride = ProtocolFeeOverride(config.mintBp, config.patchBp, config.assignBp, active);
+        if (!active) {
             delete _scopeFeeOverrides[scopeName];
         } else {
-            _scopeFeeOverrides[scopeName] = config;
+            _scopeFeeOverrides[scopeName] = feeOverride;
         }
+        emit ScopeFeeOverrideCommit(feeOverride);
+    }
+
+    /**
+    @dev commits a fee override if a proposal exists and timelock is satisfied
+    @param scopeName "" for protocol or the scope name
+    @return config The proposed config
+    @return active The proposed active state (only applies to fee overrides)
+    */
+    function _commitFeeOverride(string memory scopeName) private returns (ProtocolFeeConfig memory config, bool active) {
+        ProposedProtocolFeeConfig storage proposal = _proposedProtocolFeeConfigs[scopeName];
+        if (proposal.timestamp == 0) {
+            revert NoProposedFeeSet();
+        }
+        if (block.timestamp < proposal.timestamp + FEE_CHANGE_TIMELOCK) {
+            revert TimelockNotElapsed();
+        }
+        config = proposal.config;
+        active = proposal.active;
+        delete _proposedProtocolFeeConfigs[scopeName];
     }
 
     /**
