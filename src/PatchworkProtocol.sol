@@ -88,6 +88,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-claimScope}
     */
     function claimScope(string calldata scopeName) public {
+        if (bytes(scopeName).length == 0) {
+            revert NotAuthorized(msg.sender);
+        }
         Scope storage s = _scopes[scopeName];
         if (s.owner != address(0)) {
             revert ScopeExists(scopeName);
