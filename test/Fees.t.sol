@@ -56,15 +56,49 @@ contract FeesTest is Test {
 
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _defaultUser));
         _prot.proposeProtocolFeeConfig(IPatchworkProtocol.ProtocolFeeConfig(1000, 1000, 1000));
-        // TODO
+
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NoProposedFeeSet.selector));
+        vm.prank(_patchworkOwner);
+        _prot.commitProtocolFeeConfig();
+
         vm.prank(_patchworkOwner);
         _prot.proposeProtocolFeeConfig(IPatchworkProtocol.ProtocolFeeConfig(150, 150, 150));
         IPatchworkProtocol.ProtocolFeeConfig memory feeConfig = _prot.getProtocolFeeConfig();
+        assertEq(1000, feeConfig.mintBp);
+        assertEq(1000, feeConfig.assignBp);
+        assertEq(1000, feeConfig.patchBp);
+
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _defaultUser));
+        _prot.commitProtocolFeeConfig();
+
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.TimelockNotElapsed.selector));
+        vm.prank(_patchworkOwner);
+        _prot.commitProtocolFeeConfig();
+
+        skip(2000000);
+        vm.prank(_patchworkOwner);
+        _prot.commitProtocolFeeConfig();
+
+        feeConfig = _prot.getProtocolFeeConfig();
         assertEq(150, feeConfig.mintBp);
         assertEq(150, feeConfig.assignBp);
         assertEq(150, feeConfig.patchBp);
+
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NoProposedFeeSet.selector));
+        vm.prank(_patchworkOwner);
+        _prot.commitProtocolFeeConfig();
+        
         vm.prank(_user2Address);
         _prot.proposeProtocolFeeConfig(IPatchworkProtocol.ProtocolFeeConfig(1000, 1000, 1000));
+
+        feeConfig = _prot.getProtocolFeeConfig();
+        assertEq(150, feeConfig.mintBp);
+        assertEq(150, feeConfig.assignBp);
+        assertEq(150, feeConfig.patchBp);
+
+        skip(2000000);
+        vm.prank(_patchworkOwner);
+        _prot.commitProtocolFeeConfig();
 
         vm.prank(_patchworkOwner);
         _prot.addProtocolBanker(_defaultUser);
