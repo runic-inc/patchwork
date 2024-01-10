@@ -64,7 +64,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     FeeConfig private _protocolFeeConfig;
 
     /// Proposed protocol fee configuration
-    mapping(string => ProposedFeeConfig) private _proposedProtocolFeeConfigs;
+    mapping(string => ProposedFeeConfig) private _proposedFeeConfigs;
 
     /// scope-based fee overrides
     mapping(string => FeeConfigOverride) private _scopeFeeOverrides; 
@@ -369,7 +369,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-proposeProtocolFeeConfig}
     */
     function proposeProtocolFeeConfig(FeeConfig memory config) public onlyProtoOwnerBanker {
-        _proposedProtocolFeeConfigs[""] = ProposedFeeConfig(config, block.timestamp, true);
+        _proposedFeeConfigs[""] = ProposedFeeConfig(config, block.timestamp, true);
         emit ProtocolFeeConfigPropose(config);
     }
 
@@ -377,7 +377,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-commitProtocolFeeConfig}
     */
     function commitProtocolFeeConfig() public onlyProtoOwnerBanker {
-        (FeeConfig memory config, /* bool active */) = _commitFeeOverride("");
+        (FeeConfig memory config, /* bool active */) = _preCommitFeeChange("");
         _protocolFeeConfig = config;
         emit ProtocolFeeConfigCommit(_protocolFeeConfig);
     }
@@ -393,33 +393,33 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-proposeScopeFeeOverride}
     */
     function proposeScopeFeeOverride(string memory scopeName, FeeConfigOverride memory config) public onlyProtoOwnerBanker {
-        _proposedProtocolFeeConfigs[scopeName] = ProposedFeeConfig(
+        _proposedFeeConfigs[scopeName] = ProposedFeeConfig(
             FeeConfig(config.mintBp, config.patchBp, config.assignBp), block.timestamp, config.active);
-        emit ScopeFeeOverridePropose(config);
+        emit ScopeFeeOverridePropose(scopeName, config);
     }
 
     /**
     @dev See {IPatchworkProtocol-commitScopeFeeOverride}
     */
     function commitScopeFeeOverride(string memory scopeName) public onlyProtoOwnerBanker {
-        (FeeConfig memory config, bool active) = _commitFeeOverride(scopeName);
+        (FeeConfig memory config, bool active) = _preCommitFeeChange(scopeName);
         FeeConfigOverride memory feeOverride = FeeConfigOverride(config.mintBp, config.patchBp, config.assignBp, active);
         if (!active) {
             delete _scopeFeeOverrides[scopeName];
         } else {
             _scopeFeeOverrides[scopeName] = feeOverride;
         }
-        emit ScopeFeeOverrideCommit(feeOverride);
+        emit ScopeFeeOverrideCommit(scopeName, feeOverride);
     }
 
     /**
-    @dev commits a fee override if a proposal exists and timelock is satisfied
+    @dev commits a fee change if a proposal exists and timelock is satisfied
     @param scopeName "" for protocol or the scope name
     @return config The proposed config
     @return active The proposed active state (only applies to fee overrides)
     */
-    function _commitFeeOverride(string memory scopeName) private returns (FeeConfig memory config, bool active) {
-        ProposedFeeConfig storage proposal = _proposedProtocolFeeConfigs[scopeName];
+    function _preCommitFeeChange(string memory scopeName) private returns (FeeConfig memory config, bool active) {
+        ProposedFeeConfig storage proposal = _proposedFeeConfigs[scopeName];
         if (proposal.timestamp == 0) {
             revert NoProposedFeeSet();
         }
@@ -428,7 +428,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         }
         config = proposal.config;
         active = proposal.active;
-        delete _proposedProtocolFeeConfigs[scopeName];
+        delete _proposedFeeConfigs[scopeName];
     }
 
     /**

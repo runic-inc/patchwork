@@ -574,12 +574,12 @@ interface IPatchworkProtocol {
     /**
     @notice Emitted on scope fee config override proposed
     */
-    event ScopeFeeOverridePropose(FeeConfigOverride config);
+    event ScopeFeeOverridePropose(string scopeName, FeeConfigOverride config);
 
     /**
     @notice Emitted on scope fee config override committed
     */
-    event ScopeFeeOverrideCommit(FeeConfigOverride config);
+    event ScopeFeeOverrideCommit(string scopeName, FeeConfigOverride config);
 
     /**
     @notice Claim a scope
