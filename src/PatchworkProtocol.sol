@@ -61,13 +61,19 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     mapping(address => bool) private _protocolBankers;
 
     /// Current protocol fee configuration
-    ProtocolFeeConfig private _protocolFeeConfig;
+    FeeConfig private _protocolFeeConfig;
+
+    /// Proposed protocol fee configuration
+    mapping(string => ProposedFeeConfig) private _proposedFeeConfigs;
 
     /// scope-based fee overrides
-    mapping(string => ProtocolFeeOverride) private _scopeFeeOverrides; 
+    mapping(string => FeeConfigOverride) private _scopeFeeOverrides; 
 
     /// Scope name cache
     mapping(address => string) private _scopeNameCache;
+
+    /// How much time must elapse before a fee change can be committed (1209600 = 2 weeks)
+    uint256 public constant FEE_CHANGE_TIMELOCK = 1209600; 
 
     // TODO maybe not necessary
     uint256 public constant TRANSFER_GAS_LIMIT = 5000;
@@ -79,6 +85,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-claimScope}
     */
     function claimScope(string calldata scopeName) public {
+        if (bytes(scopeName).length == 0) {
+            revert NotAuthorized(msg.sender);
+        }
         Scope storage s = _scopes[scopeName];
         if (s.owner != address(0)) {
             revert ScopeExists(scopeName);
@@ -344,7 +353,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         // Account for 100% of the message value
         if (msg.value != 0) {
             uint256 mintBp;
-            ProtocolFeeOverride storage feeOverride = _scopeFeeOverrides[scopeName];
+            FeeConfigOverride storage feeOverride = _scopeFeeOverrides[scopeName];
             if (feeOverride.active) {
                 mintBp = feeOverride.mintBp;
             } else {
@@ -357,34 +366,75 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     }
 
     /**
-    @dev See {IPatchworkProtocol-setProtocolFeeConfig}
+    @dev See {IPatchworkProtocol-proposeProtocolFeeConfig}
     */
-    function setProtocolFeeConfig(ProtocolFeeConfig memory config) public onlyProtoOwnerBanker {
+    function proposeProtocolFeeConfig(FeeConfig memory config) public onlyProtoOwnerBanker {
+        _proposedFeeConfigs[""] = ProposedFeeConfig(config, block.timestamp, true);
+        emit ProtocolFeeConfigPropose(config);
+    }
+
+    /**
+    @dev See {IPatchworkProtocol-commitProtocolFeeConfig}
+    */
+    function commitProtocolFeeConfig() public onlyProtoOwnerBanker {
+        (FeeConfig memory config, /* bool active */) = _preCommitFeeChange("");
         _protocolFeeConfig = config;
+        emit ProtocolFeeConfigCommit(_protocolFeeConfig);
     }
 
     /**
     @dev See {IPatchworkProtocol-getProtocolFeeConfig}
     */
-    function getProtocolFeeConfig() public view returns (ProtocolFeeConfig memory config) {
+    function getProtocolFeeConfig() public view returns (FeeConfig memory config) {
         return _protocolFeeConfig;
     }
 
     /**
-    @dev See {IPatchworkProtocol-setScopeFeeOverride}
+    @dev See {IPatchworkProtocol-proposeScopeFeeOverride}
     */
-    function setScopeFeeOverride(string memory scopeName, ProtocolFeeOverride memory config) public onlyProtoOwnerBanker {
-        if (!config.active) {
+    function proposeScopeFeeOverride(string memory scopeName, FeeConfigOverride memory config) public onlyProtoOwnerBanker {
+        _proposedFeeConfigs[scopeName] = ProposedFeeConfig(
+            FeeConfig(config.mintBp, config.patchBp, config.assignBp), block.timestamp, config.active);
+        emit ScopeFeeOverridePropose(scopeName, config);
+    }
+
+    /**
+    @dev See {IPatchworkProtocol-commitScopeFeeOverride}
+    */
+    function commitScopeFeeOverride(string memory scopeName) public onlyProtoOwnerBanker {
+        (FeeConfig memory config, bool active) = _preCommitFeeChange(scopeName);
+        FeeConfigOverride memory feeOverride = FeeConfigOverride(config.mintBp, config.patchBp, config.assignBp, active);
+        if (!active) {
             delete _scopeFeeOverrides[scopeName];
         } else {
-            _scopeFeeOverrides[scopeName] = config;
+            _scopeFeeOverrides[scopeName] = feeOverride;
         }
+        emit ScopeFeeOverrideCommit(scopeName, feeOverride);
+    }
+
+    /**
+    @dev commits a fee change if a proposal exists and timelock is satisfied
+    @param scopeName "" for protocol or the scope name
+    @return config The proposed config
+    @return active The proposed active state (only applies to fee overrides)
+    */
+    function _preCommitFeeChange(string memory scopeName) private returns (FeeConfig memory config, bool active) {
+        ProposedFeeConfig storage proposal = _proposedFeeConfigs[scopeName];
+        if (proposal.timestamp == 0) {
+            revert NoProposedFeeSet();
+        }
+        if (block.timestamp < proposal.timestamp + FEE_CHANGE_TIMELOCK) {
+            revert TimelockNotElapsed();
+        }
+        config = proposal.config;
+        active = proposal.active;
+        delete _proposedFeeConfigs[scopeName];
     }
 
     /**
     @dev See {IPatchworkProtocol-getScopeFeeOverride}
     */
-    function getScopeFeeOverride(string memory scopeName) public view returns (ProtocolFeeOverride memory config) {
+    function getScopeFeeOverride(string memory scopeName) public view returns (FeeConfigOverride memory config) {
         return _scopeFeeOverrides[scopeName];
     }
 
@@ -566,7 +616,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         }
         if (msg.value > 0) {
             uint256 patchBp;
-            ProtocolFeeOverride storage feeOverride = _scopeFeeOverrides[scopeName];
+            FeeConfigOverride storage feeOverride = _scopeFeeOverrides[scopeName];
             if (feeOverride.active) {
                 patchBp = feeOverride.patchBp;
             } else {
@@ -586,7 +636,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         }
         if (msg.value > 0) {
             uint256 assignBp;
-            ProtocolFeeOverride storage feeOverride = _scopeFeeOverrides[scopeName];
+            FeeConfigOverride storage feeOverride = _scopeFeeOverrides[scopeName];
             if (feeOverride.active) {
                 assignBp = feeOverride.assignBp;
             } else {

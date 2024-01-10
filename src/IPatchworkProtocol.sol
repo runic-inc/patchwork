@@ -239,23 +239,42 @@ interface IPatchworkProtocol {
     */
     error UnsupportedOperation();
 
-    /** 
-    @notice Protocol Fee Configuration
+    /**
+    @notice No proposed fee is set 
     */
-    struct ProtocolFeeConfig {
+    error NoProposedFeeSet();
+
+    /**
+    @notice Timelock has not elapsed
+    */
+    error TimelockNotElapsed();
+
+    /** 
+    @notice Fee Configuration
+    */
+    struct FeeConfig {
         uint256 mintBp;   /// mint basis points (10000 = 100%)
         uint256 patchBp;  /// patch basis points (10000 = 100%)
         uint256 assignBp; /// assign basis points (10000 = 100%)
     }
 
     /** 
-    @notice Protocol Fee Override
+    @notice Fee Configuration Override
     */
-    struct ProtocolFeeOverride {
+    struct FeeConfigOverride {
         uint256 mintBp;   /// mint basis points (10000 = 100%)
         uint256 patchBp;  /// patch basis points (10000 = 100%)
         uint256 assignBp; /// assign basis points (10000 = 100%)
         bool active; /// true for present
+    }
+
+    /**
+    @notice Proposal to change a fee configuration for either protocol or scope override
+    */
+    struct ProposedFeeConfig {
+        FeeConfig config;
+        uint256 timestamp;
+        bool active; /// Used to enable/disable overrides - ignored for protocol
     }
 
     /**
@@ -543,6 +562,26 @@ interface IPatchworkProtocol {
     event MintBatch(address indexed actor, string scopeName, address indexed to, address indexed mintable, bytes data, uint256 quantity);
 
     /**
+    @notice Emitted on protocol fee config proposed
+    */
+    event ProtocolFeeConfigPropose(FeeConfig config);
+
+    /**
+    @notice Emitted on protocol fee config committed
+    */
+    event ProtocolFeeConfigCommit(FeeConfig config);
+
+    /**
+    @notice Emitted on scope fee config override proposed
+    */
+    event ScopeFeeOverridePropose(string scopeName, FeeConfigOverride config);
+
+    /**
+    @notice Emitted on scope fee config override committed
+    */
+    event ScopeFeeOverrideCommit(string scopeName, FeeConfigOverride config);
+
+    /**
     @notice Claim a scope
     @param scopeName the name of the scope
     */
@@ -715,30 +754,45 @@ interface IPatchworkProtocol {
     function mintBatch(address to, address mintable, bytes calldata data, uint256 quantity) external payable returns (uint256[] memory tokenIds);
 
     /**
-    @notice Set the protocol fee configuration
+    @notice Proposes a protocol fee configuration
     @dev must be protocol owner or banker to call
+    @dev configuration does not apply until commitProtocolFeeConfig is called
     @param config The protocol fee configuration to be set
     */
-    function setProtocolFeeConfig(ProtocolFeeConfig memory config) external;
+    function proposeProtocolFeeConfig(FeeConfig memory config) external;
+
+    /**
+    @notice Commits the current proposed protocol fee configuration
+    @dev must be protocol owner or banker to call
+    @dev may only be called after timelock has passed
+    */
+    function commitProtocolFeeConfig() external;
 
     /**
     @notice Get the current protocol fee configuration
     @return config The current protocol fee configuration
     */
-    function getProtocolFeeConfig() external view returns (ProtocolFeeConfig memory config);
+    function getProtocolFeeConfig() external view returns (FeeConfig memory config);
 
     /**
-    @notice Set the protocol fee override for a scope
+    @notice Proposes a protocol fee override for a scope
     @dev must be protocol owner or banker to call
-    @param config The protocol fee configuration to be set
+    @param config The protocol fee override configuration to be set
     */
-    function setScopeFeeOverride(string memory scopeName, ProtocolFeeOverride memory config) external;
+    function proposeScopeFeeOverride(string memory scopeName, FeeConfigOverride memory config) external;
+
+    /**
+    @notice Commits the current proposed protocol fee override configuration for a scope
+    @dev must be protocol owner or banker to call
+    @dev may only be called after timelock has passed
+    */
+    function commitScopeFeeOverride(string memory scopeName) external;
 
     /**
     @notice Get the protocol fee override for a scope
     @return config The current protocol fee override
     */
-    function getScopeFeeOverride(string memory scopeName) external view returns (ProtocolFeeOverride memory config);
+    function getScopeFeeOverride(string memory scopeName) external view returns (FeeConfigOverride memory config);
 
     /**
     @notice Add a banker to the protocol
