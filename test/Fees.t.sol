@@ -35,7 +35,7 @@ contract FeesTest is Test {
         vm.prank(_patchworkOwner);
         _prot = new PatchworkProtocol();
         vm.prank(_patchworkOwner);
-        _prot.proposeProtocolFeeConfig(IPatchworkProtocol.ProtocolFeeConfig(1000, 1000, 1000)); // 10%, 10%, 10%
+        _prot.proposeProtocolFeeConfig(IPatchworkProtocol.FeeConfig(1000, 1000, 1000)); // 10%, 10%, 10%
         skip(20000000);
         vm.prank(_patchworkOwner);
         _prot.commitProtocolFeeConfig();
@@ -55,15 +55,15 @@ contract FeesTest is Test {
         _prot.addProtocolBanker(_user2Address);
 
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _defaultUser));
-        _prot.proposeProtocolFeeConfig(IPatchworkProtocol.ProtocolFeeConfig(1000, 1000, 1000));
+        _prot.proposeProtocolFeeConfig(IPatchworkProtocol.FeeConfig(1000, 1000, 1000));
 
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NoProposedFeeSet.selector));
         vm.prank(_patchworkOwner);
         _prot.commitProtocolFeeConfig();
 
         vm.prank(_patchworkOwner);
-        _prot.proposeProtocolFeeConfig(IPatchworkProtocol.ProtocolFeeConfig(150, 150, 150));
-        IPatchworkProtocol.ProtocolFeeConfig memory feeConfig = _prot.getProtocolFeeConfig();
+        _prot.proposeProtocolFeeConfig(IPatchworkProtocol.FeeConfig(150, 150, 150));
+        IPatchworkProtocol.FeeConfig memory feeConfig = _prot.getProtocolFeeConfig();
         assertEq(1000, feeConfig.mintBp);
         assertEq(1000, feeConfig.assignBp);
         assertEq(1000, feeConfig.patchBp);
@@ -89,7 +89,7 @@ contract FeesTest is Test {
         _prot.commitProtocolFeeConfig();
 
         vm.prank(_user2Address);
-        _prot.proposeProtocolFeeConfig(IPatchworkProtocol.ProtocolFeeConfig(1000, 1000, 1000));
+        _prot.proposeProtocolFeeConfig(IPatchworkProtocol.FeeConfig(1000, 1000, 1000));
 
         feeConfig = _prot.getProtocolFeeConfig();
         assertEq(150, feeConfig.mintBp);
@@ -369,9 +369,9 @@ contract FeesTest is Test {
         _prot.setMintConfiguration(address(fragLr), IPatchworkProtocol.MintConfig(1000000000, true));
         // Scope owner cannot set fee overrides for anyone
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _scopeOwner));
-        _prot.proposeScopeFeeOverride(_scopeName, IPatchworkProtocol.ProtocolFeeOverride(100, 100, 100, true)); // 1%
+        _prot.proposeScopeFeeOverride(_scopeName, IPatchworkProtocol.FeeConfigOverride(100, 100, 100, true)); // 1%
 
-        IPatchworkProtocol.ProtocolFeeOverride memory protFee = _prot.getScopeFeeOverride(_scopeName);
+        IPatchworkProtocol.FeeConfigOverride memory protFee = _prot.getScopeFeeOverride(_scopeName);
         assertEq(false, protFee.active);
         assertEq(0, protFee.mintBp);
         assertEq(0, protFee.assignBp);
@@ -384,7 +384,7 @@ contract FeesTest is Test {
         _prot.commitScopeFeeOverride(_scopeName);
 
         vm.prank(_patchworkOwner);
-        _prot.proposeScopeFeeOverride(_scopeName, IPatchworkProtocol.ProtocolFeeOverride(100, 100, 100, true)); // 1%
+        _prot.proposeScopeFeeOverride(_scopeName, IPatchworkProtocol.FeeConfigOverride(100, 100, 100, true)); // 1%
         protFee = _prot.getScopeFeeOverride(_scopeName);
         assertEq(false, protFee.active);
         assertEq(0, protFee.mintBp);
@@ -407,7 +407,7 @@ contract FeesTest is Test {
         vm.prank(_patchworkOwner);
         _prot.addProtocolBanker(_user2Address);
         vm.prank(_user2Address);
-        _prot.proposeScopeFeeOverride(_scopeName, IPatchworkProtocol.ProtocolFeeOverride(100, 100, 100, true)); // 1%
+        _prot.proposeScopeFeeOverride(_scopeName, IPatchworkProtocol.FeeConfigOverride(100, 100, 100, true)); // 1%
         protFee = _prot.getScopeFeeOverride(_scopeName);
         assertEq(true, protFee.active);
         assertEq(100, protFee.mintBp);
@@ -438,7 +438,7 @@ contract FeesTest is Test {
 
         vm.stopPrank();
         vm.prank(_patchworkOwner);
-        _prot.proposeScopeFeeOverride(_scopeName, IPatchworkProtocol.ProtocolFeeOverride(0, 0, 0, false)); // 1%
+        _prot.proposeScopeFeeOverride(_scopeName, IPatchworkProtocol.FeeConfigOverride(0, 0, 0, false)); // 1%
         skip(2000000);
         vm.prank(_patchworkOwner);
         _prot.commitScopeFeeOverride(_scopeName);
