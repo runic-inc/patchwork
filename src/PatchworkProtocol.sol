@@ -222,6 +222,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         _mustBeWhitelisted(scopeName, scope, addr);
         _mustBeOwnerOrOperator(scope);
         scope.patchFees[addr] = baseFee;
+        emit PatchFeeChange(scopeName, addr, baseFee);
     }
 
     /**
@@ -247,6 +248,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         _mustBeWhitelisted(scopeName, scope, fragmentAddress);
         _mustBeOwnerOrOperator(scope);
         scope.assignFees[fragmentAddress] = baseFee;
+        emit AssignFeeChange(scopeName, fragmentAddress, baseFee);
     }
 
     /**
