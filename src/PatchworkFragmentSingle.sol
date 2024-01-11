@@ -53,6 +53,9 @@ abstract contract PatchworkFragmentSingle is Patchwork721, IPatchworkSingleAssig
     @dev See {IPatchworkAssignableNFT-unassign}
     */
     function unassign(uint256 tokenId) public virtual mustHaveTokenWriteAuth(tokenId) {
+        if (_assignments[tokenId].tokenAddr == address(0)) {
+            revert IPatchworkProtocol.FragmentNotAssigned(address(this), tokenId);
+        }
         updateOwnership(tokenId);
         delete _assignments[tokenId];
         emit Unlocked(tokenId);

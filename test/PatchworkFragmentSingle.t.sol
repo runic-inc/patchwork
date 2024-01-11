@@ -57,6 +57,12 @@ contract PatchworkFragmentSingleTest is Test {
         _testFragmentLiteRefNFT.onAssignedTransfer(address(0), address(1), 1);
     }
 
+    function testNotAssignedUnassign() public {
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentNotAssigned.selector, address(_testFragmentLiteRefNFT), 5));
+        vm.prank(_scopeOwner);
+        _testFragmentLiteRefNFT.unassign(5);
+    }
+    
     function testLiteref56bitlimit() public {
         vm.prank(_scopeOwner);
         uint8 r1 = _testFragmentLiteRefNFT.registerReferenceAddress(address(1));
