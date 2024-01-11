@@ -249,6 +249,11 @@ interface IPatchworkProtocol {
     */
     error TimelockNotElapsed();
 
+    /**
+    @notice Invalid fee value 
+    */
+    error InvalidFeeValue();
+
     /** 
     @notice Fee Configuration
     */

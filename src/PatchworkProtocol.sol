@@ -78,6 +78,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     // TODO maybe not necessary
     uint256 public constant TRANSFER_GAS_LIMIT = 5000;
 
+    /// The denominator for fee basis points
+    uint256 private constant FEE_BASIS_DENOM = 10000;
+
     /// Constructor
     constructor() Ownable() ReentrancyGuard() {}
 
@@ -359,7 +362,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
             } else {
                 mintBp = _protocolFeeConfig.mintBp;
             }
-            uint256 protocolFee = msg.value * mintBp / 10000;
+            uint256 protocolFee = msg.value * mintBp / FEE_BASIS_DENOM;
             _protocolBalance += protocolFee;
             scope.balance += msg.value - protocolFee;
         }
@@ -369,6 +372,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-proposeProtocolFeeConfig}
     */
     function proposeProtocolFeeConfig(FeeConfig memory config) public onlyProtoOwnerBanker {
+        if (config.assignBp > FEE_BASIS_DENOM || config.mintBp > FEE_BASIS_DENOM || config.patchBp > FEE_BASIS_DENOM) {
+            revert InvalidFeeValue();
+        }
         _proposedFeeConfigs[""] = ProposedFeeConfig(config, block.timestamp, true);
         emit ProtocolFeeConfigPropose(config);
     }
@@ -393,6 +399,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-proposeScopeFeeOverride}
     */
     function proposeScopeFeeOverride(string memory scopeName, FeeConfigOverride memory config) public onlyProtoOwnerBanker {
+        if (config.assignBp > FEE_BASIS_DENOM || config.mintBp > FEE_BASIS_DENOM || config.patchBp > FEE_BASIS_DENOM) {
+            revert InvalidFeeValue();
+        }
         _proposedFeeConfigs[scopeName] = ProposedFeeConfig(
             FeeConfig(config.mintBp, config.patchBp, config.assignBp), block.timestamp, config.active);
         emit ScopeFeeOverridePropose(scopeName, config);
@@ -622,7 +631,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
             } else {
                 patchBp = _protocolFeeConfig.patchBp;
             }
-            uint256 protocolFee = msg.value * patchBp / 10000;
+            uint256 protocolFee = msg.value * patchBp / FEE_BASIS_DENOM;
             _protocolBalance += protocolFee;
             scope.balance += msg.value - protocolFee;
         }
@@ -642,7 +651,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
             } else {
                 assignBp = _protocolFeeConfig.assignBp;
             }
-            uint256 protocolFee = msg.value * assignBp / 10000;
+            uint256 protocolFee = msg.value * assignBp / FEE_BASIS_DENOM;
             _protocolBalance += protocolFee;
             scope.balance += msg.value - protocolFee;
         }
