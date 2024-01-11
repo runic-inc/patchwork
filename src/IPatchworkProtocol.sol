@@ -582,6 +582,16 @@ interface IPatchworkProtocol {
     event ScopeFeeOverrideCommit(string scopeName, FeeConfigOverride config);
 
     /**
+    @notice Emitted on patch fee change 
+    */
+    event PatchFeeChange(string scopeName, address indexed addr, uint256 fee);
+
+    /**
+    @notice Emitted on assign fee change 
+    */
+    event AssignFeeChange(string scopeName, address indexed addr, uint256 fee);
+
+    /**
     @notice Claim a scope
     @param scopeName the name of the scope
     */
