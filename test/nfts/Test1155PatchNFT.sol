@@ -30,10 +30,7 @@ contract Test1155PatchNFT is Patchwork1155Patch {
         return MetadataSchema(1, entries);
     }
 
-    function mintPatch(address to, address originalNFTAddress, uint originalNFTTokenId, address account) external returns (uint256 tokenId){
-        if (msg.sender != _manager) {
-            revert();
-        }
+    function mintPatch(address to, address originalNFTAddress, uint originalNFTTokenId, address account) external mustBeManager returns (uint256 tokenId){
         // Just for testing
         tokenId = _nextTokenId;
         _nextTokenId++;
