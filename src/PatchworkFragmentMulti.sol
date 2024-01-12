@@ -21,13 +21,6 @@ abstract contract PatchworkFragmentMulti is Patchwork721, IPatchworkMultiAssigna
     mapping(uint256 => AssignmentStorage) internal _assignmentStorage;
 
     /**
-    @dev See {IPatchwork721-getScopeName}
-    */
-    function getScopeName() public view virtual override (Patchwork721, IPatchworkScoped) returns (string memory) {
-        return _scopeName;
-    }
-
-    /**
     @dev See {IERC165-supportsInterface}
     */
     function supportsInterface(bytes4 interfaceID) public view virtual override returns (bool) {

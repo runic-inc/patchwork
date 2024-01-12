@@ -30,13 +30,6 @@ abstract contract PatchworkPatch is Patchwork721, IPatchworkPatch {
     }
 
     /**
-    @dev See {IPatchwork721-getScopeName}
-    */
-    function getScopeName() public view virtual override(Patchwork721, IPatchworkScoped) returns (string memory) {
-        return _scopeName;
-    }
-
-    /**
     @dev will return the current owner of the patched address+tokenId
     @dev See {IERC721-ownerOf}
     */

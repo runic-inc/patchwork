@@ -20,13 +20,6 @@ abstract contract PatchworkFragmentSingle is Patchwork721, IPatchworkSingleAssig
     mapping(uint256 => Assignment) internal _assignments;
 
     /**
-    @dev See {IPatchworkScoped-getScopeName}
-    */
-    function getScopeName() public view virtual override (Patchwork721, IPatchworkScoped) returns (string memory) {
-        return _scopeName;
-    }
-
-    /**
     @dev See {IERC165-supportsInterface}
     */
     function supportsInterface(bytes4 interfaceID) public view virtual override returns (bool) {

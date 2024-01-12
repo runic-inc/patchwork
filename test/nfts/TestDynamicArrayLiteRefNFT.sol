@@ -55,10 +55,6 @@ contract TestDynamicArrayLiteRefNFT is Patchwork721, PatchworkLiteRef, IPatchwor
         _manager = manager_;
     }
 
-    function getScopeName() public view override (Patchwork721, IPatchworkScoped) returns (string memory scopeName) {
-        return Patchwork721.getScopeName();
-    }
-
     function mint(address to, bytes calldata /* data */) public payable returns (uint256 tokenId) {
         tokenId = _nextTokenId;
         _nextTokenId++;
