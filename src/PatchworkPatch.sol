@@ -113,6 +113,7 @@ abstract contract PatchworkPatch is Patchwork721, IPatchworkPatch {
         uint256 originalTokenId = _patchedTokenIds[tokenId];
         IPatchworkProtocol(_manager).patchBurned(originalAddress, originalTokenId, address(this));
         delete _patchedAddresses[tokenId];
+        delete _patchedTokenIds[tokenId];
         delete _patchedAddressesRev[keccak256(abi.encodePacked(originalAddress, originalTokenId))];
         super._burn(tokenId);
     }
