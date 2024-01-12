@@ -46,10 +46,6 @@ contract TestPatchFragmentNFT is PatchworkPatch, PatchworkFragmentSingle {
         _manager = manager_;
     }
 
-    function getScopeName() public view virtual override(PatchworkPatch, PatchworkFragmentSingle) returns (string memory) {
-        return _scopeName;
-    }
-
     function setLocked(uint256 tokenId, bool locked_) public view virtual override(PatchworkPatch, PatchworkFragmentSingle) {
          return PatchworkPatch.setLocked(tokenId, locked_);
     }

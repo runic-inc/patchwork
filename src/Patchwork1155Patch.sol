@@ -32,13 +32,6 @@ abstract contract Patchwork1155Patch is Patchwork721, IPatchwork1155Patch {
     }
 
     /**
-    @dev See {IPatchwork721-getScopeName}
-    */
-    function getScopeName() public view virtual override(Patchwork721, IPatchworkScoped) returns (string memory) {
-        return _scopeName;
-    }
-
-    /**
     @notice stores a patch
     @param tokenId the tokenId of the patch
     @param originalAddress the address of the original ERC-1155 we are patching
