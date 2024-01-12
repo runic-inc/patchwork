@@ -81,6 +81,9 @@ abstract contract PatchworkLiteRef is IPatchworkLiteRef, ERC165 {
     @dev See {IPatchworkLiteRef-redactReferenceAddress}
     */
     function redactReferenceAddress(uint8 id) public virtual _mustHaveWriteAuth {
+        if (_referenceAddresses[id] == address(0)) {
+            revert IPatchworkProtocol.FragmentUnregistered(address(0));
+        }
         _redactedReferenceIds[id] = true;
         emit Redact(address(this), _referenceAddresses[id]);
     }
@@ -89,6 +92,9 @@ abstract contract PatchworkLiteRef is IPatchworkLiteRef, ERC165 {
     @dev See {IPatchworkLiteRef-unredactReferenceAddress}
     */
     function unredactReferenceAddress(uint8 id) public virtual _mustHaveWriteAuth {
+        if (_referenceAddresses[id] == address(0)) {
+            revert IPatchworkProtocol.FragmentUnregistered(address(0));
+        }
         _redactedReferenceIds[id] = false;
         emit Unredact(address(this), _referenceAddresses[id]);
     }
