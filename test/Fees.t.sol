@@ -270,7 +270,7 @@ contract FeesTest is Test {
         TestBase1155 tBase1155 = new TestBase1155();
         TestPatchLiteRefNFT t721 = new TestPatchLiteRefNFT(address(_prot));
         Test1155PatchNFT t1155 = new Test1155PatchNFT(address(_prot), false);
-        TestAccountPatchNFT tAccount = new TestAccountPatchNFT(address(_prot), false, false);
+        TestAccountPatchNFT tAccount = new TestAccountPatchNFT(address(_prot), false);
         vm.stopPrank();
 
         // 721
