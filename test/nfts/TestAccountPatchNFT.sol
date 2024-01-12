@@ -3,19 +3,17 @@ pragma solidity ^0.8.13;
 
 import "../../src/PatchworkAccountPatch.sol";
 
-contract TestAccountPatchNFT is PatchworkAccountPatch {
+contract TestAccountPatchNFT is PatchworkReversibleAccountPatch {
 
     uint256 _nextTokenId = 0;
     bool _sameOwnerModel;
-    bool _reverseEnabled;
 
     struct TestPatchworkNFTMetadata {
         uint256 thing;
     }
 
-    constructor(address manager_, bool sameOwnerModel_, bool reverseEnabled_) Patchwork721("testscope", "TestAccountPatchNFT", "TPLR", manager_) {
+    constructor(address manager_, bool sameOwnerModel_) Patchwork721("testscope", "TestAccountPatchNFT", "TPLR", manager_) {
         _sameOwnerModel = sameOwnerModel_;
-        _reverseEnabled = reverseEnabled_;
     }
 
     function schemaURI() pure external returns (string memory) {
@@ -43,7 +41,7 @@ contract TestAccountPatchNFT is PatchworkAccountPatch {
         }
         uint256 tokenId = _nextTokenId;
         _nextTokenId++;
-        _storePatch(tokenId, original, _reverseEnabled);
+        _storePatch(tokenId, original);
         _mint(to, tokenId);
         _metadataStorage[tokenId] = new uint256[](1);
         return tokenId;
