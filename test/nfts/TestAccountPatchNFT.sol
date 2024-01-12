@@ -30,10 +30,7 @@ contract TestAccountPatchNFT is PatchworkReversibleAccountPatch {
         return MetadataSchema(1, entries);
     }
 
-    function mintPatch(address to, address original) public returns (uint256) {
-        if (msg.sender != _manager) {
-            revert IPatchworkProtocol.NotAuthorized(msg.sender);
-        }
+    function mintPatch(address to, address original) public mustBeManager returns (uint256) {
         if (_sameOwnerModel) {
             if (to != original) {
                 revert IPatchworkProtocol.MintNotAllowed(to);
