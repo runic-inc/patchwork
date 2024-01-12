@@ -452,16 +452,16 @@ contract FeesTest is Test {
     function testInvalidFeeValues() public {
         vm.startPrank(_patchworkOwner);
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.InvalidFeeValue.selector));
-        _prot.proposeProtocolFeeConfig(IPatchworkProtocol.FeeConfig(10001, 1000, 1000));
+        _prot.proposeProtocolFeeConfig(IPatchworkProtocol.FeeConfig(3001, 1000, 1000));
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.InvalidFeeValue.selector));
-        _prot.proposeProtocolFeeConfig(IPatchworkProtocol.FeeConfig(1000, 10001, 1000));
+        _prot.proposeProtocolFeeConfig(IPatchworkProtocol.FeeConfig(1000, 3001, 1000));
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.InvalidFeeValue.selector));
-        _prot.proposeProtocolFeeConfig(IPatchworkProtocol.FeeConfig(1000, 1000, 10001));
+        _prot.proposeProtocolFeeConfig(IPatchworkProtocol.FeeConfig(1000, 1000, 3001));
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.InvalidFeeValue.selector));
-        _prot.proposeScopeFeeOverride(_scopeName, IPatchworkProtocol.FeeConfigOverride(10001, 0, 0, true));
+        _prot.proposeScopeFeeOverride(_scopeName, IPatchworkProtocol.FeeConfigOverride(3001, 0, 0, true));
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.InvalidFeeValue.selector));
-        _prot.proposeScopeFeeOverride(_scopeName, IPatchworkProtocol.FeeConfigOverride(0, 10001, 0, true));
+        _prot.proposeScopeFeeOverride(_scopeName, IPatchworkProtocol.FeeConfigOverride(0, 3001, 0, true));
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.InvalidFeeValue.selector));
-        _prot.proposeScopeFeeOverride(_scopeName, IPatchworkProtocol.FeeConfigOverride(0, 0, 10001, true));
+        _prot.proposeScopeFeeOverride(_scopeName, IPatchworkProtocol.FeeConfigOverride(0, 0, 3001, true));
         }
 }
