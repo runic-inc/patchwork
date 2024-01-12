@@ -116,6 +116,14 @@ contract PatchworkNFTCombinedTest is Test {
         _testPatchLiteRefNFT.unredactReferenceAddress(refIdx);
         vm.prank(_scopeOwner);
         _prot.assign(address(_testFragmentLiteRefNFT), newFrag, address(_testPatchLiteRefNFT), patchTokenId);
+
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentUnregistered.selector, address(0)));
+        vm.prank(_scopeOwner);
+         _testPatchLiteRefNFT.redactReferenceAddress(100);
+
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.FragmentUnregistered.selector, address(0)));
+        vm.prank(_scopeOwner);
+         _testPatchLiteRefNFT.unredactReferenceAddress(100);
     }
 
     function testReferenceAddressErrors() public {
