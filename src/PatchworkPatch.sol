@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "./Patchwork721.sol";
-import "./IPatchworkPatch.sol";
+import "./interfaces/IPatchworkPatch.sol";
 
 /**
 @title PatchworkPatch

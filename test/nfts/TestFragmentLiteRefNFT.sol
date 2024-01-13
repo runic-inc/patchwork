@@ -11,7 +11,7 @@ pragma solidity ^0.8.13;
 
 import "../../src/PatchworkFragmentSingle.sol";
 import "../../src/PatchworkLiteRef.sol";
-import "../../src/IPatchworkMintable.sol";
+import "../../src/interfaces/IPatchworkMintable.sol";
 
 enum FragmentType {
     BASE,
@@ -47,6 +47,9 @@ contract TestFragmentLiteRefNFT is PatchworkFragmentSingle, PatchworkLiteRef, IP
     }
 
     function mint(address to, bytes calldata /* data */) public payable returns (uint256 tokenId) {
+        if (msg.value != 0) {
+            revert();
+        }
         tokenId = _nextTokenId;
         _nextTokenId++;
         _safeMint(to, tokenId);
@@ -54,6 +57,9 @@ contract TestFragmentLiteRefNFT is PatchworkFragmentSingle, PatchworkLiteRef, IP
     }
     
     function mintBatch(address to, bytes calldata data, uint256 quantity) public payable returns (uint256[] memory tokenIds) {
+        if (msg.value != 0) {
+            revert();
+        }
         tokenIds = new uint256[](quantity);
         for (uint256 i = 0; i < quantity; i++) {
             tokenIds[i] = mint(to, data);

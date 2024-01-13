@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "./Patchwork721.sol";
-import "./IPatchworkMultiAssignable.sol";
+import "./interfaces/IPatchworkMultiAssignable.sol";
 
 /**
 @title PatchworkFragmentMulti

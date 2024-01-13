@@ -3,9 +3,9 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./IPatchwork721.sol";
-import "./IERC4906.sol";
-import "./IPatchworkProtocol.sol";
+import "./interfaces/IPatchwork721.sol";
+import "./interfaces/IERC4906.sol";
+import "./interfaces/IPatchworkProtocol.sol";
 
 /**
 @title Patchwork721 Abstract Contract

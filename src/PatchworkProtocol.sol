@@ -18,16 +18,16 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "./IPatchwork721.sol";
-import "./IPatchworkSingleAssignable.sol";
-import "./IPatchworkMultiAssignable.sol";
-import "./IPatchworkLiteRef.sol";
-import "./IPatchworkPatch.sol";
-import "./IPatchwork1155Patch.sol";
-import "./IPatchworkAccountPatch.sol";
-import "./IPatchworkProtocol.sol";
-import "./IPatchworkMintable.sol";
-import "./IPatchworkScoped.sol";
+import "./interfaces/IPatchwork721.sol";
+import "./interfaces/IPatchworkSingleAssignable.sol";
+import "./interfaces/IPatchworkMultiAssignable.sol";
+import "./interfaces/IPatchworkLiteRef.sol";
+import "./interfaces/IPatchworkPatch.sol";
+import "./interfaces/IPatchwork1155Patch.sol";
+import "./interfaces/IPatchworkAccountPatch.sol";
+import "./interfaces/IPatchworkProtocol.sol";
+import "./interfaces/IPatchworkMintable.sol";
+import "./interfaces/IPatchworkScoped.sol";
 
 /** 
 @title Patchwork Protocol

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "./IPatchworkAccountPatch.sol";
-import "./IPatchworkProtocol.sol";
+import "./interfaces/IPatchworkAccountPatch.sol";
+import "./interfaces/IPatchworkProtocol.sol";
 import "./Patchwork721.sol";
 
 /**
