@@ -11,10 +11,11 @@ import "./IPatchwork1155Patch.sol";
 */
 abstract contract Patchwork1155Patch is Patchwork721, IPatchwork1155Patch {
 
+    /// @dev A canonical path to an 1155 patched
     struct PatchCanonical {
-        address addr;
-        uint256 tokenId;
-        address account;
+        address addr;    // The address of the 1155
+        uint256 tokenId; // The tokenId of the 1155
+        address account; // The account for the 1155
     }
 
     /// @dev Mapping from token ID to the canonical address of the NFT that this patch is applied to.
