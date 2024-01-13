@@ -20,7 +20,7 @@ library PatchworkUtils {
     }
 
     /**
-    @notice Converts uint64 raw data to a 16 character string
+    @notice Converts uint128 raw data to a 16 character string
     @param raw the raw data
     @return out the string
     */
@@ -34,7 +34,7 @@ library PatchworkUtils {
     }
 
     /**
-    @notice Converts uint64 raw data to a 32 character string
+    @notice Converts uint256 raw data to a 32 character string
     @param raw the raw data
     @return out the string
     */

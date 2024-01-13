@@ -879,6 +879,8 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @param fragmentTokenId the IPatchworkAssignable's tokenId
     @param target the IPatchworkLiteRef target's address
     @param targetTokenId the IPatchworkLiteRef target's tokenId
+    @param direct If this is calling the direct function
+    @param targetMetadataId the metadataId to use on the target
     @param scopeName the name of the target's scope
     */
     function _doUnassign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, bool direct, uint256 targetMetadataId, string memory scopeName) private {
