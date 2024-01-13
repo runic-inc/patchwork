@@ -65,10 +65,10 @@ abstract contract PatchworkPatch is Patchwork721, IPatchworkPatch {
     }
 
     /**
-    @dev See {IPatchworkPatch-unpatchedOwnerOf}
+    @dev See {IPatchworkPatch-ownerOfPatch}
     */
-    function unpatchedOwnerOf(uint256 tokenId) public virtual view returns (address) {
-        return super.ownerOf(tokenId);
+    function ownerOfPatch(uint256 tokenId) public virtual view returns (address) {
+        return ERC721.ownerOf(tokenId);
     }
 
     /**

@@ -75,9 +75,6 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     /// How much time must elapse before a fee change can be committed (1209600 = 2 weeks)
     uint256 public constant FEE_CHANGE_TIMELOCK = 1209600; 
 
-    // TODO maybe not necessary
-    uint256 public constant TRANSFER_GAS_LIMIT = 5000;
-
     /// The denominator for fee basis points
     uint256 private constant FEE_BASIS_DENOM = 10000;
 
@@ -299,7 +296,6 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         // modify state before calling to send
         scope.balance -= amount;
         // transfer funds
-        // (bool sent,) = msg.sender.call{value: amount, gas: TRANSFER_GAS_LIMIT}(""); // TODO is gas limit good or bad?
         (bool sent,) = msg.sender.call{value: amount}("");
         if (!sent) {
             revert FailedToSend();
@@ -476,8 +472,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
             revert InsufficientFunds();
         }
         _protocolBalance -= amount;
-        // (bool sent,) = msg.sender.call{value: amount, gas: TRANSFER_GAS_LIMIT}(""); // TODO is gas limit good or bad?
-        (bool sent,) = msg.sender.call{value: amount}("");
+         (bool sent,) = msg.sender.call{value: amount}("");
         if (!sent) {
             revert FailedToSend();
         }
@@ -571,7 +566,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
             revert ERC1155AlreadyPatched(originalAddress, originalTokenId, originalAccount, patchAddress);
         }
         _uniquePatches[_hash] = true;
-        tokenId = patch_.mintPatch(to, originalAddress, originalTokenId, originalAccount);
+        tokenId = patch_.mintPatch(to, IPatchwork1155Patch.PatchTarget(originalAddress, originalTokenId, originalAccount));
         emit ERC1155Patch(to, originalAddress, originalTokenId, originalAccount, patchAddress, tokenId);
         return tokenId;
     }

@@ -29,7 +29,7 @@ interface IPatchworkPatch is IPatchworkScoped {
     @param tokenId ID of the token
     @return address Address of the owner
     */
-    function unpatchedOwnerOf(uint256 tokenId) external view returns (address);
+    function ownerOfPatch(uint256 tokenId) external view returns (address);
 }
 
 /**
