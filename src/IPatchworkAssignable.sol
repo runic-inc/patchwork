@@ -9,6 +9,13 @@ import "./IPatchworkScoped.sol";
 @notice Interface for contracts supporting Patchwork assignment
 */
 interface IPatchworkAssignable is IPatchworkScoped {
+    
+    /// Represents an assignment of a token from an external NFT contract to a token in this contract.
+    struct Assignment {
+        address tokenAddr;  /// The address of the external NFT contract.
+        uint256 tokenId;    /// The ID of the token in the external NFT contract.
+    }
+
     /**
     @notice Assigns a token to another
     @param ourTokenId ID of our token
