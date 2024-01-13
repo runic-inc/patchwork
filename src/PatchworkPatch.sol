@@ -12,11 +12,14 @@ import "./IPatchworkPatch.sol";
 */
 abstract contract PatchworkPatch is Patchwork721, IPatchworkPatch {
 
-    /// @dev Mapping from token ID to the address of the NFT that this patch is applied to.
-    mapping(uint256 => address) internal _patchedAddresses;
+    /// @dev A canonical path to an 721 patched
+    struct PatchCanonical {
+        address addr;    // The address of the 721
+        uint256 tokenId; // The tokenId of the 721
+    }
 
-    /// @dev Mapping from token ID to the token ID of the NFT that this patch is applied to.
-    mapping(uint256 => uint256) internal _patchedTokenIds;
+    /// @dev Mapping from token ID to the canonical address and tokenId of the NFT that this patch is applied to.
+    mapping(uint256 => PatchCanonical) internal _patchedAddresses;
 
     /**
     @dev See {IERC165-supportsInterface}
@@ -32,7 +35,8 @@ abstract contract PatchworkPatch is Patchwork721, IPatchworkPatch {
     */
     function ownerOf(uint256 tokenId) public view virtual override(ERC721, IERC721) returns (address) {
         // Default is inherited ownership
-        return IERC721(_patchedAddresses[tokenId]).ownerOf(_patchedTokenIds[tokenId]);
+        PatchCanonical storage canonical = _patchedAddresses[tokenId];
+        return IERC721(canonical.addr).ownerOf(canonical.tokenId);
     }
 
     /**
@@ -42,15 +46,14 @@ abstract contract PatchworkPatch is Patchwork721, IPatchworkPatch {
     @param originalTokenId the tokenId of the original ERC-721 we are patching
     */
     function _storePatch(uint256 tokenId, address originalAddress, uint256 originalTokenId) internal virtual {
-        _patchedAddresses[tokenId] = originalAddress;
-        _patchedTokenIds[tokenId] = originalTokenId;
+        _patchedAddresses[tokenId] = PatchCanonical(originalAddress, originalTokenId);
     }
 
     /**
     @dev See {IPatchworkPatch-updateOwnership}
     */
     function updateOwnership(uint256 tokenId) public virtual {
-        address patchedAddr = _patchedAddresses[tokenId];
+        address patchedAddr = _patchedAddresses[tokenId].addr;
         if (patchedAddr != address(0)) {
             address owner_ = ownerOf(tokenId);
             address curOwner = super.ownerOf(tokenId);
@@ -88,11 +91,9 @@ abstract contract PatchworkPatch is Patchwork721, IPatchworkPatch {
     @dev See {ERC721-_burn}
     */ 
     function _burn(uint256 tokenId) internal virtual override {
-        address originalAddress = _patchedAddresses[tokenId];
-        uint256 originalTokenId = _patchedTokenIds[tokenId];
-        IPatchworkProtocol(_manager).patchBurned(originalAddress, originalTokenId, address(this));
+        PatchCanonical storage canonical = _patchedAddresses[tokenId];
+        IPatchworkProtocol(_manager).patchBurned(canonical.addr, canonical.tokenId, address(this));
         delete _patchedAddresses[tokenId];
-        delete _patchedTokenIds[tokenId];
         super._burn(tokenId);
     }
 }
@@ -131,9 +132,8 @@ abstract contract PatchworkReversiblePatch is PatchworkPatch, IPatchworkReversib
     @dev See {ERC721-_burn}
     */ 
     function _burn(uint256 tokenId) internal virtual override {
-        address originalAddress = _patchedAddresses[tokenId];
-        uint256 originalTokenId = _patchedTokenIds[tokenId];
-        delete _patchedAddressesRev[keccak256(abi.encodePacked(originalAddress, originalTokenId))];
+        PatchCanonical storage canonical = _patchedAddresses[tokenId];
+        delete _patchedAddressesRev[keccak256(abi.encodePacked(canonical.addr, canonical.tokenId))];
         super._burn(tokenId);
     }
 }

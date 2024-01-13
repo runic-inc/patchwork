@@ -9,12 +9,6 @@ import "./IPatchworkSingleAssignable.sol";
 @dev base implementation of a Single-relation Fragment is IPatchworkSingleAssignable
 */
 abstract contract PatchworkFragmentSingle is Patchwork721, IPatchworkSingleAssignable {
- 
-    /// Represents an assignment of a token from an external NFT contract to a token in this contract.
-    struct Assignment {
-        address tokenAddr;  /// The address of the external NFT contract.
-        uint256 tokenId;    /// The ID of the token in the external NFT contract.
-    }
 
     /// A mapping from token IDs in this contract to their assignments.
     mapping(uint256 => Assignment) internal _assignments;

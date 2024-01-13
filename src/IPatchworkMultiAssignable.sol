@@ -10,11 +10,6 @@ import "./IPatchworkAssignable.sol";
 */
 interface IPatchworkMultiAssignable is IPatchworkAssignable {
 
-    struct Assignment {
-        address tokenAddr;  /// The address of the external NFT contract.
-        uint256 tokenId;    /// The ID of the token in the external NFT contract.
-    }
-
     /**
     @notice Checks if this fragment is assigned to a target
     @param ourTokenId the tokenId of the fragment
