@@ -93,10 +93,8 @@ contract PatchworkPatchTest is Test {
         uint256 liteRefId = _prot.patch(_userAddress, address(_testBaseNFT), baseTokenId, address(_testPatchLiteRefNFT));
         uint256 liteRefId2 = _prot.patch(_user2Address, address(_testBaseNFT), baseTokenId2, address(_testPatchLiteRefNFT));
         uint256 fragmentTokenId = _prot.patch(_userAddress, address(_testBaseNFT), baseTokenId3, address(testPatchFragmentNFT));
-        // check reverse lookups - testPatchLiteRefNFT is disabled, always 0. patchFragmentNFT is enabled
-        assertEq(0, _testPatchLiteRefNFT.getTokenIdForOriginal721(address(_testBaseNFT), baseTokenId));
-        assertEq(0, _testPatchLiteRefNFT.getTokenIdForOriginal721(address(_testBaseNFT), baseTokenId2));
-        assertEq(fragmentTokenId, _testPatchLiteRefNFT.getTokenIdForOriginal721(address(testPatchFragmentNFT), baseTokenId3));
+        // check reverse lookups
+        assertEq(fragmentTokenId, testPatchFragmentNFT.getTokenIdForOriginal721(address(_testBaseNFT), baseTokenId3));
         // cannot assign patch to a literef that this person does not own
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _scopeOwner));
         _prot.assign(address(testPatchFragmentNFT), fragmentTokenId, address(_testPatchLiteRefNFT), liteRefId2);

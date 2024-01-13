@@ -18,9 +18,6 @@ abstract contract PatchworkPatch is Patchwork721, IPatchworkPatch {
     /// @dev Mapping from token ID to the token ID of the NFT that this patch is applied to.
     mapping(uint256 => uint256) internal _patchedTokenIds;
 
-    /// @dev Mapping of hash of original address + token ID for reverse lookups
-    mapping(bytes32 => uint256) internal _patchedAddressesRev; // hash of patched addr+tokenid to tokenId
-
     /**
     @dev See {IERC165-supportsInterface}
     */
@@ -43,21 +40,10 @@ abstract contract PatchworkPatch is Patchwork721, IPatchworkPatch {
     @param tokenId the tokenId of the patch
     @param originalAddress the address of the original ERC-721 we are patching
     @param originalTokenId the tokenId of the original ERC-721 we are patching
-    @param withReverse store reverse lookup
     */
-    function _storePatch(uint256 tokenId, address originalAddress, uint256 originalTokenId, bool withReverse) internal virtual {
+    function _storePatch(uint256 tokenId, address originalAddress, uint256 originalTokenId) internal virtual {
         _patchedAddresses[tokenId] = originalAddress;
         _patchedTokenIds[tokenId] = originalTokenId;
-        if (withReverse) {
-            _patchedAddressesRev[keccak256(abi.encodePacked(originalAddress, originalTokenId))] = tokenId;
-        }
-    }
-
-    /**
-    @dev See {IPatchworkPatch-getTokenIdForOriginal721}
-    */
-    function getTokenIdForOriginal721(address originalAddress, uint256 originalTokenId) public view virtual returns (uint256 tokenId) {
-        return _patchedAddressesRev[keccak256(abi.encodePacked(originalAddress, originalTokenId))];
     }
 
     /**
@@ -107,6 +93,46 @@ abstract contract PatchworkPatch is Patchwork721, IPatchworkPatch {
         IPatchworkProtocol(_manager).patchBurned(originalAddress, originalTokenId, address(this));
         delete _patchedAddresses[tokenId];
         delete _patchedTokenIds[tokenId];
+        super._burn(tokenId);
+    }
+}
+
+abstract contract PatchworkReversiblePatch is PatchworkPatch, IPatchworkReversiblePatch {
+    /// @dev Mapping of hash of original address + token ID for reverse lookups
+    mapping(bytes32 => uint256) internal _patchedAddressesRev; // hash of patched addr+tokenid to tokenId
+
+    /**
+    @dev See {IERC165-supportsInterface}
+    */
+    function supportsInterface(bytes4 interfaceID) public view virtual override returns (bool) {
+        return interfaceID == type(IPatchworkReversiblePatch).interfaceId ||
+        super.supportsInterface(interfaceID); 
+    }
+
+    /**
+    @dev See {IPatchworkPatch-getTokenIdForOriginal721}
+    */
+    function getTokenIdForOriginal721(address originalAddress, uint256 originalTokenId) public view virtual returns (uint256 tokenId) {
+        return _patchedAddressesRev[keccak256(abi.encodePacked(originalAddress, originalTokenId))];
+    }
+
+    /**
+    @notice stores a patch
+    @param tokenId the tokenId of the patch
+    @param originalAddress the address of the original ERC-721 we are patching
+    @param originalTokenId the tokenId of the original ERC-721 we are patching
+    */
+    function _storePatch(uint256 tokenId, address originalAddress, uint256 originalTokenId) internal virtual override {
+        super._storePatch(tokenId, originalAddress, originalTokenId);
+        _patchedAddressesRev[keccak256(abi.encodePacked(originalAddress, originalTokenId))] = tokenId;
+    }
+
+    /**
+    @dev See {ERC721-_burn}
+    */ 
+    function _burn(uint256 tokenId) internal virtual override {
+        address originalAddress = _patchedAddresses[tokenId];
+        uint256 originalTokenId = _patchedTokenIds[tokenId];
         delete _patchedAddressesRev[keccak256(abi.encodePacked(originalAddress, originalTokenId))];
         super._burn(tokenId);
     }

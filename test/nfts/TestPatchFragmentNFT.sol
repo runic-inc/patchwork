@@ -22,7 +22,7 @@ struct TestPatchFragmentNFTMetadata {
     string nickname;
 }
 
-contract TestPatchFragmentNFT is PatchworkPatch, PatchworkFragmentSingle {
+contract TestPatchFragmentNFT is PatchworkReversiblePatch, PatchworkFragmentSingle {
 
     uint256 _nextTokenId;
 
@@ -30,9 +30,9 @@ contract TestPatchFragmentNFT is PatchworkPatch, PatchworkFragmentSingle {
     }
 
     // ERC-165
-    function supportsInterface(bytes4 interfaceID) public view virtual override(PatchworkPatch, PatchworkFragmentSingle) returns (bool) {
+    function supportsInterface(bytes4 interfaceID) public view virtual override(PatchworkReversiblePatch, PatchworkFragmentSingle) returns (bool) {
         return PatchworkFragmentSingle.supportsInterface(interfaceID) ||
-            PatchworkPatch.supportsInterface(interfaceID);        
+            PatchworkReversiblePatch.supportsInterface(interfaceID);        
     }
 
     function schemaURI() pure external override returns (string memory) {
@@ -58,7 +58,7 @@ contract TestPatchFragmentNFT is PatchworkPatch, PatchworkFragmentSingle {
         return PatchworkPatch.ownerOf(tokenId);
     }
 
-    function updateOwnership(uint256 tokenId) public virtual override(PatchworkPatch, PatchworkFragmentSingle) {
+    function updateOwnership(uint256 tokenId) public virtual override(IPatchworkPatch, PatchworkPatch, PatchworkFragmentSingle) {
         PatchworkPatch.updateOwnership(tokenId);
     }
     
@@ -121,7 +121,7 @@ contract TestPatchFragmentNFT is PatchworkPatch, PatchworkFragmentSingle {
         // Just for testing
         tokenId = _nextTokenId;
         _nextTokenId++;
-        _storePatch(tokenId, originalNFTAddress, originalNFTTokenId, true);
+        _storePatch(tokenId, originalNFTAddress, originalNFTTokenId);
         _safeMint(originalNFTOwner, tokenId);
         _metadataStorage[tokenId] = new uint256[](3);
         return tokenId;
@@ -132,7 +132,7 @@ contract TestPatchFragmentNFT is PatchworkPatch, PatchworkFragmentSingle {
         _burn(tokenId);
     }
 
-    function _burn(uint256 tokenId) internal virtual override(PatchworkPatch, ERC721) {
-        return PatchworkPatch._burn(tokenId);
+    function _burn(uint256 tokenId) internal virtual override(PatchworkReversiblePatch, ERC721) {
+        return PatchworkReversiblePatch._burn(tokenId);
     }
 }

@@ -91,7 +91,7 @@ contract TestPatchNFT is PatchworkPatch {
         // Just for testing
         tokenId = _nextTokenId;
         _nextTokenId++;
-        _storePatch(tokenId, originalNFTAddress, originalNFTTokenId, false);
+        _storePatch(tokenId, originalNFTAddress, originalNFTTokenId);
         _safeMint(owner, tokenId);
         _metadataStorage[tokenId] = new uint256[](1);
         return tokenId;
