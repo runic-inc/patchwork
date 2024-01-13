@@ -30,7 +30,14 @@ interface IPatchworkPatch is IPatchworkScoped {
     @return address Address of the owner
     */
     function unpatchedOwnerOf(uint256 tokenId) external view returns (address);
+}
 
+/**
+@title Patchwork Protocol Reversible Patch Interface
+@author Runic Labs, Inc
+@notice Interface for contracts supporting Patchwork patch standard with reverse lookup
+*/
+interface IPatchworkReversiblePatch is IPatchworkPatch {
     /**
     @notice Returns the token ID (if it exists) for an NFT that may have been patched
     @dev Requires reverse storage enabled

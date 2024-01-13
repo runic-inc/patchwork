@@ -39,24 +39,34 @@ contract Patchwork1155PatchTest is Test {
 
     function testScopeName() public {
         vm.prank(_scopeOwner);
-        Test1155PatchNFT testAccountPatchNFT = new Test1155PatchNFT(address(_prot), false);
+        Test1155PatchNFT testAccountPatchNFT = new Test1155PatchNFT(address(_prot));
         assertEq(_scopeName, testAccountPatchNFT.getScopeName());
     }
     
     function testSupportsInterface() public {
         vm.prank(_scopeOwner);
-        Test1155PatchNFT testAccountPatchNFT = new Test1155PatchNFT(address(_prot), false);
+        Test1155PatchNFT testAccountPatchNFT = new Test1155PatchNFT(address(_prot));
         assertTrue(testAccountPatchNFT.supportsInterface(type(IERC165).interfaceId));
         assertTrue(testAccountPatchNFT.supportsInterface(type(IERC721).interfaceId));
         assertTrue(testAccountPatchNFT.supportsInterface(type(IERC4906).interfaceId));
         assertTrue(testAccountPatchNFT.supportsInterface(type(IERC5192).interfaceId));
         assertTrue(testAccountPatchNFT.supportsInterface(type(IPatchwork721).interfaceId));
         assertTrue(testAccountPatchNFT.supportsInterface(type(IPatchwork1155Patch).interfaceId));
+        assertFalse(testAccountPatchNFT.supportsInterface(type(IPatchworkReversible1155Patch).interfaceId));
+
+        TestReversible1155PatchNFT t = new TestReversible1155PatchNFT(address(_prot));
+        assertTrue(t.supportsInterface(type(IERC165).interfaceId));
+        assertTrue(t.supportsInterface(type(IERC721).interfaceId));
+        assertTrue(t.supportsInterface(type(IERC4906).interfaceId));
+        assertTrue(t.supportsInterface(type(IERC5192).interfaceId));
+        assertTrue(t.supportsInterface(type(IPatchwork721).interfaceId));
+        assertTrue(t.supportsInterface(type(IPatchwork1155Patch).interfaceId));
+        assertTrue(t.supportsInterface(type(IPatchworkReversible1155Patch).interfaceId));
     }
 
     function test1155Patch() public {
         vm.startPrank(_scopeOwner);
-        Test1155PatchNFT test1155PatchNFT = new Test1155PatchNFT(address(_prot), false);
+        Test1155PatchNFT test1155PatchNFT = new Test1155PatchNFT(address(_prot));
         TestBase1155 base1155 = new TestBase1155();
         uint256 b = base1155.mint(_userAddress, 1, 5);
         vm.stopPrank();
@@ -76,7 +86,7 @@ contract Patchwork1155PatchTest is Test {
     
     function test1155PatchProto() public {
         vm.startPrank(_scopeOwner);
-        Test1155PatchNFT test1155PatchNFT = new Test1155PatchNFT(address(_prot), false);
+        Test1155PatchNFT test1155PatchNFT = new Test1155PatchNFT(address(_prot));
         TestBase1155 base1155 = new TestBase1155();
         uint256 b = base1155.mint(_userAddress, 1, 5);
 
@@ -102,7 +112,7 @@ contract Patchwork1155PatchTest is Test {
         vm.prank(_scopeOwner);
         _prot.setScopeRules(_scopeName, true, false, false);
         // Not same owner model, yes transferrable
-        Test1155PatchNFT test1155PatchNFT = new Test1155PatchNFT(address(_prot), false);
+        Test1155PatchNFT test1155PatchNFT = new Test1155PatchNFT(address(_prot));
         TestBase1155 base1155 = new TestBase1155();
         uint256 b = base1155.mint(_userAddress, 1, 5);
         // user can mint
@@ -111,7 +121,7 @@ contract Patchwork1155PatchTest is Test {
 
     function testBurn() public {
         vm.startPrank(_scopeOwner);
-        Test1155PatchNFT test1155PatchNFT = new Test1155PatchNFT(address(_prot), false);
+        Test1155PatchNFT test1155PatchNFT = new Test1155PatchNFT(address(_prot));
         TestBase1155 base1155 = new TestBase1155();
         uint256 b = base1155.mint(_userAddress, 1, 5);
         uint256 pId = _prot.patch1155(_userAddress, address(base1155), b, _userAddress, address(test1155PatchNFT));
@@ -122,14 +132,10 @@ contract Patchwork1155PatchTest is Test {
 
     function testReverseLookups() public {
         vm.startPrank(_scopeOwner);
-        Test1155PatchNFT test1155PatchNFT = new Test1155PatchNFT(address(_prot), true);
+        TestReversible1155PatchNFT test1155PatchNFT = new TestReversible1155PatchNFT(address(_prot));
         TestBase1155 base1155 = new TestBase1155();
         uint256 b = base1155.mint(_userAddress, 1, 5);
         uint256 pId = _prot.patch1155(_userAddress, address(base1155), b, _userAddress, address(test1155PatchNFT));
         assertEq(pId, test1155PatchNFT.getTokenIdForOriginal1155(address(base1155), b, _userAddress));
-        // testing not enabled
-        Test1155PatchNFT test1155PatchNFT2 = new Test1155PatchNFT(address(_prot), false);
-        // 0 is default / not-enabled
-        assertEq(0, test1155PatchNFT2.getTokenIdForOriginal1155(address(base1155), b, _userAddress));
     }
 }
