@@ -81,6 +81,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     /// The denominator for fee basis points
     uint256 private constant FEE_BASIS_DENOM = 10000;
 
+    /// The maximum basis points patchwork can ever be configured to
+    uint256 private constant PROTOCOL_FEE_CEILING = 3000;
+
     /// Constructor
     constructor() Ownable() ReentrancyGuard() {}
 
@@ -374,7 +377,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-proposeProtocolFeeConfig}
     */
     function proposeProtocolFeeConfig(FeeConfig memory config) public onlyProtoOwnerBanker {
-        if (config.assignBp > FEE_BASIS_DENOM || config.mintBp > FEE_BASIS_DENOM || config.patchBp > FEE_BASIS_DENOM) {
+        if (config.assignBp > PROTOCOL_FEE_CEILING || config.mintBp > PROTOCOL_FEE_CEILING || config.patchBp > PROTOCOL_FEE_CEILING) {
             revert InvalidFeeValue();
         }
         _proposedFeeConfigs[""] = ProposedFeeConfig(config, block.timestamp, true);
@@ -401,7 +404,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     @dev See {IPatchworkProtocol-proposeScopeFeeOverride}
     */
     function proposeScopeFeeOverride(string memory scopeName, FeeConfigOverride memory config) public onlyProtoOwnerBanker {
-        if (config.assignBp > FEE_BASIS_DENOM || config.mintBp > FEE_BASIS_DENOM || config.patchBp > FEE_BASIS_DENOM) {
+        if (config.assignBp > PROTOCOL_FEE_CEILING || config.mintBp > PROTOCOL_FEE_CEILING || config.patchBp > PROTOCOL_FEE_CEILING) {
             revert InvalidFeeValue();
         }
         _proposedFeeConfigs[scopeName] = ProposedFeeConfig(
