@@ -18,7 +18,14 @@ interface IPatchwork1155Patch is IPatchworkScoped {
     @return tokenId ID of the newly minted token
     */
     function mintPatch(address to, address originalAddress, uint256 originalTokenId, address originalAccount) external returns (uint256 tokenId);
+}
 
+/**
+@title Patchwork Protocol Reversible 1155 Patch Interface
+@author Runic Labs, Inc
+@notice Interface for contracts supporting Patchwork patch standard with reverse lookup
+*/
+interface IPatchworkReversible1155Patch is IPatchwork1155Patch {
     /**
     @notice Returns the token ID (if it exists) for an NFT that may have been patched
     @dev Requires reverse storage enabled

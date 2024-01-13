@@ -54,6 +54,15 @@ contract PatchworkPatchTest is Test {
         assertTrue(_testPatchLiteRefNFT.supportsInterface(type(IPatchwork721).interfaceId));
         assertTrue(_testPatchLiteRefNFT.supportsInterface(type(IPatchworkLiteRef).interfaceId));
         assertTrue(_testPatchLiteRefNFT.supportsInterface(type(IPatchworkPatch).interfaceId));
+        assertFalse(_testPatchLiteRefNFT.supportsInterface(type(IPatchworkReversiblePatch).interfaceId));
+        TestPatchFragmentNFT testPatchFragmentNFT = new TestPatchFragmentNFT(address(_prot));
+        assertTrue(testPatchFragmentNFT.supportsInterface(type(IERC165).interfaceId));
+        assertTrue(testPatchFragmentNFT.supportsInterface(type(IERC721).interfaceId));
+        assertTrue(testPatchFragmentNFT.supportsInterface(type(IERC4906).interfaceId));
+        assertTrue(testPatchFragmentNFT.supportsInterface(type(IERC5192).interfaceId));
+        assertTrue(testPatchFragmentNFT.supportsInterface(type(IPatchwork721).interfaceId));
+        assertTrue(testPatchFragmentNFT.supportsInterface(type(IPatchworkPatch).interfaceId));
+        assertTrue(testPatchFragmentNFT.supportsInterface(type(IPatchworkReversiblePatch).interfaceId));
     }
 
     function testLocks() public {
