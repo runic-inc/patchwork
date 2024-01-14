@@ -16,7 +16,7 @@ interface IPatchworkPatch is IPatchworkScoped {
     @param originalTokenId The original 721's tokenId
     @return tokenId ID of the newly minted token
     */
-    function mintPatch(address owner, address originalAddress, uint256 originalTokenId) external returns (uint256 tokenId);
+    function mintPatch(address owner, address originalAddress, uint256 originalTokenId) external payable returns (uint256 tokenId);
 
     /**
     @notice Updates the real underlying ownership of a token in storage (if different from current)

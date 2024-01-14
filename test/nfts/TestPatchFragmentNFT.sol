@@ -117,7 +117,10 @@ contract TestPatchFragmentNFT is PatchworkReversiblePatch, PatchworkFragmentSing
         return unpackMetadata(_metadataStorage[_tokenId]);
     }
 
-    function mintPatch(address originalNFTOwner, address originalNFTAddress, uint originalNFTTokenId) external mustBeManager returns (uint256 tokenId){
+    function mintPatch(address originalNFTOwner, address originalNFTAddress, uint originalNFTTokenId) external payable mustBeManager returns (uint256 tokenId){
+        if (msg.value > 0) {
+            revert();
+        }
         // Just for testing
         tokenId = _nextTokenId;
         _nextTokenId++;

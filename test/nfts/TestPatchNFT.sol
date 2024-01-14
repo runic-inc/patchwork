@@ -83,7 +83,10 @@ contract TestPatchNFT is PatchworkPatch {
         return unpackMetadata(_metadataStorage[_tokenId]);
     }
 
-    function mintPatch(address owner, address originalNFTAddress, uint originalNFTTokenId) external mustBeManager returns (uint256 tokenId){
+    function mintPatch(address owner, address originalNFTAddress, uint originalNFTTokenId) external payable mustBeManager returns (uint256 tokenId) {
+        if (msg.value > 0) {
+            revert();
+        }
         // require inherited ownership
         if (IERC721(originalNFTAddress).ownerOf(originalNFTTokenId) != owner) {
             revert IPatchworkProtocol.NotAuthorized(owner);

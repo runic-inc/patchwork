@@ -170,8 +170,8 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
         // TODO bulk insert for fewer stores
     }
 
-    function mintPatch(address owner, address originalNFTAddress, uint originalNFTTokenId) external returns (uint256 tokenId){
-        if (msg.sender != _manager) {
+    function mintPatch(address owner, address originalNFTAddress, uint originalNFTTokenId) external payable mustBeManager() returns (uint256 tokenId){
+        if (msg.value > 0) {
             revert();
         }
         // require inherited ownership

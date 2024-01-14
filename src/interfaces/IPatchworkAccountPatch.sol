@@ -15,7 +15,7 @@ interface IPatchworkAccountPatch is IPatchworkScoped {
     @param originalAccountAddress Address of the original account
     @return tokenId ID of the newly minted token
     */
-    function mintPatch(address owner, address originalAccountAddress) external returns (uint256 tokenId);
+    function mintPatch(address owner, address originalAccountAddress) external payable returns (uint256 tokenId);
 }
 
 /**
