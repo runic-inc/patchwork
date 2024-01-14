@@ -39,7 +39,7 @@ contract TestPatchworkNFT is Patchwork721, IPatchworkMintable {
     }
 
     function mint(address to, bytes calldata /* data */) public payable returns (uint256 tokenId) {
-        if (msg.value != 0) {
+        if (msg.value > 0) {
             revert();
         }
         tokenId = _nextTokenId;
@@ -49,7 +49,7 @@ contract TestPatchworkNFT is Patchwork721, IPatchworkMintable {
     }
     
     function mintBatch(address to, bytes calldata data, uint256 quantity) public payable returns (uint256[] memory tokenIds) {
-        if (msg.value != 0) {
+        if (msg.value > 0) {
             revert();
         }
         tokenIds = new uint256[](quantity);

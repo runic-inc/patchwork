@@ -29,7 +29,7 @@ contract Test1155PatchNFT is Patchwork1155Patch {
     }
 
     function mintPatch(address to, PatchTarget memory target) external payable mustBeManager returns (uint256 tokenId){
-        if (msg.value != 0) {
+        if (msg.value > 0) {
             revert();
         }
         // Just for testing
@@ -74,7 +74,7 @@ contract TestReversible1155PatchNFT is PatchworkReversible1155Patch {
 
     function mintPatch(address to, PatchTarget memory target) external payable mustBeManager returns (uint256 tokenId){
         // Just for testing
-        if (msg.value != 0) {
+        if (msg.value > 0) {
             revert();
         }
         tokenId = _nextTokenId;
