@@ -26,11 +26,11 @@ abstract contract PatchworkAccountPatch is Patchwork721, IPatchworkAccountPatch 
     /**
     @notice stores a patch
     @param tokenId the tokenId of the patch
-    @param originalAccountAddress the account we are patching
+    @param target the account we are patching
     */
-    function _storePatch(uint256 tokenId, address originalAccountAddress) internal virtual {
+    function _storePatch(uint256 tokenId, address target) internal virtual {
         // PatchworkProtocol handles uniqueness assertion
-        _patchedAddresses[tokenId] = originalAccountAddress;
+        _patchedAddresses[tokenId] = target;
     }
 
     /**
@@ -62,29 +62,29 @@ abstract contract PatchworkReversibleAccountPatch is PatchworkAccountPatch, IPat
     }
 
     /**
-    @dev See {IPatchworkAccountPatch-getTokenIdForOriginalAccount}
+    @dev See {IPatchworkAccountPatch-getTokenIdByTarget}
     */
-    function getTokenIdForOriginalAccount(address originalAddress) public view virtual returns (uint256 tokenId) {
-        return _patchedAddressesRev[originalAddress];
+    function getTokenIdByTarget(address target) public view virtual returns (uint256 tokenId) {
+        return _patchedAddressesRev[target];
     }
 
     /**
     @notice stores a patch
     @param tokenId the tokenId of the patch
-    @param originalAccountAddress the account we are patching
+    @param target the account we are patching
     */
-    function _storePatch(uint256 tokenId, address originalAccountAddress) internal virtual override {
+    function _storePatch(uint256 tokenId, address target) internal virtual override {
         // PatchworkProtocol handles uniqueness assertion
-        _patchedAddresses[tokenId] = originalAccountAddress;
-        _patchedAddressesRev[originalAccountAddress] = tokenId;
+        _patchedAddresses[tokenId] = target;
+        _patchedAddressesRev[target] = tokenId;
     }
 
     /**
     @dev See {ERC721-_burn}
     */ 
     function _burn(uint256 tokenId) internal virtual override {
-        address originalAddress = _patchedAddresses[tokenId];
-        delete _patchedAddressesRev[originalAddress];
+        address target = _patchedAddresses[tokenId];
+        delete _patchedAddressesRev[target];
         super._burn(tokenId);
     }
 }

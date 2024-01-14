@@ -12,10 +12,10 @@ interface IPatchworkAccountPatch is IPatchworkScoped {
     /**
     @notice Creates a new token for the owner, representing a patch
     @param owner Address of the owner of the token
-    @param originalAccountAddress Address of the original account
+    @param target Address of the original account
     @return tokenId ID of the newly minted token
     */
-    function mintPatch(address owner, address originalAccountAddress) external payable returns (uint256 tokenId);
+    function mintPatch(address owner, address target) external payable returns (uint256 tokenId);
 }
 
 /**
@@ -27,8 +27,8 @@ interface IPatchworkReversibleAccountPatch is IPatchworkAccountPatch {
     /**
     @notice Returns the token ID (if it exists) for an NFT that may have been patched
     @dev Requires reverse storage enabled
-    @param originalAddress Address of the original account
+    @param target Address of the original account
     @return tokenId ID of the newly minted token
     */
-    function getTokenIdForOriginalAccount(address originalAddress) external returns (uint256 tokenId);
+    function getTokenIdByTarget(address target) external returns (uint256 tokenId);
 }
