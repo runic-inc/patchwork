@@ -528,7 +528,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
             revert AlreadyPatched(originalAddress, originalTokenId, patchAddress);
         }
         _uniquePatches[_hash] = true;
-        tokenId = patch_.mintPatch(owner, originalAddress, originalTokenId);
+        tokenId = patch_.mintPatch(owner, IPatchworkPatch.PatchTarget(originalAddress, originalTokenId));
         emit Patch(owner, originalAddress, originalTokenId, patchAddress, tokenId);
         return tokenId;
     }
