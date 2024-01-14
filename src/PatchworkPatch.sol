@@ -13,7 +13,7 @@ import "./interfaces/IPatchworkPatch.sol";
 abstract contract PatchworkPatch is Patchwork721, IPatchworkPatch {
 
     /// @dev Mapping from token ID to the canonical address and tokenId of the NFT that this patch is applied to.
-    mapping(uint256 => PatchTarget) internal _patchedAddresses;
+    mapping(uint256 => PatchTarget) internal _targetsById;
 
     /**
     @dev See {IERC165-supportsInterface}
@@ -29,7 +29,7 @@ abstract contract PatchworkPatch is Patchwork721, IPatchworkPatch {
     */
     function ownerOf(uint256 tokenId) public view virtual override(ERC721, IERC721) returns (address) {
         // Default is inherited ownership
-        PatchTarget storage target = _patchedAddresses[tokenId];
+        PatchTarget storage target = _targetsById[tokenId];
         return IERC721(target.addr).ownerOf(target.tokenId);
     }
 
@@ -39,14 +39,14 @@ abstract contract PatchworkPatch is Patchwork721, IPatchworkPatch {
     @param target the target 721 being patched
     */
     function _storePatch(uint256 tokenId, PatchTarget memory target) internal virtual {
-        _patchedAddresses[tokenId] = target;
+        _targetsById[tokenId] = target;
     }
 
     /**
     @dev See {IPatchworkPatch-updateOwnership}
     */
     function updateOwnership(uint256 tokenId) public virtual {
-        address patchedAddr = _patchedAddresses[tokenId].addr;
+        address patchedAddr = _targetsById[tokenId].addr;
         if (patchedAddr != address(0)) {
             address owner_ = ownerOf(tokenId);
             address curOwner = super.ownerOf(tokenId);
@@ -84,16 +84,16 @@ abstract contract PatchworkPatch is Patchwork721, IPatchworkPatch {
     @dev See {ERC721-_burn}
     */ 
     function _burn(uint256 tokenId) internal virtual override {
-        PatchTarget storage target = _patchedAddresses[tokenId];
+        PatchTarget storage target = _targetsById[tokenId];
         IPatchworkProtocol(_manager).patchBurned(target.addr, target.tokenId, address(this));
-        delete _patchedAddresses[tokenId];
+        delete _targetsById[tokenId];
         super._burn(tokenId);
     }
 }
 
 abstract contract PatchworkReversiblePatch is PatchworkPatch, IPatchworkReversiblePatch {
     /// @dev Mapping of hash of original address + token ID for reverse lookups
-    mapping(bytes32 => uint256) internal _patchedAddressesRev; // hash of patched addr+tokenid to tokenId
+    mapping(bytes32 => uint256) internal _idsByTargetHash; // hash of patched addr+tokenid to tokenId
 
     /**
     @dev See {IERC165-supportsInterface}
@@ -107,7 +107,7 @@ abstract contract PatchworkReversiblePatch is PatchworkPatch, IPatchworkReversib
     @dev See {IPatchworkPatch-getTokenIdByTarget}
     */
     function getTokenIdByTarget(PatchTarget memory target) public view virtual returns (uint256 tokenId) {
-        return _patchedAddressesRev[keccak256(abi.encode(target))];
+        return _idsByTargetHash[keccak256(abi.encode(target))];
     }
 
     /**
@@ -117,15 +117,15 @@ abstract contract PatchworkReversiblePatch is PatchworkPatch, IPatchworkReversib
     */
     function _storePatch(uint256 tokenId, PatchTarget memory target) internal virtual override {
         super._storePatch(tokenId, target);
-        _patchedAddressesRev[keccak256(abi.encode(target))] = tokenId;
+        _idsByTargetHash[keccak256(abi.encode(target))] = tokenId;
     }
 
     /**
     @dev See {ERC721-_burn}
     */ 
     function _burn(uint256 tokenId) internal virtual override {
-        PatchTarget storage target = _patchedAddresses[tokenId];
-        delete _patchedAddressesRev[keccak256(abi.encode(target))];
+        PatchTarget storage target = _targetsById[tokenId];
+        delete _idsByTargetHash[keccak256(abi.encode(target))];
         super._burn(tokenId);
     }
 }
