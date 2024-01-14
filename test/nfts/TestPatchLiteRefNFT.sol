@@ -42,11 +42,6 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
 
     function imageURI(uint256 _tokenId) pure external override returns (string memory) {}
 
-    function setManager(address manager_) external {
-        require(_checkWriteAuth());
-        _manager = manager_;
-    }
-
     /*
     Hard coded prototype schema is:
     slot 0 offset 0 = artifactIDs (spans 2) - also we need special built-in handling for < 256 bit IDs

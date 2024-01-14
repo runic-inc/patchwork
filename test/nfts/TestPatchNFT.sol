@@ -34,11 +34,6 @@ contract TestPatchNFT is PatchworkPatch {
 
     function imageURI(uint256 _tokenId) pure external override returns (string memory) {}
 
-    function setManager(address manager_) external {
-        require(_checkWriteAuth());
-        _manager = manager_;
-    }
-
     function schema() pure external override returns (MetadataSchema memory) {
         MetadataSchemaEntry[] memory entries = new MetadataSchemaEntry[](7);
         entries[0] = MetadataSchemaEntry(0, 1, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 0, 0, "xp");

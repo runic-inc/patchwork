@@ -18,7 +18,7 @@ abstract contract Patchwork721 is ERC721, IPatchwork721, IERC4906, Ownable {
     string internal _scopeName;
 
     /// @dev Our manager (PatchworkProtocol).
-    address internal _manager;
+    address internal immutable _manager;
 
     /// @dev A mapping to keep track of permissions for each address.
     mapping(address => uint256) internal _permissionsAllow;

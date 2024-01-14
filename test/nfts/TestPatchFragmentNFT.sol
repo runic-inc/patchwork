@@ -41,11 +41,6 @@ contract TestPatchFragmentNFT is PatchworkReversiblePatch, PatchworkFragmentSing
 
     function imageURI(uint256 _tokenId) pure external override returns (string memory) {}
 
-    function setManager(address manager_) external {
-        require(_checkWriteAuth());
-        _manager = manager_;
-    }
-
     function setLocked(uint256 tokenId, bool locked_) public view virtual override(PatchworkPatch, PatchworkFragmentSingle) {
          return PatchworkPatch.setLocked(tokenId, locked_);
     }

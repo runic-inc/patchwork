@@ -50,11 +50,6 @@ contract TestDynamicArrayLiteRefNFT is Patchwork721, PatchworkLiteRef, IPatchwor
 
     function imageURI(uint256 _tokenId) pure external override returns (string memory) {}
 
-    function setManager(address manager_) external {
-        require(_checkWriteAuth());
-        _manager = manager_;
-    }
-
     function mint(address to, bytes calldata /* data */) public payable returns (uint256 tokenId) {
         if (msg.value > 0) {
             revert();
