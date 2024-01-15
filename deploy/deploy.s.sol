@@ -10,7 +10,7 @@ contract DeployPatchworkScript is Script {
     function setUp() public {}
 
     function run() public {
-        //string memory deployed = Defender.deployContract("PatchworkProtocol.sol:PatchworkProtocol");
-        //console.log("Successfully deployed to address ", deployed);
+        string memory deployed = Defender.deployContract("PatchworkProtocol.sol:PatchworkProtocol");
+        console.log("Successfully deployed to address ", deployed);
     }
 }
