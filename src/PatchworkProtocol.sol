@@ -598,7 +598,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
             revert NotAuthorized(msg.sender);
         }
         _handlePatchFee(scopeName, scope, patchAddress);
-        // limit this to one unique patch (originalAddress+TokenID+patchAddress)
+        // limit this to one unique patch (originalAddress+patchAddress)
         bytes32 _hash = keccak256(abi.encodePacked(originalAddress, patchAddress));
         if (_uniquePatches[_hash]) {
             revert AccountAlreadyPatched(originalAddress, patchAddress);
