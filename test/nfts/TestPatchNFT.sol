@@ -34,11 +34,6 @@ contract TestPatchNFT is PatchworkPatch {
 
     function imageURI(uint256 _tokenId) pure external override returns (string memory) {}
 
-    function setManager(address manager_) external {
-        require(_checkWriteAuth());
-        _manager = manager_;
-    }
-
     function schema() pure external override returns (MetadataSchema memory) {
         MetadataSchemaEntry[] memory entries = new MetadataSchemaEntry[](7);
         entries[0] = MetadataSchemaEntry(0, 1, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 0, 0, "xp");
@@ -83,15 +78,18 @@ contract TestPatchNFT is PatchworkPatch {
         return unpackMetadata(_metadataStorage[_tokenId]);
     }
 
-    function mintPatch(address owner, address originalNFTAddress, uint originalNFTTokenId) external mustBeManager returns (uint256 tokenId){
+    function mintPatch(address owner, PatchTarget memory target) external payable mustBeManager returns (uint256 tokenId) {
+        if (msg.value > 0) {
+            revert();
+        }
         // require inherited ownership
-        if (IERC721(originalNFTAddress).ownerOf(originalNFTTokenId) != owner) {
+        if (IERC721(target.addr).ownerOf(target.tokenId) != owner) {
             revert IPatchworkProtocol.NotAuthorized(owner);
         }
         // Just for testing
         tokenId = _nextTokenId;
         _nextTokenId++;
-        _storePatch(tokenId, originalNFTAddress, originalNFTTokenId);
+        _storePatch(tokenId, target);
         _safeMint(owner, tokenId);
         _metadataStorage[tokenId] = new uint256[](1);
         return tokenId;

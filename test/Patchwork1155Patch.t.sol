@@ -72,16 +72,16 @@ contract Patchwork1155PatchTest is Test {
         vm.stopPrank();
         vm.startPrank(address(_prot));
         // basic mints should work
-        test1155PatchNFT.mintPatch(_userAddress, address(base1155), b, _userAddress);
+        test1155PatchNFT.mintPatch(_userAddress, IPatchwork1155Patch.PatchTarget(address(base1155), b, _userAddress));
         // global
-        test1155PatchNFT.mintPatch(_userAddress, address(base1155), b, address(0));
+        test1155PatchNFT.mintPatch(_userAddress, IPatchwork1155Patch.PatchTarget(address(base1155), b, address(0)));
         vm.stopPrank();      
         // no auth
         vm.expectRevert();  
-        test1155PatchNFT.mintPatch(_userAddress, address(base1155), b, _userAddress);
+        test1155PatchNFT.mintPatch(_userAddress, IPatchwork1155Patch.PatchTarget(address(base1155), b, _userAddress));
         // global
         vm.expectRevert();  
-        test1155PatchNFT.mintPatch(_userAddress, address(base1155), b, address(0));
+        test1155PatchNFT.mintPatch(_userAddress, IPatchwork1155Patch.PatchTarget(address(base1155), b, address(0)));
     }
     
     function test1155PatchProto() public {
@@ -136,6 +136,6 @@ contract Patchwork1155PatchTest is Test {
         TestBase1155 base1155 = new TestBase1155();
         uint256 b = base1155.mint(_userAddress, 1, 5);
         uint256 pId = _prot.patch1155(_userAddress, address(base1155), b, _userAddress, address(test1155PatchNFT));
-        assertEq(pId, test1155PatchNFT.getTokenIdForOriginal1155(address(base1155), b, _userAddress));
+        assertEq(pId, test1155PatchNFT.getTokenIdByTarget(IPatchwork1155Patch.PatchTarget(address(base1155), b, _userAddress)));
     }
 }

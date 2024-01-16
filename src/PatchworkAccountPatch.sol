@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "./IPatchworkAccountPatch.sol";
-import "./IPatchworkProtocol.sol";
+import "./interfaces/IPatchworkAccountPatch.sol";
+import "./interfaces/IPatchworkProtocol.sol";
 import "./Patchwork721.sol";
 
 /**
@@ -13,7 +13,7 @@ import "./Patchwork721.sol";
 abstract contract PatchworkAccountPatch is Patchwork721, IPatchworkAccountPatch {
     
     /// @dev Mapping from token ID to the address of the NFT that this patch is applied to.
-    mapping(uint256 => address) internal _patchedAddresses;
+    mapping(uint256 => address) internal _targetsById;
 
     /**
     @dev See {IERC165-supportsInterface}
@@ -26,20 +26,20 @@ abstract contract PatchworkAccountPatch is Patchwork721, IPatchworkAccountPatch 
     /**
     @notice stores a patch
     @param tokenId the tokenId of the patch
-    @param originalAccountAddress the account we are patching
+    @param target the account we are patching
     */
-    function _storePatch(uint256 tokenId, address originalAccountAddress) internal virtual {
+    function _storePatch(uint256 tokenId, address target) internal virtual {
         // PatchworkProtocol handles uniqueness assertion
-        _patchedAddresses[tokenId] = originalAccountAddress;
+        _targetsById[tokenId] = target;
     }
 
     /**
     @dev See {ERC721-_burn}
     */ 
     function _burn(uint256 tokenId) internal virtual override {
-        address originalAddress = _patchedAddresses[tokenId];
+        address originalAddress = _targetsById[tokenId];
         IPatchworkProtocol(_manager).patchBurnedAccount(originalAddress, address(this));
-        delete _patchedAddresses[tokenId];
+        delete _targetsById[tokenId];
         super._burn(tokenId);
     }
     
@@ -51,7 +51,7 @@ abstract contract PatchworkAccountPatch is Patchwork721, IPatchworkAccountPatch 
 */
 abstract contract PatchworkReversibleAccountPatch is PatchworkAccountPatch, IPatchworkReversibleAccountPatch {
     /// @dev Mapping of original address to token Ids for reverse lookups
-    mapping(address => uint256) internal _patchedAddressesRev;
+    mapping(address => uint256) internal _idsByTarget;
 
     /**
     @dev See {IERC165-supportsInterface}
@@ -62,29 +62,29 @@ abstract contract PatchworkReversibleAccountPatch is PatchworkAccountPatch, IPat
     }
 
     /**
-    @dev See {IPatchworkAccountPatch-getTokenIdForOriginalAccount}
+    @dev See {IPatchworkAccountPatch-getTokenIdByTarget}
     */
-    function getTokenIdForOriginalAccount(address originalAddress) public view virtual returns (uint256 tokenId) {
-        return _patchedAddressesRev[originalAddress];
+    function getTokenIdByTarget(address target) public view virtual returns (uint256 tokenId) {
+        return _idsByTarget[target];
     }
 
     /**
     @notice stores a patch
     @param tokenId the tokenId of the patch
-    @param originalAccountAddress the account we are patching
+    @param target the account we are patching
     */
-    function _storePatch(uint256 tokenId, address originalAccountAddress) internal virtual override {
+    function _storePatch(uint256 tokenId, address target) internal virtual override {
         // PatchworkProtocol handles uniqueness assertion
-        _patchedAddresses[tokenId] = originalAccountAddress;
-        _patchedAddressesRev[originalAccountAddress] = tokenId;
+        _targetsById[tokenId] = target;
+        _idsByTarget[target] = tokenId;
     }
 
     /**
     @dev See {ERC721-_burn}
     */ 
     function _burn(uint256 tokenId) internal virtual override {
-        address originalAddress = _patchedAddresses[tokenId];
-        delete _patchedAddressesRev[originalAddress];
+        address target = _targetsById[tokenId];
+        delete _idsByTarget[target];
         super._burn(tokenId);
     }
 }

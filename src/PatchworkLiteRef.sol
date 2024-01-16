@@ -2,8 +2,8 @@
 pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import "./IPatchworkLiteRef.sol";
-import "./IPatchworkProtocol.sol";
+import "./interfaces/IPatchworkLiteRef.sol";
+import "./interfaces/IPatchworkProtocol.sol";
 
 /**
 @title PatchworkLiteRef

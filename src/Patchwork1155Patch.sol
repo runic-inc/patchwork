@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "./Patchwork721.sol";
-import "./IPatchwork1155Patch.sol";
+import "./interfaces/IPatchwork1155Patch.sol";
 
 /**
 @title Patchwork1155Patch
@@ -11,15 +11,8 @@ import "./IPatchwork1155Patch.sol";
 */
 abstract contract Patchwork1155Patch is Patchwork721, IPatchwork1155Patch {
 
-    /// @dev A canonical path to an 1155 patched
-    struct PatchCanonical {
-        address addr;    // The address of the 1155
-        uint256 tokenId; // The tokenId of the 1155
-        address account; // The account for the 1155
-    }
-
     /// @dev Mapping from token ID to the canonical address of the NFT that this patch is applied to.
-    mapping(uint256 => PatchCanonical) internal _patchedAddresses;
+    mapping(uint256 => PatchTarget) internal _targetsById;
 
     /**
     @dev See {IERC165-supportsInterface}
@@ -32,24 +25,22 @@ abstract contract Patchwork1155Patch is Patchwork721, IPatchwork1155Patch {
     /**
     @notice stores a patch
     @param tokenId the tokenId of the patch
-    @param originalAddress the address of the original ERC-1155 we are patching
-    @param originalTokenId the tokenId of the original ERC-1155 we are patching
-    @param account the account of the ERC-1155 we are patching
+    @param target the patch target
     */
-    function _storePatch(uint256 tokenId, address originalAddress, uint256 originalTokenId, address account) internal virtual {
-        _patchedAddresses[tokenId] = PatchCanonical(originalAddress, originalTokenId, account);
+    function _storePatch(uint256 tokenId, PatchTarget memory target) internal virtual {
+        _targetsById[tokenId] = target;
     }
 
     /**
     @dev See {ERC721-_burn}
     */ 
     function _burn(uint256 tokenId) internal virtual override {
-        PatchCanonical storage canonical = _patchedAddresses[tokenId];
-        address originalAddress = canonical.addr;
-        uint256 originalTokenId = canonical.tokenId;
-        address account = canonical.account;
+        PatchTarget storage target = _targetsById[tokenId];
+        address originalAddress = target.addr;
+        uint256 originalTokenId = target.tokenId;
+        address account = target.account;
         IPatchworkProtocol(_manager).patchBurned1155(originalAddress, originalTokenId, account, address(this));
-        delete _patchedAddresses[tokenId];
+        delete _targetsById[tokenId];
         super._burn(tokenId);
     }
 }
@@ -60,7 +51,7 @@ abstract contract Patchwork1155Patch is Patchwork721, IPatchwork1155Patch {
 */
 abstract contract PatchworkReversible1155Patch is Patchwork1155Patch, IPatchworkReversible1155Patch {
     /// @dev Mapping of hash of original address + token ID + account for reverse lookups
-    mapping(bytes32 => uint256) internal _patchedAddressesRev; // hash of patched addr+tokenid+account to tokenId
+    mapping(bytes32 => uint256) internal _idsByTargetHash; // hash of patched addr+tokenid+account to tokenId
 
     /**
     @dev See {IERC165-supportsInterface}
@@ -71,33 +62,28 @@ abstract contract PatchworkReversible1155Patch is Patchwork1155Patch, IPatchwork
     }
 
     /**
-    @dev See {IPatchwork1155Patch-getTokenIdForOriginal1155}
+    @dev See {IPatchwork1155Patch-getTokenIdByTarget}
     */
-    function getTokenIdForOriginal1155(address originalAddress, uint256 originalTokenId, address originalAccount) public view virtual returns (uint256 tokenId) {
-        return _patchedAddressesRev[keccak256(abi.encodePacked(originalAddress, originalTokenId, originalAccount))];
+    function getTokenIdByTarget(PatchTarget memory target) public view virtual returns (uint256 tokenId) {
+        return _idsByTargetHash[keccak256(abi.encode(target))];
     }
 
     /**
     @notice stores a patch
     @param tokenId the tokenId of the patch
-    @param originalAddress the address of the original ERC-1155 we are patching
-    @param originalTokenId the tokenId of the original ERC-1155 we are patching
-    @param account the account of the ERC-1155 we are patching
+    @param target the patch target
     */
-    function _storePatch(uint256 tokenId, address originalAddress, uint256 originalTokenId, address account) internal virtual override {
-        _patchedAddresses[tokenId] = PatchCanonical(originalAddress, originalTokenId, account);
-        _patchedAddressesRev[keccak256(abi.encodePacked(originalAddress, originalTokenId, account))] = tokenId;
+    function _storePatch(uint256 tokenId, PatchTarget memory target) internal virtual override {
+        _targetsById[tokenId] = target;
+        _idsByTargetHash[keccak256(abi.encode(target))] = tokenId;
     }
 
     /**
     @dev See {ERC721-_burn}
     */ 
     function _burn(uint256 tokenId) internal virtual override {
-        PatchCanonical storage canonical = _patchedAddresses[tokenId];
-        address originalAddress = canonical.addr;
-        uint256 originalTokenId = canonical.tokenId;
-        address account = canonical.account;
-        delete _patchedAddressesRev[keccak256(abi.encodePacked(originalAddress, originalTokenId, account))];
+        PatchTarget storage target = _targetsById[tokenId];
+        delete _idsByTargetHash[keccak256(abi.encode(target))];
         super._burn(tokenId);
     }
 }

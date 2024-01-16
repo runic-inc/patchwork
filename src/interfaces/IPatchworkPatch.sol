@@ -9,14 +9,19 @@ import "./IPatchworkScoped.sol";
 @notice Interface for contracts supporting Patchwork patch standard
 */
 interface IPatchworkPatch is IPatchworkScoped {
+    /// @dev A canonical path to an 721 patched
+    struct PatchTarget {
+        address addr;    // The address of the 721
+        uint256 tokenId; // The tokenId of the 721
+    }
+    
     /**
     @notice Creates a new token for the owner, representing a patch
     @param owner Address of the owner of the token
-    @param originalAddress Address of the original 721
-    @param originalTokenId The original 721's tokenId
+    @param target path to target of patch
     @return tokenId ID of the newly minted token
     */
-    function mintPatch(address owner, address originalAddress, uint256 originalTokenId) external returns (uint256 tokenId);
+    function mintPatch(address owner, PatchTarget memory target) external payable returns (uint256 tokenId);
 
     /**
     @notice Updates the real underlying ownership of a token in storage (if different from current)
@@ -29,7 +34,7 @@ interface IPatchworkPatch is IPatchworkScoped {
     @param tokenId ID of the token
     @return address Address of the owner
     */
-    function unpatchedOwnerOf(uint256 tokenId) external view returns (address);
+    function ownerOfPatch(uint256 tokenId) external view returns (address);
 }
 
 /**
@@ -41,9 +46,8 @@ interface IPatchworkReversiblePatch is IPatchworkPatch {
     /**
     @notice Returns the token ID (if it exists) for an NFT that may have been patched
     @dev Requires reverse storage enabled
-    @param originalAddress Address of the original 721
-    @param originalTokenId The original 721's tokenId
-    @return tokenId ID of the newly minted token
+    @param target Patch to target of patch
+    @return tokenId token ID of the patch
     */
-    function getTokenIdForOriginal721(address originalAddress, uint256 originalTokenId) external view returns (uint256 tokenId);
+    function getTokenIdByTarget(PatchTarget memory target) external view returns (uint256 tokenId);
 }

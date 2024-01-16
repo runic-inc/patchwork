@@ -699,9 +699,9 @@ contract PatchworkProtocolTest is Test {
         vm.prank(_userAddress);
         _testBaseNFT.transferFrom(_userAddress, _user2Address, _testBaseNFTTokenId);
         assertEq(_user2Address, patch.ownerOf(patchTokenId));
-        assertEq(_userAddress, patch.unpatchedOwnerOf(patchTokenId));
+        assertEq(_userAddress, patch.ownerOfPatch(patchTokenId));
         _prot.updateOwnershipTree(address(patch), patchTokenId);
-        assertEq(_user2Address, patch.unpatchedOwnerOf(patchTokenId));
+        assertEq(_user2Address, patch.ownerOfPatch(patchTokenId));
     }
 
     function testLocks() public {

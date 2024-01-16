@@ -28,11 +28,14 @@ contract Test1155PatchNFT is Patchwork1155Patch {
         return MetadataSchema(1, entries);
     }
 
-    function mintPatch(address to, address originalNFTAddress, uint originalNFTTokenId, address account) external mustBeManager returns (uint256 tokenId){
+    function mintPatch(address to, PatchTarget memory target) external payable mustBeManager returns (uint256 tokenId){
+        if (msg.value > 0) {
+            revert();
+        }
         // Just for testing
         tokenId = _nextTokenId;
         _nextTokenId++;
-        _storePatch(tokenId, originalNFTAddress, originalNFTTokenId, account);
+        _storePatch(tokenId, target);
         _safeMint(to, tokenId);
         _metadataStorage[tokenId] = new uint256[](1);
         return tokenId;
@@ -69,11 +72,14 @@ contract TestReversible1155PatchNFT is PatchworkReversible1155Patch {
         return MetadataSchema(1, entries);
     }
 
-    function mintPatch(address to, address originalNFTAddress, uint originalNFTTokenId, address account) external mustBeManager returns (uint256 tokenId){
+    function mintPatch(address to, PatchTarget memory target) external payable mustBeManager returns (uint256 tokenId){
         // Just for testing
+        if (msg.value > 0) {
+            revert();
+        }
         tokenId = _nextTokenId;
         _nextTokenId++;
-        _storePatch(tokenId, originalNFTAddress, originalNFTTokenId, account);
+        _storePatch(tokenId, target);
         _safeMint(to, tokenId);
         _metadataStorage[tokenId] = new uint256[](1);
         return tokenId;

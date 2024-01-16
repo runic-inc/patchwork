@@ -42,11 +42,6 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
 
     function imageURI(uint256 _tokenId) pure external override returns (string memory) {}
 
-    function setManager(address manager_) external {
-        require(_checkWriteAuth());
-        _manager = manager_;
-    }
-
     /*
     Hard coded prototype schema is:
     slot 0 offset 0 = artifactIDs (spans 2) - also we need special built-in handling for < 256 bit IDs
@@ -170,18 +165,18 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
         // TODO bulk insert for fewer stores
     }
 
-    function mintPatch(address owner, address originalNFTAddress, uint originalNFTTokenId) external returns (uint256 tokenId){
-        if (msg.sender != _manager) {
+    function mintPatch(address owner, PatchTarget memory target) external payable mustBeManager() returns (uint256 tokenId){
+        if (msg.value > 0) {
             revert();
         }
         // require inherited ownership
-        if (IERC721(originalNFTAddress).ownerOf(originalNFTTokenId) != owner) {
+        if (IERC721(target.addr).ownerOf(target.tokenId) != owner) {
             revert IPatchworkProtocol.NotAuthorized(owner);
         }
         // Just for testing
         tokenId = _nextTokenId;
         _nextTokenId++;
-        _storePatch(tokenId, originalNFTAddress, originalNFTTokenId);
+        _storePatch(tokenId, target);
         _safeMint(owner, tokenId);
         _metadataStorage[tokenId] = new uint256[](3);
         return tokenId;

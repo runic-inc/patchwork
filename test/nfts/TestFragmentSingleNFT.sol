@@ -34,11 +34,6 @@ contract TestFragmentSingleNFT is PatchworkFragmentSingle {
     }
 
     function imageURI(uint256 _tokenId) pure external override returns (string memory) {}
-
-    function setManager(address manager_) external {
-        require(_checkWriteAuth());
-        _manager = manager_;
-    }
     
     /*
     Hard coded prototype schema is:

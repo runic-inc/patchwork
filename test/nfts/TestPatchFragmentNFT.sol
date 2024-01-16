@@ -41,11 +41,6 @@ contract TestPatchFragmentNFT is PatchworkReversiblePatch, PatchworkFragmentSing
 
     function imageURI(uint256 _tokenId) pure external override returns (string memory) {}
 
-    function setManager(address manager_) external {
-        require(_checkWriteAuth());
-        _manager = manager_;
-    }
-
     function setLocked(uint256 tokenId, bool locked_) public view virtual override(PatchworkPatch, PatchworkFragmentSingle) {
          return PatchworkPatch.setLocked(tokenId, locked_);
     }
@@ -117,11 +112,14 @@ contract TestPatchFragmentNFT is PatchworkReversiblePatch, PatchworkFragmentSing
         return unpackMetadata(_metadataStorage[_tokenId]);
     }
 
-    function mintPatch(address originalNFTOwner, address originalNFTAddress, uint originalNFTTokenId) external mustBeManager returns (uint256 tokenId){
+    function mintPatch(address originalNFTOwner, PatchTarget memory target) external payable mustBeManager returns (uint256 tokenId){
+        if (msg.value > 0) {
+            revert();
+        }
         // Just for testing
         tokenId = _nextTokenId;
         _nextTokenId++;
-        _storePatch(tokenId, originalNFTAddress, originalNFTTokenId);
+        _storePatch(tokenId, target);
         _safeMint(originalNFTOwner, tokenId);
         _metadataStorage[tokenId] = new uint256[](3);
         return tokenId;
