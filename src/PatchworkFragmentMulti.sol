@@ -6,7 +6,7 @@ import "./IPatchworkMultiAssignable.sol";
 
 /**
 @title PatchworkFragmentMulti
-@dev base implementation of a Single-relation Fragment is IPatchworkAssignable
+@dev base implementation of a Multi-relation Fragment is IPatchworkAssignable
 */
 abstract contract PatchworkFragmentMulti is Patchwork721, IPatchworkMultiAssignable {
 
