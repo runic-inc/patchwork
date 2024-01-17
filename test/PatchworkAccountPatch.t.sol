@@ -26,7 +26,7 @@ contract PatchworkAccountPatchTest is Test {
         _scopeOwner = 0xDAFEA492D9c6733ae3d56b7Ed1ADB60692c98Bc5;
 
         vm.prank(_patchworkOwner);
-        _prot = new PatchworkProtocol();
+        _prot = new PatchworkProtocol(_patchworkOwner);
 
         vm.startPrank(_scopeOwner);
         _scopeName = "testscope";

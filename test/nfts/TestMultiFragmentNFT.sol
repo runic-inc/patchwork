@@ -12,7 +12,7 @@ struct TestMultiFragmentNFTMetadata {
 contract TestMultiFragmentNFT is PatchworkFragmentMulti, IPatchworkMintable {
     uint256 _nextTokenId;
 
-    constructor (address _manager) Patchwork721("testscope", "TestMultiFragmentNFT", "TFLR", _manager) {
+    constructor (address _manager) Patchwork721("testscope", "TestMultiFragmentNFT", "TFLR", _manager, msg.sender) {
     }
 
     function supportsInterface(bytes4 interfaceID) public view virtual override returns (bool) {
