@@ -34,14 +34,14 @@ abstract contract Patchwork1155Patch is Patchwork721, IPatchwork1155Patch {
     /**
     @dev See {ERC721-_burn}
     */ 
-    function _burn(uint256 tokenId) internal virtual override {
+    function _burnPatch(uint256 tokenId) internal virtual {
         PatchTarget storage target = _targetsById[tokenId];
         address originalAddress = target.addr;
         uint256 originalTokenId = target.tokenId;
         address account = target.account;
         IPatchworkProtocol(_manager).patchBurned1155(originalAddress, originalTokenId, account, address(this));
         delete _targetsById[tokenId];
-        super._burn(tokenId);
+        _burn(tokenId);
     }
 }
 
@@ -81,9 +81,9 @@ abstract contract PatchworkReversible1155Patch is Patchwork1155Patch, IPatchwork
     /**
     @dev See {ERC721-_burn}
     */ 
-    function _burn(uint256 tokenId) internal virtual override {
+    function _burnPatch(uint256 tokenId) internal virtual override {
         PatchTarget storage target = _targetsById[tokenId];
         delete _idsByTargetHash[keccak256(abi.encode(target))];
-        super._burn(tokenId);
+        _burnPatch(tokenId);
     }
 }

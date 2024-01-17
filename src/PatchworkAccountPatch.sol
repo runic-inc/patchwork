@@ -36,7 +36,7 @@ abstract contract PatchworkAccountPatch is Patchwork721, IPatchworkAccountPatch 
     /**
     @dev See {ERC721-_burn}
     */ 
-    function _burn(uint256 tokenId) internal virtual override {
+    function _burnPatch(uint256 tokenId) internal virtual {
         address originalAddress = _targetsById[tokenId];
         IPatchworkProtocol(_manager).patchBurnedAccount(originalAddress, address(this));
         delete _targetsById[tokenId];
@@ -82,9 +82,9 @@ abstract contract PatchworkReversibleAccountPatch is PatchworkAccountPatch, IPat
     /**
     @dev See {ERC721-_burn}
     */ 
-    function _burn(uint256 tokenId) internal virtual override {
+    function _burnPatch(uint256 tokenId) internal virtual override {
         address target = _targetsById[tokenId];
         delete _idsByTarget[target];
-        super._burn(tokenId);
+        super._burnPatch(tokenId);
     }
 }

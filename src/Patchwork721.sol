@@ -48,7 +48,7 @@ abstract contract Patchwork721 is ERC721, IPatchwork721, IERC4906, Ownable {
         string memory name_,
         string memory symbol_,
         address manager_
-    ) ERC721(name_, symbol_) Ownable() {
+    ) ERC721(name_, symbol_) Ownable(msg.sender) {
         _scopeName = scopeName_;
         _manager = manager_;
     } 
@@ -123,14 +123,6 @@ abstract contract Patchwork721 is ERC721, IPatchwork721, IERC4906, Ownable {
     function transferFrom(address from, address to, uint256 tokenId) public virtual override(ERC721, IERC721) {
         IPatchworkProtocol(_manager).applyTransfer(from, to, tokenId);
         super.transferFrom(from, to, tokenId);
-    }
-
-    /**
-    @dev See {IERC721-safeTransferFrom}.
-    */
-    function safeTransferFrom(address from, address to, uint256 tokenId) public virtual override(ERC721, IERC721) {
-        IPatchworkProtocol(_manager).applyTransfer(from, to, tokenId);
-        super.safeTransferFrom(from, to, tokenId);
     }
 
     /**

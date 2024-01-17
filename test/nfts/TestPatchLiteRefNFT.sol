@@ -257,6 +257,6 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
 
     function burn(uint256 tokenId) public {
         // test only
-        _burn(tokenId);
+        _burnPatch(tokenId);
     }
 }
