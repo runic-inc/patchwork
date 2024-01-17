@@ -12,7 +12,7 @@ contract TestAccountPatchNFT is PatchworkReversibleAccountPatch {
         uint256 thing;
     }
 
-    constructor(address manager_, bool sameOwnerModel_) Patchwork721("testscope", "TestAccountPatchNFT", "TPLR", manager_) {
+    constructor(address manager_, bool sameOwnerModel_) Patchwork721("testscope", "TestAccountPatchNFT", "TPLR", manager_, msg.sender) {
         _sameOwnerModel = sameOwnerModel_;
     }
 
@@ -68,7 +68,7 @@ contract TestAccountPatchNFT is PatchworkReversibleAccountPatch {
         super.safeTransferFrom(from, to, tokenId, data);
     }
 
-    function _checkTransfer(address from, address to, uint256 tokenId) internal {
+    function _checkTransfer(address from, address to, uint256 tokenId) internal view {
             if (_sameOwnerModel) {
                 // allow burn only
             if (from == address(0)) {

@@ -36,7 +36,7 @@ contract TestFragmentLiteRefNFT is PatchworkFragmentSingle, PatchworkLiteRef, IP
     bool _getAssignedToOverrideSet;
     address _getAssignedToOverride;
 
-    constructor (address _manager) Patchwork721("testscope", "TestFragmentLiteRef", "TFLR", _manager) {
+    constructor (address _manager) Patchwork721("testscope", "TestFragmentLiteRef", "TFLR", _manager, msg.sender) {
     }
 
     // ERC-165

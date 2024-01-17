@@ -26,7 +26,7 @@ contract TestPatchFragmentNFT is PatchworkReversiblePatch, PatchworkFragmentSing
 
     uint256 _nextTokenId;
 
-    constructor(address manager_) Patchwork721("testscope", "TestPatchFragment", "TPLR", manager_) PatchworkFragmentSingle() {
+    constructor(address manager_) Patchwork721("testscope", "TestPatchFragment", "TPLR", manager_, msg.sender) PatchworkFragmentSingle() {
     }
 
     // ERC-165

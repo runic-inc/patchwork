@@ -11,7 +11,7 @@ contract Test1155PatchNFT is Patchwork1155Patch {
         uint256 thing;
     }
 
-    constructor(address manager_) Patchwork721("testscope", "Test1155PatchNFT", "TPLR", manager_) {
+    constructor(address manager_) Patchwork721("testscope", "Test1155PatchNFT", "TPLR", manager_, msg.sender) {
     }
 
     function schemaURI() pure external returns (string memory) {
@@ -55,7 +55,7 @@ contract TestReversible1155PatchNFT is PatchworkReversible1155Patch {
         uint256 thing;
     }
 
-    constructor(address manager_) Patchwork721("testscope", "Test1155PatchNFT", "TPLR", manager_) {
+    constructor(address manager_) Patchwork721("testscope", "Test1155PatchNFT", "TPLR", manager_, msg.sender) {
     }
 
     function schemaURI() pure external returns (string memory) {
