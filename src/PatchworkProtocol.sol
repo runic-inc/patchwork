@@ -17,7 +17,7 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./interfaces/IPatchwork721.sol";
 import "./interfaces/IPatchworkSingleAssignable.sol";
 import "./interfaces/IPatchworkMultiAssignable.sol";
@@ -82,7 +82,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     uint256 private constant PROTOCOL_FEE_CEILING = 3000;
 
     /// Constructor
-    constructor() Ownable() ReentrancyGuard() {}
+    constructor() Ownable(msg.sender) ReentrancyGuard() {}
 
     /**
     @dev See {IPatchworkProtocol-claimScope}

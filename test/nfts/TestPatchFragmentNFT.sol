@@ -127,10 +127,6 @@ contract TestPatchFragmentNFT is PatchworkReversiblePatch, PatchworkFragmentSing
 
     function burn(uint256 tokenId) public {
         // test only
-        _burn(tokenId);
-    }
-
-    function _burn(uint256 tokenId) internal virtual override(PatchworkReversiblePatch, ERC721) {
-        return PatchworkReversiblePatch._burn(tokenId);
+        _burnPatch(tokenId);
     }
 }

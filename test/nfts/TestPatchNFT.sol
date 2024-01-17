@@ -97,6 +97,6 @@ contract TestPatchNFT is PatchworkPatch {
 
     function burn(uint256 tokenId) public {
         // test only - protocol does not currently support this as you can't mint another patch later
-        _burn(tokenId);
+        _burnPatch(tokenId);
     }
 }

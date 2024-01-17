@@ -42,7 +42,7 @@ contract Test1155PatchNFT is Patchwork1155Patch {
     }
 
     function burn(uint256 tokenId) external {
-        _burn(tokenId);
+        _burnPatch(tokenId);
     }
 
 }
@@ -86,7 +86,7 @@ contract TestReversible1155PatchNFT is PatchworkReversible1155Patch {
     }
 
     function burn(uint256 tokenId) external {
-        _burn(tokenId);
+        _burnPatch(tokenId);
     }
 
 }
