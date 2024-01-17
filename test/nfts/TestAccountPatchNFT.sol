@@ -56,14 +56,7 @@ contract TestAccountPatchNFT is PatchworkReversibleAccountPatch {
     @dev See {IERC721-transferFrom}.
     */
     function transferFrom(address from, address to, uint256 tokenId) public virtual override {
-        if (_sameOwnerModel) {
-            // allow burn only
-            if (from == address(0)) {
-                // mint allowed
-            } else if (to != address(0)) {
-                revert IPatchworkProtocol.TransferNotAllowed(address(this), tokenId);
-            }
-       }
+        _checkTransfer(from, to, tokenId);
         super.transferFrom(from, to, tokenId);
     }
 
@@ -71,14 +64,18 @@ contract TestAccountPatchNFT is PatchworkReversibleAccountPatch {
     @dev See {IERC721-safeTransferFrom}.
     */
     function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public virtual override {
-        if (_sameOwnerModel) {
-            // allow burn only
+        _checkTransfer(from, to, tokenId);
+        super.safeTransferFrom(from, to, tokenId, data);
+    }
+
+    function _checkTransfer(address from, address to, uint256 tokenId) internal {
+            if (_sameOwnerModel) {
+                // allow burn only
             if (from == address(0)) {
                 // mint allowed
             } else if (to != address(0)) {
                 revert IPatchworkProtocol.TransferNotAllowed(address(this), tokenId);
             }
        }
-        super.safeTransferFrom(from, to, tokenId, data);
     }
 }
