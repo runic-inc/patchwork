@@ -42,13 +42,15 @@ abstract contract Patchwork721 is ERC721, IPatchwork721, IERC4906, Ownable {
     @param name_ The ERC-721 name.
     @param symbol_ The ERC-721 symbol.
     @param manager_ The address that will be set as the manager (PatchworkProtocol).
+    @param owner_ The address that will be set as the owner
     */
     constructor(
         string memory scopeName_,
         string memory name_,
         string memory symbol_,
-        address manager_
-    ) ERC721(name_, symbol_) Ownable(msg.sender) {
+        address manager_,
+        address owner_
+    ) ERC721(name_, symbol_) Ownable(owner_) {
         _scopeName = scopeName_;
         _manager = manager_;
     } 
