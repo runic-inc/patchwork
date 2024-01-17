@@ -86,13 +86,13 @@ contract PatchworkNFTTest is Test {
         // test wrong user revert
         vm.startPrank(_userAddress);
         assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
-        vm.expectRevert("ERC721: caller is not token owner or approved");
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InsufficientApproval.selector, _userAddress, n));
         _testPatchworkNFT.transferFrom(_user2Address, _userAddress, n);
         assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
-        vm.expectRevert("ERC721: caller is not token owner or approved");
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InsufficientApproval.selector, _userAddress, n));
         _testPatchworkNFT.safeTransferFrom(_user2Address, _userAddress, n);
         assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
-        vm.expectRevert("ERC721: caller is not token owner or approved");
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InsufficientApproval.selector, _userAddress, n));
         _testPatchworkNFT.safeTransferFrom(_user2Address, _userAddress, n, bytes("abcd"));
         assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
     }
@@ -171,13 +171,13 @@ contract PatchworkNFTTest is Test {
         // test wrong user revert
         vm.startPrank(_userAddress);
         assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
-        vm.expectRevert("ERC721: caller is not token owner or approved");
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InsufficientApproval.selector, _userAddress, n));
         _testPatchworkNFT.transferFromWithFreezeNonce(_user2Address, _userAddress, n, 1);
         assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
-        vm.expectRevert("ERC721: caller is not token owner or approved");
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InsufficientApproval.selector, _userAddress, n));
         _testPatchworkNFT.safeTransferFromWithFreezeNonce(_user2Address, _userAddress, n, 1);
         assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
-        vm.expectRevert("ERC721: caller is not token owner or approved");
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InsufficientApproval.selector, _userAddress, n));
         _testPatchworkNFT.safeTransferFromWithFreezeNonce(_user2Address, _userAddress, n, bytes("abcd"), 1);
         assertEq(_user2Address, _testPatchworkNFT.ownerOf(n));
         vm.stopPrank();

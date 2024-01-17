@@ -49,7 +49,7 @@ contract FeesTest is Test {
     }
 
     function testProtocolBankers() public {
-        vm.expectRevert("Ownable: caller is not the owner"); // caller is not owner
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, _defaultUser));
         _prot.addProtocolBanker(_defaultUser);
         vm.prank(_patchworkOwner);
         _prot.addProtocolBanker(_user2Address);
@@ -132,7 +132,7 @@ contract FeesTest is Test {
         vm.prank(_user2Address); 
         _prot.withdrawFromProtocol(50000000);
         // Remove a banker
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, _defaultUser));
         _prot.removeProtocolBanker(_user2Address);
         vm.prank(_patchworkOwner);
         _prot.removeProtocolBanker(_user2Address);
