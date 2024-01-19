@@ -42,12 +42,8 @@ esac
 COMPILER_VERSION="0.8.23+commit.f704f362"
 OPTIMIZER_RUNS=200
 
-#forge_options="--optimizer-runs=200 --via-ir "
-
-# Verifying the contract on Etherscan
-#forge verify-contract $CONTRACT_ADDRESS --chain-id $CHAIN_ID  src/PatchworkProtocol.sol:PatchworkProtocol $forge_options  --watch 
-
 forge verify-contract $CONTRACT_ADDRESS src/PatchworkProtocol.sol:PatchworkProtocol \
+                      --constructor-args "0x0000000000000000000000007239aec2fa59303ba68bece386be2a9ddc72e63b" \
                       --chain-id $CHAIN_ID \
                       --compiler-version $COMPILER_VERSION \
                       --optimizer-runs $OPTIMIZER_RUNS \
