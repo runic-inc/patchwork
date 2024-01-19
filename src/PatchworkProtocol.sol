@@ -523,7 +523,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         } else {
             revert NotAuthorized(msg.sender);
         }
-        _handlePatchFee(scopeName, scope, patchAddress);
+        (uint256 scopeFee, uint256 protocolFee) = _handlePatchFee(scopeName, scope, patchAddress);
         // limit this to one unique patch (originalAddress+TokenID+patchAddress)
         bytes32 _hash = keccak256(abi.encodePacked(originalAddress, originalTokenId, patchAddress));
         if (_uniquePatches[_hash]) {
@@ -531,7 +531,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         }
         _uniquePatches[_hash] = true;
         tokenId = patch_.mintPatch(owner, IPatchworkPatch.PatchTarget(originalAddress, originalTokenId));
-        emit Patch(owner, originalAddress, originalTokenId, patchAddress, tokenId);
+        emit Patch(owner, originalAddress, originalTokenId, patchAddress, tokenId, scopeFee, protocolFee);
         return tokenId;
     }
 
@@ -561,7 +561,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         } else {
             revert NotAuthorized(msg.sender);
         }
-        _handlePatchFee(scopeName, scope, patchAddress);
+        (uint256 scopeFee, uint256 protocolFee) = _handlePatchFee(scopeName, scope, patchAddress);
         // limit this to one unique patch (originalAddress+TokenID+patchAddress)
         bytes32 _hash = keccak256(abi.encodePacked(originalAddress, originalTokenId, originalAccount, patchAddress));
         if (_uniquePatches[_hash]) {
@@ -569,7 +569,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         }
         _uniquePatches[_hash] = true;
         tokenId = patch_.mintPatch(to, IPatchwork1155Patch.PatchTarget(originalAddress, originalTokenId, originalAccount));
-        emit ERC1155Patch(to, originalAddress, originalTokenId, originalAccount, patchAddress, tokenId);
+        emit ERC1155Patch(to, originalAddress, originalTokenId, originalAccount, patchAddress, tokenId, scopeFee, protocolFee);
         return tokenId;
     }
 
@@ -599,7 +599,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         } else {
             revert NotAuthorized(msg.sender);
         }
-        _handlePatchFee(scopeName, scope, patchAddress);
+        (uint256 scopeFee, uint256 protocolFee) = _handlePatchFee(scopeName, scope, patchAddress);
         // limit this to one unique patch (originalAddress+patchAddress)
         bytes32 _hash = keccak256(abi.encodePacked(originalAddress, patchAddress));
         if (_uniquePatches[_hash]) {
@@ -607,7 +607,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         }
         _uniquePatches[_hash] = true;
         tokenId = patch_.mintPatch(owner, originalAddress);
-        emit AccountPatch(owner, originalAddress, patchAddress, tokenId);
+        emit AccountPatch(owner, originalAddress, patchAddress, tokenId, scopeFee, protocolFee);
         return tokenId;
     }
 
@@ -620,7 +620,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     }
 
     /// common to patches
-    function _handlePatchFee(string memory scopeName, Scope storage scope, address patchAddress) private {
+    function _handlePatchFee(string memory scopeName, Scope storage scope, address patchAddress) private returns (uint256 scopeFee, uint256 protocolFee) {
         uint256 patchFee = scope.patchFees[patchAddress];
         if (msg.value != patchFee) {
             revert IncorrectFeeAmount();
@@ -633,14 +633,15 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
             } else {
                 patchBp = _protocolFeeConfig.patchBp;
             }
-            uint256 protocolFee = msg.value * patchBp / _FEE_BASIS_DENOM;
+            protocolFee = msg.value * patchBp / _FEE_BASIS_DENOM;
+            scopeFee = msg.value - protocolFee;
             _protocolBalance += protocolFee;
-            scope.balance += msg.value - protocolFee;
+            scope.balance += scopeFee;
         }
     }
 
     // common to assigns
-    function _handleAssignFee(string memory scopeName, Scope storage scope, address fragmentAddress) private {
+    function _handleAssignFee(string memory scopeName, Scope storage scope, address fragmentAddress) private returns (uint256 scopeFee, uint256 protocolFee) {
         uint256 assignFee = scope.assignFees[fragmentAddress];
         if (msg.value != assignFee) {
             revert IncorrectFeeAmount();
@@ -653,9 +654,10 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
             } else {
                 assignBp = _protocolFeeConfig.assignBp;
             }
-            uint256 protocolFee = msg.value * assignBp / _FEE_BASIS_DENOM;
+            protocolFee = msg.value * assignBp / _FEE_BASIS_DENOM;
+            scopeFee = msg.value - protocolFee;
             _protocolBalance += protocolFee;
-            scope.balance += msg.value - protocolFee;
+            scope.balance += scopeFee;
         }
     }
 
@@ -723,56 +725,63 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
             revert SelfAssignmentNotAllowed(fragment, fragmentTokenId);
         }
         IPatchworkAssignable assignable = IPatchworkAssignable(fragment);
-        if (_isLocked(fragment, fragmentTokenId)) {
-            revert Locked(fragment, fragmentTokenId);
-        }
         // Use the target's scope for general permission and check the fragment for detailed permissions
-        string memory targetScopeName = _getScopeName(target);
-        Scope storage targetScope = _mustHaveScope(targetScopeName);
-        _mustBeWhitelisted(targetScopeName, targetScope, target);
         {
+            string memory targetScopeName = _getScopeName(target);
+            if (!assignable.allowAssignment(fragmentTokenId, target, targetTokenId, targetOwner, msg.sender, targetScopeName)) {
+                revert NotAuthorized(msg.sender);
+            }
+            Scope storage targetScope = _mustHaveScope(targetScopeName);
+            _mustBeWhitelisted(targetScopeName, targetScope, target);
+            if (targetScope.owner == msg.sender || targetScope.operators[msg.sender]) {
+                // all good
+            } else if (targetScope.allowUserAssign) {
+                // msg.sender must own the target
+                if (targetOwner != msg.sender) {
+                    revert NotAuthorized(msg.sender);
+                }
+            } else {
+                revert NotAuthorized(msg.sender);
+            }
+        }
+        uint256 scopeFee = 0;
+        uint256 protocolFee = 0;
+        // Check fragment whitelisting and handle fees
+        {
+            if (_isLocked(fragment, fragmentTokenId)) {
+                revert Locked(fragment, fragmentTokenId);
+            }
             // Whitelist check, these variables do not need to stay in the function level stack
             string memory fragmentScopeName = _getScopeName(fragment);
             Scope storage fragmentScope = _mustHaveScope(fragmentScopeName);
             _mustBeWhitelisted(fragmentScopeName, fragmentScope, fragment);
-            _handleAssignFee(fragmentScopeName, fragmentScope, fragment);
+            (scopeFee, protocolFee) = _handleAssignFee(fragmentScopeName, fragmentScope, fragment);
         }
-        if (targetScope.owner == msg.sender || targetScope.operators[msg.sender]) {
-            // all good
-        } else if (targetScope.allowUserAssign) {
-            // msg.sender must own the target
-            if (targetOwner != msg.sender) {
-                revert NotAuthorized(msg.sender);
+        uint64 ref;
+        // Handle storage and duplicate checks
+        {
+            bool redacted;
+            (ref, redacted) = IPatchworkLiteRef(target).getLiteReference(fragment, fragmentTokenId);
+            if (redacted) {
+                revert FragmentRedacted(address(fragment));
             }
-        } else {
-            revert NotAuthorized(msg.sender);
+            if (ref == 0) {
+                revert FragmentUnregistered(address(fragment));
+            }
+            // targetRef is a compound key (targetAddr+targetTokenID+ref) - blocks duplicate assignments
+            bytes32 targetRef = keccak256(abi.encodePacked(target, targetTokenId, ref));
+            if (_liteRefs[targetRef]) {
+                revert FragmentAlreadyAssigned(address(fragment), fragmentTokenId);
+            }
+            // add to our storage of assignments
+            _liteRefs[targetRef] = true;
+            // call assign on the fragment
+            assignable.assign(fragmentTokenId, target, targetTokenId);
         }
-        if (!IPatchworkAssignable(fragment).allowAssignment(fragmentTokenId, target, targetTokenId, targetOwner, msg.sender, targetScopeName)) {
-            revert NotAuthorized(msg.sender);
-        }
-        bytes32 targetRef;
-        // reduce stack to stay under limit
-        address _target = target;
-        uint256 _targetTokenId = targetTokenId;
-        address _fragment = fragment;
-        uint256 _fragmentTokenId = fragmentTokenId;
-        (uint64 ref, bool redacted) = IPatchworkLiteRef(_target).getLiteReference(_fragment, _fragmentTokenId);
-        // targetRef is a compound key (targetAddr+targetTokenID+fragmentAddr+fragmentTokenID) - blocks duplicate assignments
-        targetRef = keccak256(abi.encodePacked(_target, _targetTokenId, ref));
-        if (ref == 0) {
-            revert FragmentUnregistered(address(_fragment));
-        }
-        if (redacted) {
-            revert FragmentRedacted(address(_fragment));
-        }
-        if (_liteRefs[targetRef]) {
-            revert FragmentAlreadyAssigned(address(_fragment), _fragmentTokenId);
-        }
-        // call assign on the fragment
-        assignable.assign(_fragmentTokenId, _target, _targetTokenId);
-        // add to our storage of assignments
-        _liteRefs[targetRef] = true;
-        emit Assign(targetOwner, _fragment, _fragmentTokenId, _target, _targetTokenId);
+        // these two end up beyond stack depth on some compiler settings.
+        address fragment_ = fragment;
+        uint256 fragmentTokenId_ = fragmentTokenId;
+        emit Assign(targetOwner, fragment_, fragmentTokenId_, target, targetTokenId, scopeFee, protocolFee);
         return ref;
     }
 
