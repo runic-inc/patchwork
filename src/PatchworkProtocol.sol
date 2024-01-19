@@ -320,9 +320,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         if (msg.value != config.flatFee) {
             revert IncorrectFeeAmount();
         }
-        _handleMintFee(scopeName, scope);
+        (uint256 scopeFee, uint256 protocolFee) = _handleMintFee(scopeName, scope);
         tokenId = IPatchworkMintable(mintable).mint(to, data);
-        emit Mint(msg.sender, scopeName, to, mintable, data);
+        emit Mint(msg.sender, scopeName, to, mintable, data, scopeFee, protocolFee);
     }
     
     /**
@@ -334,9 +334,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         if (msg.value != totalFee) {
             revert IncorrectFeeAmount();
         }
-        _handleMintFee(scopeName, scope);
+        (uint256 scopeFee, uint256 protocolFee) = _handleMintFee(scopeName, scope);
         tokenIds = IPatchworkMintable(mintable).mintBatch(to, data, quantity);
-        emit MintBatch(msg.sender, scopeName, to, mintable, data, quantity);
+        emit MintBatch(msg.sender, scopeName, to, mintable, data, quantity, scopeFee, protocolFee);
     }
 
     /// Common to mints
@@ -354,7 +354,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     }
 
     /// Common to mints
-    function _handleMintFee(string memory scopeName, Scope storage scope) internal {
+    function _handleMintFee(string memory scopeName, Scope storage scope) internal returns (uint256 scopeFee, uint256 protocolFee) {
         // Account for 100% of the message value
         if (msg.value != 0) {
             uint256 mintBp;
@@ -364,9 +364,10 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
             } else {
                 mintBp = _protocolFeeConfig.mintBp;
             }
-            uint256 protocolFee = msg.value * mintBp / _FEE_BASIS_DENOM;
+            protocolFee = msg.value * mintBp / _FEE_BASIS_DENOM;
+            scopeFee = msg.value - protocolFee;
             _protocolBalance += protocolFee;
-            scope.balance += msg.value - protocolFee;
+            scope.balance += scopeFee;
         }
     }
 

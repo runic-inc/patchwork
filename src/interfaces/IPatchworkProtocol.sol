@@ -552,8 +552,10 @@ interface IPatchworkProtocol {
     @param to The receipient of the mint
     @param mintable The IPatchworkMintable minted
     @param data The data used to mint
+    @param scopeFee The fee collected to the scope
+    @param protocolFee The fee collected to the protocol
     */
-    event Mint(address indexed actor, string scopeName, address indexed to, address indexed mintable, bytes data);
+    event Mint(address indexed actor, string scopeName, address indexed to, address indexed mintable, bytes data, uint256 scopeFee, uint256 protocolFee);
 
     /**
     @notice Emitted on batch mint
@@ -563,8 +565,10 @@ interface IPatchworkProtocol {
     @param mintable The IPatchworkMintable minted
     @param data The data used to mint
     @param quantity The quantity minted
+    @param scopeFee The fee collected to the scope
+    @param protocolFee The fee collected to the protocol
     */
-    event MintBatch(address indexed actor, string scopeName, address indexed to, address indexed mintable, bytes data, uint256 quantity);
+    event MintBatch(address indexed actor, string scopeName, address indexed to, address indexed mintable, bytes data, uint256 quantity, uint256 scopeFee, uint256 protocolFee);
 
     /**
     @notice Emitted on protocol fee config proposed
