@@ -36,7 +36,7 @@ case $NETWORK in
     ;;
 esac
 
-forge_options="--via-ir --optimize --optimizer-runs 0"
+forge_options="--via-ir --optimize --optimizer-runs 200"
 
 # Check for broadcast flag
 if [[ " $* " =~ " --broadcast " ]]; then
