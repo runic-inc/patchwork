@@ -375,8 +375,10 @@ interface IPatchworkProtocol {
     @param fragmentTokenId The tokenId of the fragment
     @param targetAddress The address of the target's contract
     @param targetTokenId The tokenId of the target
+    @param scopeFee The fee collected to the scope
+    @param protocolFee The fee collected to the protocol
     */
-    event Assign(address indexed owner, address fragmentAddress, uint256 fragmentTokenId, address indexed targetAddress, uint256 indexed targetTokenId);
+    event Assign(address indexed owner, address fragmentAddress, uint256 fragmentTokenId, address indexed targetAddress, uint256 indexed targetTokenId, uint256 scopeFee, uint256 protocolFee);
 
     /**
     @notice Emitted when a fragment is unassigned
@@ -395,8 +397,10 @@ interface IPatchworkProtocol {
     @param originalTokenId The tokenId of the original 721
     @param patchAddress The address of the patch's contract
     @param patchTokenId The tokenId of the patch
+    @param scopeFee The fee collected to the scope
+    @param protocolFee The fee collected to the protocol
     */
-    event Patch(address indexed owner, address originalAddress, uint256 originalTokenId, address indexed patchAddress, uint256 indexed patchTokenId);
+    event Patch(address indexed owner, address originalAddress, uint256 originalTokenId, address indexed patchAddress, uint256 indexed patchTokenId, uint256 scopeFee, uint256 protocolFee);
 
     /**
     @notice Emitted when a patch is minted
@@ -406,8 +410,10 @@ interface IPatchworkProtocol {
     @param originalAccount The address of the original 1155's account
     @param patchAddress The address of the patch's contract
     @param patchTokenId The tokenId of the patch
+    @param scopeFee The fee collected to the scope
+    @param protocolFee The fee collected to the protocol
     */
-    event ERC1155Patch(address indexed owner, address originalAddress, uint256 originalTokenId, address originalAccount, address indexed patchAddress, uint256 indexed patchTokenId);
+    event ERC1155Patch(address indexed owner, address originalAddress, uint256 originalTokenId, address originalAccount, address indexed patchAddress, uint256 indexed patchTokenId, uint256 scopeFee, uint256 protocolFee);
 
 
     /**
@@ -416,8 +422,10 @@ interface IPatchworkProtocol {
     @param originalAddress The address of the original account
     @param patchAddress The address of the patch's contract
     @param patchTokenId The tokenId of the patch
+    @param scopeFee The fee collected to the scope
+    @param protocolFee The fee collected to the protocol
     */
-    event AccountPatch(address indexed owner, address originalAddress, address indexed patchAddress, uint256 indexed patchTokenId);
+    event AccountPatch(address indexed owner, address originalAddress, address indexed patchAddress, uint256 indexed patchTokenId, uint256 scopeFee, uint256 protocolFee);
 
     /**
     @notice Emitted when a new scope is claimed
@@ -552,8 +560,10 @@ interface IPatchworkProtocol {
     @param to The receipient of the mint
     @param mintable The IPatchworkMintable minted
     @param data The data used to mint
+    @param scopeFee The fee collected to the scope
+    @param protocolFee The fee collected to the protocol
     */
-    event Mint(address indexed actor, string scopeName, address indexed to, address indexed mintable, bytes data);
+    event Mint(address indexed actor, string scopeName, address indexed to, address indexed mintable, bytes data, uint256 scopeFee, uint256 protocolFee);
 
     /**
     @notice Emitted on batch mint
@@ -563,8 +573,10 @@ interface IPatchworkProtocol {
     @param mintable The IPatchworkMintable minted
     @param data The data used to mint
     @param quantity The quantity minted
+    @param scopeFee The fee collected to the scope
+    @param protocolFee The fee collected to the protocol
     */
-    event MintBatch(address indexed actor, string scopeName, address indexed to, address indexed mintable, bytes data, uint256 quantity);
+    event MintBatch(address indexed actor, string scopeName, address indexed to, address indexed mintable, bytes data, uint256 quantity, uint256 scopeFee, uint256 protocolFee);
 
     /**
     @notice Emitted on protocol fee config proposed
