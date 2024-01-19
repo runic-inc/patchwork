@@ -38,7 +38,19 @@ case $NETWORK in
     ;;
 esac
 
-forge_options="--optimizer-runs=200 --via-ir"
+
+COMPILER_VERSION="0.8.23+commit.f704f362"
+OPTIMIZER_RUNS=200
+
+#forge_options="--optimizer-runs=200 --via-ir "
 
 # Verifying the contract on Etherscan
-forge verify-contract --chain-id $CHAIN_ID $CONTRACT_ADDRESS src/PatchworkProtocol.sol:PatchworkProtocol $forge_options  --watch 
+#forge verify-contract $CONTRACT_ADDRESS --chain-id $CHAIN_ID  src/PatchworkProtocol.sol:PatchworkProtocol $forge_options  --watch 
+
+forge verify-contract $CONTRACT_ADDRESS src/PatchworkProtocol.sol:PatchworkProtocol \
+                      --chain-id $CHAIN_ID \
+                      --compiler-version $COMPILER_VERSION \
+                      --optimizer-runs $OPTIMIZER_RUNS \
+                      --via-ir \
+                      --etherscan-api-key $ETHERSCAN_API_KEY \
+                      --watch
