@@ -36,8 +36,6 @@ case $NETWORK in
     ;;
 esac
 
-forge_options="--via-ir --optimize --optimizer-runs 200"
-
 # Check for broadcast flag
 if [[ " $* " =~ " --broadcast " ]]; then
   echo "Broadcasting is enabled"
@@ -48,7 +46,6 @@ fi
 export PATCHWORK_OWNER
 
 # Execute the Solidity script with the environment variable
-forge script ./deploy.s.sol:DeterministicPatchworkDeploy \
+forge script --via-ir --optimize --optimizer-runs 200 ./deploy.s.sol:DeterministicPatchworkDeploy \
   --rpc-url $RPC_URL \
-  --private-key $PRIVATE_KEY \
-  $forge_options
+  --private-key $PRIVATE_KEY
