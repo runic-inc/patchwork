@@ -724,67 +724,77 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         if (fragment == target && fragmentTokenId == targetTokenId) {
             revert SelfAssignmentNotAllowed(fragment, fragmentTokenId);
         }
-        IPatchworkAssignable assignable = IPatchworkAssignable(fragment);
         // Use the target's scope for general permission and check the fragment for detailed permissions
-        {
-            string memory targetScopeName = _getScopeName(target);
-            if (!assignable.allowAssignment(fragmentTokenId, target, targetTokenId, targetOwner, msg.sender, targetScopeName)) {
-                revert NotAuthorized(msg.sender);
-            }
-            Scope storage targetScope = _mustHaveScope(targetScopeName);
-            _mustBeWhitelisted(targetScopeName, targetScope, target);
-            if (targetScope.owner == msg.sender || targetScope.operators[msg.sender]) {
-                // all good
-            } else if (targetScope.allowUserAssign) {
-                // msg.sender must own the target
-                if (targetOwner != msg.sender) {
-                    revert NotAuthorized(msg.sender);
-                }
-            } else {
-                revert NotAuthorized(msg.sender);
-            }
-        }
-        uint256 scopeFee = 0;
-        uint256 protocolFee = 0;
-        // Check fragment whitelisting and handle fees
-        {
-            if (_isLocked(fragment, fragmentTokenId)) {
-                revert Locked(fragment, fragmentTokenId);
-            }
-            // Whitelist check, these variables do not need to stay in the function level stack
-            string memory fragmentScopeName = _getScopeName(fragment);
-            Scope storage fragmentScope = _mustHaveScope(fragmentScopeName);
-            _mustBeWhitelisted(fragmentScopeName, fragmentScope, fragment);
-            (scopeFee, protocolFee) = _handleAssignFee(fragmentScopeName, fragmentScope, fragment);
-        }
-        uint64 ref;
+        (uint256 scopeFee, uint256 protocolFee) = _doAssignPermissionsAndFees(fragment, fragmentTokenId, target, targetTokenId, targetOwner);
         // Handle storage and duplicate checks
-        {
-            bool redacted;
-            (ref, redacted) = IPatchworkLiteRef(target).getLiteReference(fragment, fragmentTokenId);
-            if (redacted) {
-                revert FragmentRedacted(address(fragment));
-            }
-            if (ref == 0) {
-                revert FragmentUnregistered(address(fragment));
-            }
-            // targetRef is a compound key (targetAddr+targetTokenID+ref) - blocks duplicate assignments
-            bytes32 targetRef = keccak256(abi.encodePacked(target, targetTokenId, ref));
-            if (_liteRefs[targetRef]) {
-                revert FragmentAlreadyAssigned(address(fragment), fragmentTokenId);
-            }
-            // add to our storage of assignments
-            _liteRefs[targetRef] = true;
-            // call assign on the fragment
-            assignable.assign(fragmentTokenId, target, targetTokenId);
-        }
+        uint64 ref = _doAssignStorageAndDupes(fragment, fragmentTokenId, target, targetTokenId);
         // these two end up beyond stack depth on some compiler settings.
-        address fragment_ = fragment;
-        uint256 fragmentTokenId_ = fragmentTokenId;
-        emit Assign(targetOwner, fragment_, fragmentTokenId_, target, targetTokenId, scopeFee, protocolFee);
+        emit Assign(targetOwner, fragment, fragmentTokenId, target, targetTokenId, scopeFee, protocolFee);
         return ref;
     }
 
+    /**
+    @notice Handles assignment permissions and fees
+    @param fragment the IPatchworkAssignable's address
+    @param fragmentTokenId the IPatchworkAssignable's tokenId
+    @param target the IPatchworkLiteRef target's address
+    @param targetTokenId the IPatchworkLiteRef target's tokenId
+    @param targetOwner the owner address of the target
+    */
+    function _doAssignPermissionsAndFees(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, address targetOwner) private returns (uint256 scopeFee, uint256 protocolFee) {
+        string memory targetScopeName = _getScopeName(target);
+        if (!IPatchworkAssignable(fragment).allowAssignment(fragmentTokenId, target, targetTokenId, targetOwner, msg.sender, targetScopeName)) {
+            revert NotAuthorized(msg.sender);
+        }
+        Scope storage targetScope = _mustHaveScope(targetScopeName);
+        _mustBeWhitelisted(targetScopeName, targetScope, target);
+        if (targetScope.owner == msg.sender || targetScope.operators[msg.sender]) {
+            // all good
+        } else if (targetScope.allowUserAssign) {
+            // msg.sender must own the target
+            if (targetOwner != msg.sender) {
+                revert NotAuthorized(msg.sender);
+            }
+        } else {
+            revert NotAuthorized(msg.sender);
+        }
+        if (_isLocked(fragment, fragmentTokenId)) {
+            revert Locked(fragment, fragmentTokenId);
+        }
+        // Whitelist check, these variables do not need to stay in the function level stack
+        string memory fragmentScopeName = _getScopeName(fragment);
+        Scope storage fragmentScope = _mustHaveScope(fragmentScopeName);
+        _mustBeWhitelisted(fragmentScopeName, fragmentScope, fragment);
+        (scopeFee, protocolFee) = _handleAssignFee(fragmentScopeName, fragmentScope, fragment);
+    }
+
+    /**
+    @notice Handles assignment storage and duplicate checks
+    @param fragment the IPatchworkAssignable's address
+    @param fragmentTokenId the IPatchworkAssignable's tokenId
+    @param target the IPatchworkLiteRef target's address
+    @param targetTokenId the IPatchworkLiteRef target's tokenId
+    */
+    function _doAssignStorageAndDupes(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) private returns (uint64 ref) {
+        bool redacted;
+        (ref, redacted) = IPatchworkLiteRef(target).getLiteReference(fragment, fragmentTokenId);
+        if (redacted) {
+            revert FragmentRedacted(address(fragment));
+        }
+        if (ref == 0) {
+            revert FragmentUnregistered(address(fragment));
+        }
+        // targetRef is a compound key (targetAddr+targetTokenID+ref) - blocks duplicate assignments
+        bytes32 targetRef = keccak256(abi.encodePacked(target, targetTokenId, ref));
+        if (_liteRefs[targetRef]) {
+            revert FragmentAlreadyAssigned(address(fragment), fragmentTokenId);
+        }
+        // add to our storage of assignments
+        _liteRefs[targetRef] = true;
+        // call assign on the fragment
+        IPatchworkAssignable(fragment).assign(fragmentTokenId, target, targetTokenId);
+    }
+    
     /**
     @dev See {IPatchworkProtocol-unassign}
     */
