@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import { Script } from "forge-std/Script.sol";
 import "forge-std/console.sol";
-import { PatchworkProtocol } from "src/PatchworkProtocol.sol";
+import { PatchworkProtocol } from "../src/PatchworkProtocol.sol";
 
 contract DeterministicPatchworkDeploy is Script {
 
@@ -13,14 +13,16 @@ contract DeterministicPatchworkDeploy is Script {
         address patchworkOwner = vm.envAddress("PATCHWORK_OWNER");
         vm.startBroadcast();
 
-        bytes memory creationBytecode = abi.encodePacked(type(PatchworkProtocol).creationCode, abi.encode(patchworkOwner));
+        bytes memory pwCCode = type(PatchworkProtocol).creationCode;
+        console.log("Patchwork creation code length: ", pwCCode.length);
+        bytes memory creationBytecode = abi.encodePacked(pwCCode, abi.encode(patchworkOwner));
         (bool success, bytes memory returnData) = _DETERMINISTIC_CREATE2_FACTORY.call(creationBytecode);
         require(success, "Failed to deploy Patchwork");
 
         address patchworkAddress = address(uint160(bytes20(returnData)));
         patchwork = PatchworkProtocol(patchworkAddress);
 
-        console.log("Deployed Patchwork contract at:", patchworkAddress);
+        console.log("Deployed Patchwork contract at: ", patchworkAddress);
         vm.stopBroadcast();
     }
 }
