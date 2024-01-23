@@ -1,7 +1,8 @@
 import { configService } from "../appServices";
-import { ManagementConfig } from "../types/types";
-import { ethers } from 'ethers'
-import { EthersAdapter } from '@safe-global/protocol-kit'
+import { ManagementConfig, MetaMaskEthereumProvider } from "../types/types";
+import { MetaTransactionData } from '@safe-global/safe-core-sdk-types'
+import { ethers, BrowserProvider } from 'ethers'
+import { EthersAdapter, Safe } from '@safe-global/protocol-kit'
 import { useWalletClient } from 'wagmi'
 import { Signer } from 'ethers';
 
@@ -22,28 +23,30 @@ export class SafeService {
         const chainId = BigInt(this.managementConfig.chain.id);
         this.service = new SafeApiKit({ chainId })
 
-
-        //const ethAdapter = new EthersAdapter({
-        //    ethers,
-        //    signerOrProvider: signer
-        //  })
+       
 
     }
 
     public async test() {
         
-        const info = await this.service.getSafeInfo(this.managementConfig.patchworkAddress);
+        const info = await this.service.getSafeInfo(this.managementConfig.patchworkSafe);
         console.log(info);
 
+    }
 
-        /*
-        const ethAdapter = new EthersAdapter({
+    public async signAndSend(data: MetaTransactionData, provider: BrowserProvider){
+;
+
+         const ethAdapter = new EthersAdapter({
             ethers,
-            signerOrProvider: signer
-         })
+            signerOrProvider: provider
+          })
 
-         console.log(ethAdapter);
-         */
+          const protocolKit = await Safe.create({
+            ethAdapter,
+            safeAddress: config.SAFE_ADDRESS
+          })
+
     }
 
 }

@@ -20,6 +20,7 @@
     "dependencies": {
         "@headlessui/react": "^1.7.18",
         "@headlessui/tailwindcss": "^0.2.0",
+        "@metamask/detect-provider": "^2.0.0",
         "@reduxjs/toolkit": "^1.9.7",
         "@safe-global/api-kit": "^2.0.0",
         "@safe-global/protocol-kit": "^2.0.0",

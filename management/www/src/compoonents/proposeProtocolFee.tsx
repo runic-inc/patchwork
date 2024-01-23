@@ -1,28 +1,29 @@
 // ProposeProtocolFee.tsx
 import { useState } from 'react';
-import { safeService } from '../appServices';
-import { useWalletClient } from 'wagmi';
-import { Signer } from 'ethers';
-import { useEthersSigner } from '../helpers/ethersHelper';
+import { safeService, web3Service } from '../appServices';
+import { ethers } from 'ethers'
+
+import detectEthereumProvider from '@metamask/detect-provider';
+
 
 export const ProposeProtocolFee = () => {
-    //const { data: signer } = useWalletClient();
-    const [mintBp, setMintBp] = useState('');
-    const [patchBp, setPatchBp] = useState('');
-    const [assignBp, setAssignBp] = useState('');
+
+    const [mintBp, setMintBp] = useState(0);
+    const [patchBp, setPatchBp] = useState(0);
+    const [assignBp, setAssignBp] = useState(0);
+
 
     const handleSubmit = async () => {
-        await safeService.test();
-        /*
-        const signer = useEthersSigner();
-        if (signer) {
-            await safeService.test(signer);
-            console.log(mintBp, patchBp, assignBp);
-        } else {
-            // Handle the case where signer is undefined
-            console.error('Signer is not available');
+        const provider = await detectEthereumProvider();
+
+        if (provider){
+            web3Service.getProposeProtocolFeeTxData(mintBp, patchBp, assignBp);
+            //const signer = await provider.getSigner();
+        }else{
+            console.error("No provider found");
         }
-        */
+        console.log(provider);
+        //
     };
 
     return (
@@ -35,7 +36,7 @@ export const ProposeProtocolFee = () => {
                     type="text" 
                     id="mintBp"
                     value={mintBp} 
-                    onChange={(e) => setMintBp(e.target.value)} 
+                    onChange={(e) => setMintBp((parseInt(e.target.value)))} 
                     placeholder="Mint BP" 
                     className="mt-1 w-full p-2 border border-gray-300 rounded"
                 />
@@ -49,7 +50,7 @@ export const ProposeProtocolFee = () => {
                     type="text" 
                     id="patchBp"
                     value={patchBp} 
-                    onChange={(e) => setPatchBp(e.target.value)} 
+                    onChange={(e) => setPatchBp(parseInt(e.target.value))} 
                     placeholder="Patch BP" 
                     className="mt-1 w-full p-2 border border-gray-300 rounded"
                 />
@@ -63,7 +64,7 @@ export const ProposeProtocolFee = () => {
                     type="text" 
                     id="assignBp"
                     value={assignBp} 
-                    onChange={(e) => setAssignBp(e.target.value)} 
+                    onChange={(e) => setAssignBp(parseInt(e.target.value))} 
                     placeholder="Assign BP" 
                     className="mt-1 w-full p-2 border border-gray-300 rounded"
                 />

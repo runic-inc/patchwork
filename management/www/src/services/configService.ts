@@ -12,14 +12,14 @@ interface NetworkConfig {
 const NETWORK_CONFIGS: Record<string, NetworkConfig> = {
     base: {
         rpcUrl: import.meta.env.BASE_RPC_URL,
-        patchworkSafe: import.meta.env.BASE_PATCHWORK_ADDRESS as `0x${string}`,
-        patchworkAddress: import.meta.env.BASE_PATCHWORK_OWNER as `0x${string}`,
+        patchworkSafe: import.meta.env.BASE_PATCHWORK_OWNER as `0x${string}`,
+        patchworkAddress: import.meta.env.BASE_PATCHWORK_ADDRESS as `0x${string}`,
         chain: base
     },
     sepolia: {
         rpcUrl: import.meta.env.SEPOLIA_RPC_URL,
-        patchworkSafe: import.meta.env.SEPOLIA_PATCHWORK_ADDRESS as `0x${string}`,
-        patchworkAddress: import.meta.env.SEPOLIA_PATCHWORK_OWNER as `0x${string}`,
+        patchworkSafe: import.meta.env.SEPOLIA_PATCHWORK_OWNER as `0x${string}`,
+        patchworkAddress: import.meta.env.SEPOLIA_PATCHWORK_ADDRESS as `0x${string}`,
         chain: sepolia
     },
 };
