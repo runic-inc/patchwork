@@ -33,8 +33,7 @@ export class SafeService {
     }
 
     public async signAndSend(data: MetaTransactionData, provider: BrowserProvider) {
-        ;
-
+    
         const ethAdapter = new EthersAdapter({
             ethers,
             signerOrProvider: provider
