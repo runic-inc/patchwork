@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+    font-family: 'Arial Narrow';
+    font-weight: 400;
+    src: url('/fonts/ArialNarrowMTPro-Regular-fix.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Arial Narrow';
+    font-weight: 700;
+    src: url('/fonts/ArialNarrowMTPro-Bold-fix.woff2') format('woff2');
+}
+
+@layer utilities {
+}
+
+@layer base {
+    body {
+        @apply min-h-screen text-lg subpixel-antialiased;
+        font-family: 'Arial Narrow';
+    }
+}
