@@ -12,18 +12,18 @@ export const ProposeProtocolFee = () => {
     const [patchBp, setPatchBp] = useState(0);
     const [assignBp, setAssignBp] = useState(0);
 
-
     const handleSubmit = async () => {
-        const provider = await detectEthereumProvider();
+
+        //const provider = new ethers.providers.Web3Provider(window.ethereum)
+
+        const provider = new ethers.BrowserProvider(window!.ethereum);        
 
         if (provider){
-            web3Service.getProposeProtocolFeeTxData(mintBp, patchBp, assignBp);
-            //const signer = await provider.getSigner();
+            const data = await web3Service.getProposeProtocolFeeTxData(mintBp, patchBp, assignBp);
+            await safeService.signAndSend(data, provider);
         }else{
             console.error("No provider found");
         }
-        console.log(provider);
-        //
     };
 
     return (
