@@ -9,8 +9,8 @@
         "pnpm": ">=8.10.0"
     },
     "scripts": {
-        "dev:base": "NETWORK=base vite",
-        "dev:sepolia": "NETWORK=sepolia vite",
+        "dev:base": "VITE_NETWORK=base vite",
+        "dev:sepolia": "VITE_NETWORK=sepolia vite",
         "build": "tsc && vite build",
         "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
         "preinstall": "npx only-allow pnpm",
@@ -21,8 +21,12 @@
         "@headlessui/react": "^1.7.18",
         "@headlessui/tailwindcss": "^0.2.0",
         "@reduxjs/toolkit": "^1.9.7",
+        "@safe-global/api-kit": "^2.0.0",
+        "@safe-global/protocol-kit": "^2.0.0",
+        "@safe-global/safe-core-sdk-types": "^3.0.1",
         "@web3modal/wagmi": "^3.5.7",
         "connectkit": "^1.6.0",
+        "ethers": "^6.10.0",
         "framer-motion": "^10.18.0",
         "postcss-import": "^16.0.0",
         "react": "^18.2.0",

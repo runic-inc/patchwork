@@ -29,9 +29,7 @@ export class ConfigService {
     private managementConfig: ManagementConfig;
 
     constructor() {
-        console.log(process.env.NETWORK);
-        const network = process.env.NETWORK || 'base';
-        console.log(network);
+        const network = import.meta.env.VITE_NETWORK || 'base';
         const networkConfig = NETWORK_CONFIGS[network];
         if (!networkConfig) {
             throw new Error(`Configuration for network '${network}' not found.`);

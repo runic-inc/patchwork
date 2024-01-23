@@ -1,14 +1,28 @@
 // ProposeProtocolFee.tsx
 import { useState } from 'react';
+import { safeService } from '../appServices';
+import { useWalletClient } from 'wagmi';
+import { Signer } from 'ethers';
+import { useEthersSigner } from '../helpers/ethersHelper';
 
 export const ProposeProtocolFee = () => {
+    //const { data: signer } = useWalletClient();
     const [mintBp, setMintBp] = useState('');
     const [patchBp, setPatchBp] = useState('');
     const [assignBp, setAssignBp] = useState('');
 
-    const handleSubmit = () => {
-        // Handle submission logic here
-        console.log(mintBp, patchBp, assignBp);
+    const handleSubmit = async () => {
+        await safeService.test();
+        /*
+        const signer = useEthersSigner();
+        if (signer) {
+            await safeService.test(signer);
+            console.log(mintBp, patchBp, assignBp);
+        } else {
+            // Handle the case where signer is undefined
+            console.error('Signer is not available');
+        }
+        */
     };
 
     return (
