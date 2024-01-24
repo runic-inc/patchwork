@@ -84,6 +84,6 @@ abstract contract PatchworkReversible1155Patch is Patchwork1155Patch, IPatchwork
     function _burnPatch(uint256 tokenId) internal virtual override {
         PatchTarget storage target = _targetsById[tokenId];
         delete _idsByTargetHash[keccak256(abi.encode(target))];
-        _burnPatch(tokenId);
+        super._burnPatch(tokenId);
     }
 }
