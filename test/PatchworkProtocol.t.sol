@@ -57,7 +57,6 @@ contract PatchworkProtocolTest is Test {
         vm.startPrank(_scopeOwner);
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _scopeOwner));
         _prot.claimScope("");
-        vm.startPrank(_scopeOwner);
         _prot.claimScope(_scopeName);
         assertEq(_prot.getScopeOwner(_scopeName), _scopeOwner);
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.ScopeExists.selector, _scopeName));
