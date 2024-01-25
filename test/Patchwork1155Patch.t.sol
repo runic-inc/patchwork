@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
 import "../src/PatchworkProtocol.sol";
+import "../src/PatchworkProtocolAssigner.sol";
 import "./nfts/Test1155PatchNFT.sol";
 import "./nfts/TestBase1155.sol";
 
@@ -27,7 +28,7 @@ contract Patchwork1155PatchTest is Test {
         _scopeOwner = 0xDAFEA492D9c6733ae3d56b7Ed1ADB60692c98Bc5;
 
         vm.prank(_patchworkOwner);
-        _prot = new PatchworkProtocol(_patchworkOwner);
+        _prot = new PatchworkProtocol(_patchworkOwner, address(new PatchworkProtocolAssigner(_patchworkOwner)));
 
         vm.startPrank(_scopeOwner);
         _scopeName = "testscope";

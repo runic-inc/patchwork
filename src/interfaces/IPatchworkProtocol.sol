@@ -931,7 +931,7 @@ interface IPatchworkProtocol {
     @param target The address of the target IPatchworkLiteRef 
     @param targetTokenId The token ID of the target IPatchworkLiteRef 
     */
-    function assignBatch(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId) external payable;
+    function assignBatch(address[] calldata fragments, uint256[] calldata tokenIds, address target, uint256 targetTokenId) external payable;
 
     /**
     @notice Assign multiple fragments to a target in batch
@@ -941,7 +941,7 @@ interface IPatchworkProtocol {
     @param targetTokenId The token ID of the target IPatchworkLiteRef 
     @param targetMetadataId The metadata ID on the target to store the references in
     */
-    function assignBatch(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId, uint256 targetMetadataId) external payable;
+    function assignBatch(address[] calldata fragments, uint256[] calldata tokenIds, address target, uint256 targetTokenId, uint256 targetMetadataId) external payable;
 
     /**
     @notice Unassign a fragment from a target
@@ -949,7 +949,7 @@ interface IPatchworkProtocol {
     @param fragmentTokenId The IPatchworkSingleAssignable token ID of the fragment
     @dev reverts if fragment is not an IPatchworkSingleAssignable
     */
-    function unassignSingle(address fragment, uint fragmentTokenId) external;
+    function unassignSingle(address fragment, uint256 fragmentTokenId) external;
     
     /**
     @notice Unassign a fragment from a target
@@ -958,7 +958,7 @@ interface IPatchworkProtocol {
     @param targetMetadataId The metadata ID on the target to unassign from
     @dev reverts if fragment is not an IPatchworkSingleAssignable
     */
-    function unassignSingle(address fragment, uint fragmentTokenId, uint256 targetMetadataId) external;
+    function unassignSingle(address fragment, uint256 fragmentTokenId, uint256 targetMetadataId) external;
 
     /**
     @notice Unassigns a multi relation
