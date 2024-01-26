@@ -16,7 +16,7 @@ pragma solidity ^0.8.23;
 */
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "./PatchworkProtocolStorage.sol";
+import "./PatchworkProtocolCommon.sol";
 import "./interfaces/IPatchwork721.sol";
 import "./interfaces/IPatchworkSingleAssignable.sol";
 import "./interfaces/IPatchworkMultiAssignable.sol";
@@ -32,7 +32,7 @@ import "./interfaces/IPatchworkScoped.sol";
 @title Patchwork Protocol
 @author Runic Labs, Inc
 */
-contract PatchworkProtocol is IPatchworkProtocol, PatchworkProtocolStorage {
+contract PatchworkProtocol is IPatchworkProtocol, PatchworkProtocolCommon {
     
     /// How much time must elapse before a fee change can be committed (1209600 = 2 weeks)
     uint256 public constant FEE_CHANGE_TIMELOCK = 1209600; 
@@ -45,7 +45,7 @@ contract PatchworkProtocol is IPatchworkProtocol, PatchworkProtocolStorage {
 
     /// Constructor
     /// @param owner_ The address of the initial owner
-    constructor(address owner_, address assignerDelegate_) PatchworkProtocolStorage(owner_) {
+    constructor(address owner_, address assignerDelegate_) PatchworkProtocolCommon(owner_) {
         _assignerDelegate = assignerDelegate_;
     }
 
@@ -756,31 +756,6 @@ contract PatchworkProtocol is IPatchworkProtocol, PatchworkProtocolStorage {
     }
 
     /**
-    @notice Requires that scopeName is present
-    @dev will revert with ScopeDoesNotExist if not present
-    @return scope the scope
-    */
-    function _mustHaveScope(string memory scopeName) private view returns (Scope storage scope) {
-        scope = _scopes[scopeName];
-        if (scope.owner == address(0)) {
-            revert ScopeDoesNotExist(scopeName);
-        }
-    }
-
-    /**
-    @notice Requires that addr is whitelisted if whitelisting is enabled
-    @dev will revert with NotWhitelisted if whitelisting is enabled and address is not whitelisted
-    @param scopeName the name of the scope
-    @param scope the scope
-    @param addr the address to check
-    */
-    function _mustBeWhitelisted(string memory scopeName, Scope storage scope, address addr) private view {
-        if (scope.requireWhitelist && !scope.whitelist[addr]) {
-            revert NotWhitelisted(scopeName, addr);
-        }
-    }
-
-    /**
     @notice Requires that msg.sender is owner of scope
     @dev will revert with NotAuthorized if msg.sender is not owner
     @param scope the scope
@@ -803,19 +778,6 @@ contract PatchworkProtocol is IPatchworkProtocol, PatchworkProtocolStorage {
     }
 
     /**
-    @notice Memoizing wrapper for IPatchworkScoped.getScopeName()
-    @param addr Address to check
-    @return scopeName return value of IPatchworkScoped(addr).getScopeName()
-    */
-    function _getScopeName(address addr) private returns (string memory scopeName) {
-        scopeName = _scopeNameCache[addr];
-        if (bytes(scopeName).length == 0) {
-            scopeName = IPatchworkScoped(addr).getScopeName();
-            _scopeNameCache[addr] = scopeName;
-        }
-    }
-
-    /**
     @notice Memoized view-only wrapper for IPatchworkScoped.getScopeName()
     @dev required to get optimized result from view-only functions, does not memoize result if not already memoized
     @param addr Address to check
@@ -828,6 +790,7 @@ contract PatchworkProtocol is IPatchworkProtocol, PatchworkProtocolStorage {
         }
     }
 
+    /// Only protocol owner or protocol banker
     modifier onlyProtoOwnerBanker() {
         if (msg.sender != owner() && _protocolBankers[msg.sender] == false) {
             revert NotAuthorized(msg.sender);
@@ -835,6 +798,7 @@ contract PatchworkProtocol is IPatchworkProtocol, PatchworkProtocolStorage {
         _;
     }
 
+    /// Only msg.sender from addr
     modifier onlyFrom(address addr) {
         if (msg.sender != addr) {
             revert NotAuthorized(msg.sender);

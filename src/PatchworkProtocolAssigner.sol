@@ -1,13 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "./PatchworkProtocolStorage.sol";
-import "./interfaces/IPatchwork721.sol";
-import "./interfaces/IPatchworkSingleAssignable.sol";
-import "./interfaces/IPatchworkMultiAssignable.sol";
-import "./interfaces/IPatchworkLiteRef.sol";
-
 /**
 
     ____        __       __                       __  
@@ -24,12 +17,23 @@ Assigner Module
 
 */
 
-contract PatchworkProtocolAssigner is PatchworkProtocolStorage {
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "./PatchworkProtocolCommon.sol";
+import "./interfaces/IPatchwork721.sol";
+import "./interfaces/IPatchworkSingleAssignable.sol";
+import "./interfaces/IPatchworkMultiAssignable.sol";
+import "./interfaces/IPatchworkLiteRef.sol";
+
+/** 
+@title Patchwork Protocol Assigner Module
+@author Runic Labs, Inc
+*/
+contract PatchworkProtocolAssigner is PatchworkProtocolCommon {
 
     /// The denominator for fee basis points
     uint256 private constant _FEE_BASIS_DENOM = 10000;
 
-    constructor(address owner_) PatchworkProtocolStorage(owner_) {}
+    constructor(address owner_) PatchworkProtocolCommon(owner_) {}
     
     // common to assigns
     function _handleAssignFee(string memory scopeName, IPatchworkProtocol.Scope storage scope, address fragmentAddress) private returns (uint256 scopeFee, uint256 protocolFee) {
@@ -366,31 +370,5 @@ contract PatchworkProtocolAssigner is PatchworkProtocolStorage {
             }
         }
         return false;
-    }
-
-    /**
-    Library?
-     */
-
-
-    function _getScopeName(address addr) private returns (string memory scopeName) {
-        scopeName = _scopeNameCache[addr];
-        if (bytes(scopeName).length == 0) {
-            scopeName = IPatchworkScoped(addr).getScopeName();
-            _scopeNameCache[addr] = scopeName;
-        }
-    }
-
-    function _mustHaveScope(string memory scopeName) private view returns (IPatchworkProtocol.Scope storage scope) {
-        scope = _scopes[scopeName];
-        if (scope.owner == address(0)) {
-            revert IPatchworkProtocol.ScopeDoesNotExist(scopeName);
-        }
-    }
-
-    function _mustBeWhitelisted(string memory scopeName, IPatchworkProtocol.Scope storage scope, address addr) private view {
-        if (scope.requireWhitelist && !scope.whitelist[addr]) {
-            revert IPatchworkProtocol.NotWhitelisted(scopeName, addr);
-        }
     }
 }
