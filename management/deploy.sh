@@ -46,6 +46,6 @@ fi
 export PATCHWORK_OWNER
 
 # Execute the Solidity script with the environment variable
-forge script --via-ir --optimize --optimizer-runs 200 ./deploy.s.sol:DeterministicPatchworkDeploy \
+forge script $forge_options --optimize --optimizer-runs 200 ./deploy.s.sol:DeterministicPatchworkDeploy \
   --rpc-url $RPC_URL \
   --private-key $PRIVATE_KEY
