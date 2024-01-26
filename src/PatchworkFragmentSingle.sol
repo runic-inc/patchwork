@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.23;
 
 import "./Patchwork721.sol";
 import "./interfaces/IPatchworkSingleAssignable.sol";
