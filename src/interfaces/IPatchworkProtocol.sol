@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.23;
 
 /**
 @title Patchwork Protocol Interface
@@ -254,6 +254,11 @@ interface IPatchworkProtocol {
     */
     error InvalidFeeValue();
 
+    /**
+    @notice No delegate proposed 
+    */
+    error NoDelegateProposed();
+    
     /** 
     @notice Fee Configuration
     */
@@ -288,6 +293,14 @@ interface IPatchworkProtocol {
     struct MintConfig {
         uint256 flatFee; /// fee per 1 quantity mint in wei
         bool active;     /// If the mint is active
+    }
+
+    /**
+    @notice Proposed assigner delegate
+    */
+    struct ProposedAssignerDelegate {
+        uint256 timestamp;
+        address addr;
     }
 
     /**
@@ -580,33 +593,57 @@ interface IPatchworkProtocol {
 
     /**
     @notice Emitted on protocol fee config proposed
+    @param config The fee configuration
     */
     event ProtocolFeeConfigPropose(FeeConfig config);
 
     /**
     @notice Emitted on protocol fee config committed
+    @param config The fee configuration
     */
     event ProtocolFeeConfigCommit(FeeConfig config);
 
     /**
     @notice Emitted on scope fee config override proposed
+    @param scopeName The scope
+    @param config The fee configuration
     */
     event ScopeFeeOverridePropose(string scopeName, FeeConfigOverride config);
 
     /**
     @notice Emitted on scope fee config override committed
+    @param scopeName The scope
+    @param config The fee configuration
     */
     event ScopeFeeOverrideCommit(string scopeName, FeeConfigOverride config);
 
     /**
-    @notice Emitted on patch fee change 
+    @notice Emitted on patch fee change
+    @param scopeName The scope of the patch
+    @param addr The address of the patch
+    @param fee The new fee
     */
     event PatchFeeChange(string scopeName, address indexed addr, uint256 fee);
 
     /**
     @notice Emitted on assign fee change 
+    @param scopeName The scope of the assignable
+    @param addr The address of the assignable
+    @param fee The new fee
     */
     event AssignFeeChange(string scopeName, address indexed addr, uint256 fee);
+
+    /**
+    @notice Emitted on assigner delegate propose
+    @param addr The address of the delegate
+    */
+    event AssignerDelegatePropose(address indexed addr);
+
+    /**
+    @notice Emitted on assigner delegate commit
+    @param addr The address of the delegate
+    */
+    event AssignerDelegateCommit(address indexed addr);
 
     /**
     @notice Claim a scope
@@ -931,7 +968,7 @@ interface IPatchworkProtocol {
     @param target The address of the target IPatchworkLiteRef 
     @param targetTokenId The token ID of the target IPatchworkLiteRef 
     */
-    function assignBatch(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId) external payable;
+    function assignBatch(address[] calldata fragments, uint256[] calldata tokenIds, address target, uint256 targetTokenId) external payable;
 
     /**
     @notice Assign multiple fragments to a target in batch
@@ -941,7 +978,7 @@ interface IPatchworkProtocol {
     @param targetTokenId The token ID of the target IPatchworkLiteRef 
     @param targetMetadataId The metadata ID on the target to store the references in
     */
-    function assignBatch(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId, uint256 targetMetadataId) external payable;
+    function assignBatch(address[] calldata fragments, uint256[] calldata tokenIds, address target, uint256 targetTokenId, uint256 targetMetadataId) external payable;
 
     /**
     @notice Unassign a fragment from a target
@@ -949,7 +986,7 @@ interface IPatchworkProtocol {
     @param fragmentTokenId The IPatchworkSingleAssignable token ID of the fragment
     @dev reverts if fragment is not an IPatchworkSingleAssignable
     */
-    function unassignSingle(address fragment, uint fragmentTokenId) external;
+    function unassignSingle(address fragment, uint256 fragmentTokenId) external;
     
     /**
     @notice Unassign a fragment from a target
@@ -958,7 +995,7 @@ interface IPatchworkProtocol {
     @param targetMetadataId The metadata ID on the target to unassign from
     @dev reverts if fragment is not an IPatchworkSingleAssignable
     */
-    function unassignSingle(address fragment, uint fragmentTokenId, uint256 targetMetadataId) external;
+    function unassignSingle(address fragment, uint256 fragmentTokenId, uint256 targetMetadataId) external;
 
     /**
     @notice Unassigns a multi relation
@@ -1014,4 +1051,16 @@ interface IPatchworkProtocol {
     @param tokenId The ID of the token whose ownership tree needs to be updated
     */
     function updateOwnershipTree(address addr, uint256 tokenId) external;
+
+    /**
+    @notice Propose an assigner delegate module
+    @param addr The address of the new delegate module
+    */
+    function proposeAssignerDelegate(address addr) external;
+
+    /**
+    @notice Commit the proposed assigner delegate module
+    @dev must be past timelock
+    */
+    function commitAssignerDelegate() external;
 }

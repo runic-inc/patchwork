@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.23;
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
 import "../src/PatchworkProtocol.sol";
+import "../src/PatchworkProtocolAssigner.sol";
 import "./nfts/Test1155PatchNFT.sol";
 import "./nfts/TestBase1155.sol";
 import "./nfts/TestFragmentLiteRefNFT.sol";
@@ -32,13 +33,12 @@ contract FeesTest is Test {
         _user2Address = address(550001);
         _scopeOwner = 0xDAFEA492D9c6733ae3d56b7Ed1ADB60692c98Bc5;
 
-        vm.prank(_patchworkOwner);
-        _prot = new PatchworkProtocol(_patchworkOwner);
-        vm.prank(_patchworkOwner);
+        vm.startPrank(_patchworkOwner);
+        _prot = new PatchworkProtocol(_patchworkOwner, address(new PatchworkProtocolAssigner(_patchworkOwner)));
         _prot.proposeProtocolFeeConfig(IPatchworkProtocol.FeeConfig(1000, 1000, 1000)); // 10%, 10%, 10%
         skip(20000000);
-        vm.prank(_patchworkOwner);
         _prot.commitProtocolFeeConfig();
+        vm.stopPrank();
 
         vm.startPrank(_scopeOwner);
         _scopeName = "testscope";
