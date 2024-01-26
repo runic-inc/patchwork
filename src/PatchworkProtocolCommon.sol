@@ -67,6 +67,9 @@ contract PatchworkProtocolCommon is Ownable, ReentrancyGuard{
     /// Scope name cache
     mapping(address => string) internal _scopeNameCache;
 
+    /// Proposed assigner delegate
+    IPatchworkProtocol.ProposedAssignerDelegate internal _proposedAssignerDelegate;
+
     /// Assigner module
     address internal _assignerDelegate;
 

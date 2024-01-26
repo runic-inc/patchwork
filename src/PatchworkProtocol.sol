@@ -37,6 +37,9 @@ contract PatchworkProtocol is IPatchworkProtocol, PatchworkProtocolCommon {
     /// How much time must elapse before a fee change can be committed (1209600 = 2 weeks)
     uint256 public constant FEE_CHANGE_TIMELOCK = 1209600; 
 
+    /// How much time must elapse before a fee change can be committed (1209600 = 2 weeks)
+    uint256 public constant CONTRACT_UPGRADE_TIMELOCK = 1209600; 
+
     /// The denominator for fee basis points
     uint256 private constant _FEE_BASIS_DENOM = 10000;
 
@@ -753,6 +756,34 @@ contract PatchworkProtocol is IPatchworkProtocol, PatchworkProtocolCommon {
         } else if (IERC165(addr).supportsInterface(type(IPatchworkPatch).interfaceId)) {
             IPatchworkPatch(addr).updateOwnership(tokenId);
         }
+    }
+
+    /**
+    @dev See {IPatchworkProtocol-proposeAssignerDelegate}
+    */
+    function proposeAssignerDelegate(address addr) public onlyOwner {
+        if (addr == address(0)) {
+            // effectively a cancel
+            _proposedAssignerDelegate = ProposedAssignerDelegate(0, address(0));
+        } else {
+            _proposedAssignerDelegate = ProposedAssignerDelegate(block.timestamp, addr);
+        }
+        emit AssignerDelegatePropose(addr);
+    }
+
+    /**
+    @dev See {IPatchworkProtocol-commitAssignerDelegate}
+    */
+    function commitAssignerDelegate() public onlyOwner {
+        if (_proposedAssignerDelegate.timestamp == 0) {
+            revert NoDelegateProposed();
+        }
+        if (block.timestamp < _proposedAssignerDelegate.timestamp + CONTRACT_UPGRADE_TIMELOCK) {
+            revert TimelockNotElapsed();
+        }
+        _assignerDelegate = _proposedAssignerDelegate.addr;
+        _proposedAssignerDelegate = ProposedAssignerDelegate(0, address(0));
+        emit AssignerDelegateCommit(_assignerDelegate);
     }
 
     /**

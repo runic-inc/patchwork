@@ -254,6 +254,11 @@ interface IPatchworkProtocol {
     */
     error InvalidFeeValue();
 
+    /**
+    @notice No delegate proposed 
+    */
+    error NoDelegateProposed();
+    
     /** 
     @notice Fee Configuration
     */
@@ -288,6 +293,14 @@ interface IPatchworkProtocol {
     struct MintConfig {
         uint256 flatFee; /// fee per 1 quantity mint in wei
         bool active;     /// If the mint is active
+    }
+
+    /**
+    @notice Proposed assigner delegate
+    */
+    struct ProposedAssignerDelegate {
+        uint256 timestamp;
+        address addr;
     }
 
     /**
@@ -580,33 +593,57 @@ interface IPatchworkProtocol {
 
     /**
     @notice Emitted on protocol fee config proposed
+    @param config The fee configuration
     */
     event ProtocolFeeConfigPropose(FeeConfig config);
 
     /**
     @notice Emitted on protocol fee config committed
+    @param config The fee configuration
     */
     event ProtocolFeeConfigCommit(FeeConfig config);
 
     /**
     @notice Emitted on scope fee config override proposed
+    @param scopeName The scope
+    @param config The fee configuration
     */
     event ScopeFeeOverridePropose(string scopeName, FeeConfigOverride config);
 
     /**
     @notice Emitted on scope fee config override committed
+    @param scopeName The scope
+    @param config The fee configuration
     */
     event ScopeFeeOverrideCommit(string scopeName, FeeConfigOverride config);
 
     /**
-    @notice Emitted on patch fee change 
+    @notice Emitted on patch fee change
+    @param scopeName The scope of the patch
+    @param addr The address of the patch
+    @param fee The new fee
     */
     event PatchFeeChange(string scopeName, address indexed addr, uint256 fee);
 
     /**
     @notice Emitted on assign fee change 
+    @param scopeName The scope of the assignable
+    @param addr The address of the assignable
+    @param fee The new fee
     */
     event AssignFeeChange(string scopeName, address indexed addr, uint256 fee);
+
+    /**
+    @notice Emitted on assigner delegate propose
+    @param addr The address of the delegate
+    */
+    event AssignerDelegatePropose(address indexed addr);
+
+    /**
+    @notice Emitted on assigner delegate commit
+    @param addr The address of the delegate
+    */
+    event AssignerDelegateCommit(address indexed addr);
 
     /**
     @notice Claim a scope
@@ -1014,4 +1051,16 @@ interface IPatchworkProtocol {
     @param tokenId The ID of the token whose ownership tree needs to be updated
     */
     function updateOwnershipTree(address addr, uint256 tokenId) external;
+
+    /**
+    @notice Propose an assigner delegate module
+    @param addr The address of the new delegate module
+    */
+    function proposeAssignerDelegate(address addr) external;
+
+    /**
+    @notice Commit the proposed assigner delegate module
+    @dev must be past timelock
+    */
+    function commitAssignerDelegate() external;
 }
