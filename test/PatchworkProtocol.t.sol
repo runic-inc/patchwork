@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.23;
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
 import "../src/PatchworkProtocol.sol";
+import "../src/PatchworkProtocolAssigner.sol";
 import "./nfts/TestPatchLiteRefNFT.sol";
 import "./nfts/TestFragmentLiteRefNFT.sol";
 import "./nfts/TestBaseNFT.sol";
@@ -37,7 +38,7 @@ contract PatchworkProtocolTest is Test {
         _scopeOwner = 0xDAFEA492D9c6733ae3d56b7Ed1ADB60692c98Bc5;
 
         vm.prank(_patchworkOwner);
-        _prot = new PatchworkProtocol(_patchworkOwner);
+        _prot = new PatchworkProtocol(_patchworkOwner, address(new PatchworkProtocolAssigner(_patchworkOwner)));
         _scopeName = "testscope";
 
         vm.prank(_userAddress);
@@ -57,7 +58,6 @@ contract PatchworkProtocolTest is Test {
         vm.startPrank(_scopeOwner);
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _scopeOwner));
         _prot.claimScope("");
-        vm.startPrank(_scopeOwner);
         _prot.claimScope(_scopeName);
         assertEq(_prot.getScopeOwner(_scopeName), _scopeOwner);
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.ScopeExists.selector, _scopeName));

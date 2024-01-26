@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.23;
 
 /**
 
@@ -16,8 +16,7 @@ pragma solidity ^0.8.13;
 */
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "./PatchworkProtocolCommon.sol";
 import "./interfaces/IPatchwork721.sol";
 import "./interfaces/IPatchworkSingleAssignable.sol";
 import "./interfaces/IPatchworkMultiAssignable.sol";
@@ -33,47 +32,13 @@ import "./interfaces/IPatchworkScoped.sol";
 @title Patchwork Protocol
 @author Runic Labs, Inc
 */
-contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
-
-    /// Scopes
-    mapping(string => Scope) private _scopes;
-
-    /**
-    @notice unique references
-    @dev A hash of target + targetTokenId + literef provides uniqueness
-    */
-    mapping(bytes32 => bool) private _liteRefs;
-
-    /**
-    @notice unique patches
-    @dev Hash of the patch mapped to a boolean indicating its uniqueness
-    */
-    mapping(bytes32 => bool) private _uniquePatches;
-
-    /// Balance of the protocol
-    uint256 private _protocolBalance;
-
-    /**
-    @notice protocol bankers
-    @dev Map of addresses authorized to set fees and withdraw funds for the protocol
-    @dev Does not allow for scope balance withdrawl
-    */
-    mapping(address => bool) private _protocolBankers;
-
-    /// Current protocol fee configuration
-    FeeConfig private _protocolFeeConfig;
-
-    /// Proposed protocol fee configuration
-    mapping(string => ProposedFeeConfig) private _proposedFeeConfigs;
-
-    /// scope-based fee overrides
-    mapping(string => FeeConfigOverride) private _scopeFeeOverrides; 
-
-    /// Scope name cache
-    mapping(address => string) private _scopeNameCache;
-
+contract PatchworkProtocol is IPatchworkProtocol, PatchworkProtocolCommon {
+    
     /// How much time must elapse before a fee change can be committed (1209600 = 2 weeks)
     uint256 public constant FEE_CHANGE_TIMELOCK = 1209600; 
+
+    /// How much time must elapse before a contract upgrade can be committed (1209600 = 2 weeks)
+    uint256 public constant CONTRACT_UPGRADE_TIMELOCK = 1209600; 
 
     /// The denominator for fee basis points
     uint256 private constant _FEE_BASIS_DENOM = 10000;
@@ -83,7 +48,9 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
 
     /// Constructor
     /// @param owner_ The address of the initial owner
-    constructor(address owner_) Ownable(owner_) ReentrancyGuard() {}
+    constructor(address owner_, address assignerDelegate_) PatchworkProtocolCommon(owner_) {
+        _assignerDelegate = assignerDelegate_;
+    }
 
     /**
     @dev See {IPatchworkProtocol-claimScope}
@@ -640,293 +607,85 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         }
     }
 
-    // common to assigns
-    function _handleAssignFee(string memory scopeName, Scope storage scope, address fragmentAddress) private returns (uint256 scopeFee, uint256 protocolFee) {
-        uint256 assignFee = scope.assignFees[fragmentAddress];
-        if (msg.value != assignFee) {
-            revert IncorrectFeeAmount();
-        }
-        if (msg.value > 0) {
-            uint256 assignBp;
-            FeeConfigOverride storage feeOverride = _scopeFeeOverrides[scopeName];
-            if (feeOverride.active) {
-                assignBp = feeOverride.assignBp;
-            } else {
-                assignBp = _protocolFeeConfig.assignBp;
+    function _delegatecall(address delegate, bytes memory data) internal returns (bytes memory) {
+        (bool success, bytes memory returndata) = delegate.delegatecall(data);
+        if (!success) {
+            if (returndata.length == 0) revert();
+            assembly {
+                revert(add(32, returndata), mload(returndata))
             }
-            protocolFee = msg.value * assignBp / _FEE_BASIS_DENOM;
-            scopeFee = msg.value - protocolFee;
-            _protocolBalance += protocolFee;
-            scope.balance += scopeFee;
         }
+        return returndata;
     }
 
     /**
     @dev See {IPatchworkProtocol-assign}
     */
-    function assign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) public payable mustNotBeFrozen(target, targetTokenId) {
-        address targetOwner = IERC721(target).ownerOf(targetTokenId);
-        uint64 ref = _doAssign(fragment, fragmentTokenId, target, targetTokenId, targetOwner);
-        IPatchworkLiteRef(target).addReference(targetTokenId, ref);
+    function assign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) public payable {
+        _delegatecall(_assignerDelegate, abi.encodeWithSignature("assign(address,uint256,address,uint256)", fragment, fragmentTokenId, target, targetTokenId));
     }
 
     /**
     @dev See {IPatchworkProtocol-assign}
     */
-    function assign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) public payable mustNotBeFrozen(target, targetTokenId) {
-        address targetOwner = IERC721(target).ownerOf(targetTokenId);
-        uint64 ref = _doAssign(fragment, fragmentTokenId, target, targetTokenId, targetOwner);
-        IPatchworkLiteRef(target).addReference(targetTokenId, ref, targetMetadataId);
+    function assign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) public payable {
+         _delegatecall(_assignerDelegate, abi.encodeWithSignature("assign(address,uint256,address,uint256,uint256)", fragment, fragmentTokenId, target, targetTokenId, targetMetadataId));
+   }
+
+    /**
+    @dev See {IPatchworkProtocol-assignBatch}
+    */
+    function assignBatch(address[] calldata fragments, uint256[] calldata tokenIds, address target, uint256 targetTokenId) public payable {
+        _delegatecall(_assignerDelegate, abi.encodeWithSignature("assignBatch(address[],uint256[],address,uint256)", fragments, tokenIds, target, targetTokenId));
     }
 
     /**
     @dev See {IPatchworkProtocol-assignBatch}
     */
-    function assignBatch(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId) public payable mustNotBeFrozen(target, targetTokenId) {
-        (uint64[] memory refs, ) = _batchAssignCommon(fragments, tokenIds, target, targetTokenId);
-        IPatchworkLiteRef(target).addReferenceBatch(targetTokenId, refs);
-    }
-
-    /**
-    @dev See {IPatchworkProtocol-assignBatch}
-    */
-    function assignBatch(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId, uint256 targetMetadataId) public payable mustNotBeFrozen(target, targetTokenId) {
-        (uint64[] memory refs, ) = _batchAssignCommon(fragments, tokenIds, target, targetTokenId);
-        IPatchworkLiteRef(target).addReferenceBatch(targetTokenId, refs, targetMetadataId);
-    }
-
-    /**
-    @dev Common function to handle the batch assignments.
-    */
-    function _batchAssignCommon(address[] calldata fragments, uint[] calldata tokenIds, address target, uint targetTokenId) private returns (uint64[] memory refs, address targetOwner) {
-        if (fragments.length != tokenIds.length) {
-            revert BadInputLengths();
-        }
-        targetOwner = IERC721(target).ownerOf(targetTokenId);
-        refs = new uint64[](fragments.length);
-        for (uint i = 0; i < fragments.length; i++) {
-            address fragment = fragments[i];
-            uint256 fragmentTokenId = tokenIds[i];
-            refs[i] = _doAssign(fragment, fragmentTokenId, target, targetTokenId, targetOwner);
-        }
-    }
-
-    /**
-    @notice Performs assignment of an IPatchworkAssignable to an IPatchworkLiteRef
-    @param fragment the IPatchworkAssignable's address
-    @param fragmentTokenId the IPatchworkAssignable's tokenId
-    @param target the IPatchworkLiteRef target's address
-    @param targetTokenId the IPatchworkLiteRef target's tokenId
-    @param targetOwner the owner address of the target
-    @return uint64 literef of assignable in target
-    */
-    function _doAssign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, address targetOwner) private mustNotBeFrozen(fragment, fragmentTokenId) returns (uint64) {
-        if (fragment == target && fragmentTokenId == targetTokenId) {
-            revert SelfAssignmentNotAllowed(fragment, fragmentTokenId);
-        }
-        // Use the target's scope for general permission and check the fragment for detailed permissions
-        (uint256 scopeFee, uint256 protocolFee) = _doAssignPermissionsAndFees(fragment, fragmentTokenId, target, targetTokenId, targetOwner);
-        // Handle storage and duplicate checks
-        uint64 ref = _doAssignStorageAndDupes(fragment, fragmentTokenId, target, targetTokenId);
-        // these two end up beyond stack depth on some compiler settings.
-        emit Assign(targetOwner, fragment, fragmentTokenId, target, targetTokenId, scopeFee, protocolFee);
-        return ref;
-    }
-
-    /**
-    @notice Handles assignment permissions and fees
-    @param fragment the IPatchworkAssignable's address
-    @param fragmentTokenId the IPatchworkAssignable's tokenId
-    @param target the IPatchworkLiteRef target's address
-    @param targetTokenId the IPatchworkLiteRef target's tokenId
-    @param targetOwner the owner address of the target
-    */
-    function _doAssignPermissionsAndFees(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, address targetOwner) private returns (uint256 scopeFee, uint256 protocolFee) {
-        string memory targetScopeName = _getScopeName(target);
-        if (!IPatchworkAssignable(fragment).allowAssignment(fragmentTokenId, target, targetTokenId, targetOwner, msg.sender, targetScopeName)) {
-            revert NotAuthorized(msg.sender);
-        }
-        Scope storage targetScope = _mustHaveScope(targetScopeName);
-        _mustBeWhitelisted(targetScopeName, targetScope, target);
-        if (targetScope.owner == msg.sender || targetScope.operators[msg.sender]) {
-            // all good
-        } else if (targetScope.allowUserAssign) {
-            // msg.sender must own the target
-            if (targetOwner != msg.sender) {
-                revert NotAuthorized(msg.sender);
-            }
-        } else {
-            revert NotAuthorized(msg.sender);
-        }
-        if (_isLocked(fragment, fragmentTokenId)) {
-            revert Locked(fragment, fragmentTokenId);
-        }
-        // Whitelist check, these variables do not need to stay in the function level stack
-        string memory fragmentScopeName = _getScopeName(fragment);
-        Scope storage fragmentScope = _mustHaveScope(fragmentScopeName);
-        _mustBeWhitelisted(fragmentScopeName, fragmentScope, fragment);
-        (scopeFee, protocolFee) = _handleAssignFee(fragmentScopeName, fragmentScope, fragment);
-    }
-
-    /**
-    @notice Handles assignment storage and duplicate checks
-    @param fragment the IPatchworkAssignable's address
-    @param fragmentTokenId the IPatchworkAssignable's tokenId
-    @param target the IPatchworkLiteRef target's address
-    @param targetTokenId the IPatchworkLiteRef target's tokenId
-    */
-    function _doAssignStorageAndDupes(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) private returns (uint64 ref) {
-        bool redacted;
-        (ref, redacted) = IPatchworkLiteRef(target).getLiteReference(fragment, fragmentTokenId);
-        if (redacted) {
-            revert FragmentRedacted(address(fragment));
-        }
-        if (ref == 0) {
-            revert FragmentUnregistered(address(fragment));
-        }
-        // targetRef is a compound key (targetAddr+targetTokenID+ref) - blocks duplicate assignments
-        bytes32 targetRef = keccak256(abi.encodePacked(target, targetTokenId, ref));
-        if (_liteRefs[targetRef]) {
-            revert FragmentAlreadyAssigned(address(fragment), fragmentTokenId);
-        }
-        // add to our storage of assignments
-        _liteRefs[targetRef] = true;
-        // call assign on the fragment
-        IPatchworkAssignable(fragment).assign(fragmentTokenId, target, targetTokenId);
+    function assignBatch(address[] calldata fragments, uint256[] calldata tokenIds, address target, uint256 targetTokenId, uint256 targetMetadataId) public payable {
+        _delegatecall(_assignerDelegate, abi.encodeWithSignature("assignBatch(address[],uint256[],address,uint256,uint256)", fragments, tokenIds, target, targetTokenId, targetMetadataId));
     }
     
     /**
     @dev See {IPatchworkProtocol-unassign}
     */
-    function unassign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) public mustNotBeFrozen(target, targetTokenId) {
-        _unassign(fragment, fragmentTokenId, target, targetTokenId, false, 0);
+    function unassign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) public {
+        _delegatecall(_assignerDelegate, abi.encodeWithSignature("unassign(address,uint256,address,uint256)", fragment, fragmentTokenId, target, targetTokenId));
     }
 
     /**
     @dev See {IPatchworkProtocol-unassign}
     */
-    function unassign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) public mustNotBeFrozen(target, targetTokenId) {
-        _unassign(fragment, fragmentTokenId, target, targetTokenId, true, targetMetadataId);
-    }
-
-    /**
-    @dev Common function to handle unassignments.
-    */
-    function _unassign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, bool isDirect, uint256 targetMetadataId) private {
-        if (IERC165(fragment).supportsInterface(type(IPatchworkMultiAssignable).interfaceId)) {
-            if (isDirect) {
-                unassignMulti(fragment, fragmentTokenId, target, targetTokenId, targetMetadataId);
-            } else {
-                unassignMulti(fragment, fragmentTokenId, target, targetTokenId);
-            }
-        } else if (IERC165(fragment).supportsInterface(type(IPatchworkSingleAssignable).interfaceId)) {
-            (address _target, uint256 _targetTokenId) = IPatchworkSingleAssignable(fragment).getAssignedTo(fragmentTokenId);
-            if (target != _target || _targetTokenId != targetTokenId) {
-                revert FragmentNotAssignedToTarget(fragment, fragmentTokenId, target, targetTokenId);
-            }
-            if (isDirect) {
-                unassignSingle(fragment, fragmentTokenId, targetMetadataId);
-            } else {
-                unassignSingle(fragment, fragmentTokenId);
-            }
-        } else {
-            revert UnsupportedContract();
-        }
+    function unassign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) public {
+        _delegatecall(_assignerDelegate, abi.encodeWithSignature("unassign(address,uint256,address,uint256,uint256)", fragment, fragmentTokenId, target, targetTokenId, targetMetadataId));
     }
 
     /**
     @dev See {IPatchworkProtocol-unassignMulti}
     */
-    function unassignMulti(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) public mustNotBeFrozen(target, targetTokenId) {
-        _unassignMultiCommon(fragment, fragmentTokenId, target, targetTokenId, false, 0);
+    function unassignMulti(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) public {
+        _delegatecall(_assignerDelegate, abi.encodeWithSignature("unassignMulti(address,uint256,address,uint256)", fragment, fragmentTokenId, target, targetTokenId));
     }
 
     /**
     @dev See {IPatchworkProtocol-unassignMulti}
     */
-    function unassignMulti(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) public mustNotBeFrozen(target, targetTokenId) {
-        _unassignMultiCommon(fragment, fragmentTokenId, target, targetTokenId, true, targetMetadataId);
-    }
-
-    /**
-    @dev Common function to handle the unassignment of multi assignables.
-    */
-    function _unassignMultiCommon(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, bool isDirect, uint256 targetMetadataId) private {
-        IPatchworkMultiAssignable assignable = IPatchworkMultiAssignable(fragment);
-        if (!assignable.isAssignedTo(fragmentTokenId, target, targetTokenId)) {
-            revert FragmentNotAssignedToTarget(fragment, fragmentTokenId, target, targetTokenId);
-        }
-        string memory scopeName = _getScopeName(target);
-        _doUnassign(fragment, fragmentTokenId, target, targetTokenId, isDirect, targetMetadataId, scopeName);
-        assignable.unassign(fragmentTokenId, target, targetTokenId);
+    function unassignMulti(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) public {
+        _delegatecall(_assignerDelegate, abi.encodeWithSignature("unassignMulti(address,uint256,address,uint256,uint256)", fragment, fragmentTokenId, target, targetTokenId, targetMetadataId));
     }
 
     /**
     @dev See {IPatchworkProtocol-unassignSingle}
     */
-    function unassignSingle(address fragment, uint fragmentTokenId) public mustNotBeFrozen(fragment, fragmentTokenId) {
-        _unassignSingleCommon(fragment, fragmentTokenId, false, 0);
+    function unassignSingle(address fragment, uint256 fragmentTokenId) public {
+        _delegatecall(_assignerDelegate, abi.encodeWithSignature("unassignSingle(address,uint256)", fragment, fragmentTokenId));
     }
 
     /**
     @dev See {IPatchworkProtocol-unassignSingle}
     */
-    function unassignSingle(address fragment, uint fragmentTokenId, uint256 targetMetadataId) public mustNotBeFrozen(fragment, fragmentTokenId) {
-        _unassignSingleCommon(fragment, fragmentTokenId, true, targetMetadataId);
-    }
-
-    /**
-    @dev Common function to handle the unassignment of single assignables.
-    */
-    function _unassignSingleCommon(address fragment, uint fragmentTokenId, bool isDirect, uint256 targetMetadataId) private {
-        IPatchworkSingleAssignable assignable = IPatchworkSingleAssignable(fragment);
-        (address target, uint256 targetTokenId) = assignable.getAssignedTo(fragmentTokenId);
-        if (target == address(0)) {
-            revert FragmentNotAssigned(fragment, fragmentTokenId);
-        }
-        string memory scopeName = _getScopeName(target);
-        _doUnassign(fragment, fragmentTokenId, target, targetTokenId, isDirect, targetMetadataId, scopeName);
-        assignable.unassign(fragmentTokenId);
-    }
-
-    /**
-    @notice Performs unassignment of an IPatchworkAssignable to an IPatchworkLiteRef
-    @param fragment the IPatchworkAssignable's address
-    @param fragmentTokenId the IPatchworkAssignable's tokenId
-    @param target the IPatchworkLiteRef target's address
-    @param targetTokenId the IPatchworkLiteRef target's tokenId
-    @param direct If this is calling the direct function
-    @param targetMetadataId the metadataId to use on the target
-    @param scopeName the name of the target's scope
-    */
-    function _doUnassign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, bool direct, uint256 targetMetadataId, string memory scopeName) private {
-        Scope storage scope = _mustHaveScope(scopeName);
-        if (scope.owner == msg.sender || scope.operators[msg.sender]) {
-            // continue
-        } else if (scope.allowUserAssign) {
-            if (IERC721(target).ownerOf(targetTokenId) != msg.sender) {
-                revert NotAuthorized(msg.sender);
-            }
-            // continue
-        } else {
-            revert NotAuthorized(msg.sender);
-        }
-        (uint64 ref, ) = IPatchworkLiteRef(target).getLiteReference(fragment, fragmentTokenId);
-        if (ref == 0) {
-            revert FragmentUnregistered(address(fragment));
-        }
-        bytes32 targetRef = keccak256(abi.encodePacked(target, targetTokenId, ref));
-        if (!_liteRefs[targetRef]) {
-            revert RefNotFound(target, fragment, fragmentTokenId);
-        }
-        delete _liteRefs[targetRef];
-        if (direct) {
-            IPatchworkLiteRef(target).removeReference(targetTokenId, ref, targetMetadataId);
-        } else {
-            IPatchworkLiteRef(target).removeReference(targetTokenId, ref);
-        }
-
-        emit Unassign(IERC721(fragment).ownerOf(fragmentTokenId), fragment, fragmentTokenId, target, targetTokenId);
+    function unassignSingle(address fragment, uint256 fragmentTokenId, uint256 targetMetadataId) public {
+        _delegatecall(_assignerDelegate, abi.encodeWithSignature("unassignSingle(address,uint256,uint256)", fragment, fragmentTokenId, targetMetadataId));
     }
 
     /**
@@ -1000,28 +759,31 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     }
 
     /**
-    @notice Requires that scopeName is present
-    @dev will revert with ScopeDoesNotExist if not present
-    @return scope the scope
+    @dev See {IPatchworkProtocol-proposeAssignerDelegate}
     */
-    function _mustHaveScope(string memory scopeName) private view returns (Scope storage scope) {
-        scope = _scopes[scopeName];
-        if (scope.owner == address(0)) {
-            revert ScopeDoesNotExist(scopeName);
+    function proposeAssignerDelegate(address addr) public onlyOwner {
+        if (addr == address(0)) {
+            // effectively a cancel
+            _proposedAssignerDelegate = ProposedAssignerDelegate(0, address(0));
+        } else {
+            _proposedAssignerDelegate = ProposedAssignerDelegate(block.timestamp, addr);
         }
+        emit AssignerDelegatePropose(addr);
     }
 
     /**
-    @notice Requires that addr is whitelisted if whitelisting is enabled
-    @dev will revert with NotWhitelisted if whitelisting is enabled and address is not whitelisted
-    @param scopeName the name of the scope
-    @param scope the scope
-    @param addr the address to check
+    @dev See {IPatchworkProtocol-commitAssignerDelegate}
     */
-    function _mustBeWhitelisted(string memory scopeName, Scope storage scope, address addr) private view {
-        if (scope.requireWhitelist && !scope.whitelist[addr]) {
-            revert NotWhitelisted(scopeName, addr);
+    function commitAssignerDelegate() public onlyOwner {
+        if (_proposedAssignerDelegate.timestamp == 0) {
+            revert NoDelegateProposed();
         }
+        if (block.timestamp < _proposedAssignerDelegate.timestamp + CONTRACT_UPGRADE_TIMELOCK) {
+            revert TimelockNotElapsed();
+        }
+        _assignerDelegate = _proposedAssignerDelegate.addr;
+        _proposedAssignerDelegate = ProposedAssignerDelegate(0, address(0));
+        emit AssignerDelegateCommit(_assignerDelegate);
     }
 
     /**
@@ -1047,68 +809,6 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
     }
 
     /**
-    @notice Requires that nft is not frozen
-    @dev will revert with Frozen if nft is frozen
-    @param nft the address of nft
-    @param tokenId the tokenId of nft
-    */
-    modifier mustNotBeFrozen(address nft, uint256 tokenId) {
-        if (_isFrozen(nft, tokenId)) {
-            revert Frozen(nft, tokenId);
-        }
-        _;
-    }
-
-    /**
-    @notice Determines if nft is frozen using ownership hierarchy
-    @param nft the address of nft
-    @param tokenId the tokenId of nft
-    @return frozen if the nft or an owner up the tree is frozen
-    */
-    function _isFrozen(address nft, uint256 tokenId) private view returns (bool frozen) {
-        if (IERC165(nft).supportsInterface(type(IPatchwork721).interfaceId)) {
-            if (IPatchwork721(nft).frozen(tokenId)) {
-                return true;
-            }
-            if (IERC165(nft).supportsInterface(type(IPatchworkSingleAssignable).interfaceId)) {
-                (address assignedAddr, uint256 assignedTokenId) = IPatchworkSingleAssignable(nft).getAssignedTo(tokenId);
-                if (assignedAddr != address(0)) {
-                    return _isFrozen(assignedAddr, assignedTokenId);
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-    @notice Determines if nft is locked
-    @param nft the address of nft
-    @param tokenId the tokenId of nft
-    @return locked if the nft is locked
-    */
-    function _isLocked(address nft, uint256 tokenId) private view returns (bool locked) {
-        if (IERC165(nft).supportsInterface(type(IPatchwork721).interfaceId)) {
-            if (IPatchwork721(nft).locked(tokenId)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-    @notice Memoizing wrapper for IPatchworkScoped.getScopeName()
-    @param addr Address to check
-    @return scopeName return value of IPatchworkScoped(addr).getScopeName()
-    */
-    function _getScopeName(address addr) private returns (string memory scopeName) {
-        scopeName = _scopeNameCache[addr];
-        if (bytes(scopeName).length == 0) {
-            scopeName = IPatchworkScoped(addr).getScopeName();
-            _scopeNameCache[addr] = scopeName;
-        }
-    }
-
-    /**
     @notice Memoized view-only wrapper for IPatchworkScoped.getScopeName()
     @dev required to get optimized result from view-only functions, does not memoize result if not already memoized
     @param addr Address to check
@@ -1121,6 +821,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         }
     }
 
+    /// Only protocol owner or protocol banker
     modifier onlyProtoOwnerBanker() {
         if (msg.sender != owner() && _protocolBankers[msg.sender] == false) {
             revert NotAuthorized(msg.sender);
@@ -1128,6 +829,7 @@ contract PatchworkProtocol is IPatchworkProtocol, Ownable, ReentrancyGuard {
         _;
     }
 
+    /// Only msg.sender from addr
     modifier onlyFrom(address addr) {
         if (msg.sender != addr) {
             revert NotAuthorized(msg.sender);

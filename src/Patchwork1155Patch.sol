@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.23;
 
 import "./Patchwork721.sol";
 import "./interfaces/IPatchwork1155Patch.sol";
@@ -84,6 +84,6 @@ abstract contract PatchworkReversible1155Patch is Patchwork1155Patch, IPatchwork
     function _burnPatch(uint256 tokenId) internal virtual override {
         PatchTarget storage target = _targetsById[tokenId];
         delete _idsByTargetHash[keccak256(abi.encode(target))];
-        _burnPatch(tokenId);
+        super._burnPatch(tokenId);
     }
 }

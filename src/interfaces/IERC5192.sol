@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: CC0-1.0
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.23;
 
 interface IERC5192 {
   /// @notice Emitted when the locking status is changed to locked.
