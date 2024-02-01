@@ -35,13 +35,16 @@ contract PatchworkProtocolAssigner is PatchworkProtocolCommon {
 
     constructor(address owner_) PatchworkProtocolCommon(owner_) {}
     
-    // common to assigns
-    function _handleAssignFee(string memory scopeName, IPatchworkProtocol.Scope storage scope, address fragmentAddress) private returns (uint256 scopeFee, uint256 protocolFee) {
+    /**
+    @dev common to assigns
+    @dev fees are processed per-assignment
+    */
+    function _handleAssignFee(uint256 value, string memory scopeName, IPatchworkProtocol.Scope storage scope, address fragmentAddress) private returns (uint256 scopeFee, uint256 protocolFee, uint256 valueRemaining) {
         uint256 assignFee = scope.assignFees[fragmentAddress];
-        if (msg.value != assignFee) {
+        if (value < assignFee) {
             revert IPatchworkProtocol.IncorrectFeeAmount();
         }
-        if (msg.value > 0) {
+        if (value > 0) {
             uint256 assignBp;
             IPatchworkProtocol.FeeConfigOverride storage feeOverride = _scopeFeeOverrides[scopeName];
             if (feeOverride.active) {
@@ -49,10 +52,11 @@ contract PatchworkProtocolAssigner is PatchworkProtocolCommon {
             } else {
                 assignBp = _protocolFeeConfig.assignBp;
             }
-            protocolFee = msg.value * assignBp / _FEE_BASIS_DENOM;
-            scopeFee = msg.value - protocolFee;
+            protocolFee = assignFee * assignBp / _FEE_BASIS_DENOM;
+            scopeFee = assignFee - protocolFee;
             _protocolBalance += protocolFee;
             scope.balance += scopeFee;
+            valueRemaining = value - assignFee;
         }
     }
 
@@ -61,7 +65,10 @@ contract PatchworkProtocolAssigner is PatchworkProtocolCommon {
     */
     function assign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId) public payable mustNotBeFrozen(target, targetTokenId) {
         address targetOwner = IERC721(target).ownerOf(targetTokenId);
-        uint64 ref = _doAssign(fragment, fragmentTokenId, target, targetTokenId, targetOwner);
+        (uint64 ref, uint256 valueRemaining) = _doAssign(msg.value, fragment, fragmentTokenId, target, targetTokenId, targetOwner);
+        if (valueRemaining > 0) {
+            revert IPatchworkProtocol.IncorrectFeeAmount();
+        }
         IPatchworkLiteRef(target).addReference(targetTokenId, ref);
     }
 
@@ -70,7 +77,10 @@ contract PatchworkProtocolAssigner is PatchworkProtocolCommon {
     */
     function assign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, uint256 targetMetadataId) public payable mustNotBeFrozen(target, targetTokenId) {
         address targetOwner = IERC721(target).ownerOf(targetTokenId);
-        uint64 ref = _doAssign(fragment, fragmentTokenId, target, targetTokenId, targetOwner);
+        (uint64 ref, uint256 valueRemaining) = _doAssign(msg.value, fragment, fragmentTokenId, target, targetTokenId, targetOwner);
+        if (valueRemaining > 0) {
+            revert IPatchworkProtocol.IncorrectFeeAmount();
+        }
         IPatchworkLiteRef(target).addReference(targetTokenId, ref, targetMetadataId);
     }
 
@@ -99,44 +109,57 @@ contract PatchworkProtocolAssigner is PatchworkProtocolCommon {
         }
         targetOwner = IERC721(target).ownerOf(targetTokenId);
         refs = new uint64[](fragments.length);
+        uint256 value = msg.value;
         for (uint i = 0; i < fragments.length; i++) {
             address fragment = fragments[i];
             uint256 fragmentTokenId = tokenIds[i];
-            refs[i] = _doAssign(fragment, fragmentTokenId, target, targetTokenId, targetOwner);
+            (refs[i], value) = _doAssign(value, fragment, fragmentTokenId, target, targetTokenId, targetOwner);
+        }
+        // If the correct fee amount is provided there should be no remainder after all assignments are processed
+        if (value > 0) {
+            revert IPatchworkProtocol.IncorrectFeeAmount();
         }
     }
 
     /**
     @notice Performs assignment of an IPatchworkAssignable to an IPatchworkLiteRef
+    @param value the remaining message value after any previous assignments in this tx
     @param fragment the IPatchworkAssignable's address
     @param fragmentTokenId the IPatchworkAssignable's tokenId
     @param target the IPatchworkLiteRef target's address
     @param targetTokenId the IPatchworkLiteRef target's tokenId
     @param targetOwner the owner address of the target
-    @return uint64 literef of assignable in target
+    @return ref literef of assignable in target
+    @return valueRemaining message value remaining after fee
     */
-    function _doAssign(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, address targetOwner) private mustNotBeFrozen(fragment, fragmentTokenId) returns (uint64) {
+    function _doAssign(uint256 value, address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, address targetOwner) private mustNotBeFrozen(fragment, fragmentTokenId) returns (uint64 ref, uint256 valueRemaining) {
         if (fragment == target && fragmentTokenId == targetTokenId) {
             revert IPatchworkProtocol.SelfAssignmentNotAllowed(fragment, fragmentTokenId);
         }
+        uint256 scopeFee;
+        uint256 protocolFee;
         // Use the target's scope for general permission and check the fragment for detailed permissions
-        (uint256 scopeFee, uint256 protocolFee) = _doAssignPermissionsAndFees(fragment, fragmentTokenId, target, targetTokenId, targetOwner);
+        (scopeFee, protocolFee, valueRemaining) = _doAssignPermissionsAndFees(value, fragment, fragmentTokenId, target, targetTokenId, targetOwner);
         // Handle storage and duplicate checks
-        uint64 ref = _doAssignStorageAndDupes(fragment, fragmentTokenId, target, targetTokenId);
+        ref = _doAssignStorageAndDupes(fragment, fragmentTokenId, target, targetTokenId);
         // these two end up beyond stack depth on some compiler settings.
         emit IPatchworkProtocol.Assign(targetOwner, fragment, fragmentTokenId, target, targetTokenId, scopeFee, protocolFee);
-        return ref;
+        return (ref, valueRemaining);
     }
 
     /**
     @notice Handles assignment permissions and fees
+    @param value the remaining message value after any previous assignments in this tx
     @param fragment the IPatchworkAssignable's address
     @param fragmentTokenId the IPatchworkAssignable's tokenId
     @param target the IPatchworkLiteRef target's address
     @param targetTokenId the IPatchworkLiteRef target's tokenId
     @param targetOwner the owner address of the target
+    @return scopeFee the scope fee taken
+    @return protocolFee the protocol fee taken
+    @return valueRemaining the remaining message value after fees taken
     */
-    function _doAssignPermissionsAndFees(address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, address targetOwner) private returns (uint256 scopeFee, uint256 protocolFee) {
+    function _doAssignPermissionsAndFees(uint256 value, address fragment, uint256 fragmentTokenId, address target, uint256 targetTokenId, address targetOwner) private returns (uint256 scopeFee, uint256 protocolFee, uint256 valueRemaining) {
         string memory targetScopeName = _getScopeName(target);
         if (!IPatchworkAssignable(fragment).allowAssignment(fragmentTokenId, target, targetTokenId, targetOwner, msg.sender, targetScopeName)) {
             revert IPatchworkProtocol.NotAuthorized(msg.sender);
@@ -160,7 +183,7 @@ contract PatchworkProtocolAssigner is PatchworkProtocolCommon {
         string memory fragmentScopeName = _getScopeName(fragment);
         IPatchworkProtocol.Scope storage fragmentScope = _mustHaveScope(fragmentScopeName);
         _mustBeWhitelisted(fragmentScopeName, fragmentScope, fragment);
-        (scopeFee, protocolFee) = _handleAssignFee(fragmentScopeName, fragmentScope, fragment);
+        (scopeFee, protocolFee, valueRemaining) = _handleAssignFee(value, fragmentScopeName, fragmentScope, fragment);
     }
 
     /**
