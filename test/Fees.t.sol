@@ -463,5 +463,42 @@ contract FeesTest is Test {
         _prot.proposeScopeFeeOverride(_scopeName, IPatchworkProtocol.FeeConfigOverride(0, 3001, 0, true));
         vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.InvalidFeeValue.selector));
         _prot.proposeScopeFeeOverride(_scopeName, IPatchworkProtocol.FeeConfigOverride(0, 0, 3001, true));
+    }
+
+    function testAssignBatchFees() public {
+        vm.startPrank(_scopeOwner);
+        _prot.setScopeRules(_scopeName, false, false, true);
+        TestFragmentLiteRefNFT nft = new TestFragmentLiteRefNFT(address(_prot));
+        nft.registerReferenceAddress(address(nft));
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotWhitelisted.selector, _scopeName, address(nft)));
+        _prot.setAssignFee(address(nft), 1);
+        _prot.addWhitelist(_scopeName, address(nft));
+        vm.stopPrank();
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.NotAuthorized.selector, _userAddress));
+        vm.prank(_userAddress);
+        _prot.setAssignFee(address(nft), 1);
+        // success
+        vm.startPrank(_scopeOwner);
+        _prot.setAssignFee(address(nft), 1);
+        uint256 nftAssignFee = _prot.getAssignFee(address(nft));
+        assertEq(1, nftAssignFee);
+        uint256 n1 = nft.mint(_userAddress, "");
+        uint256[] memory fragmentIds = new uint256[](8);
+        address[] memory fragmentAddresses = new address[](8);
+        for (uint8 i = 0; i < 8; i++) {
+            fragmentAddresses[i] = address(nft);
+            fragmentIds[i] = nft.mint(_userAddress, "");
         }
+        // No fee given should revert
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.IncorrectFeeAmount.selector));
+        _prot.assignBatch(fragmentAddresses, fragmentIds, address(nft), n1);
+        // too little fee should revert
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.IncorrectFeeAmount.selector));
+        _prot.assignBatch{value: nftAssignFee}(fragmentAddresses, fragmentIds, address(nft), n1);
+        // too much fee should revert
+        vm.expectRevert(abi.encodeWithSelector(IPatchworkProtocol.IncorrectFeeAmount.selector));
+        _prot.assignBatch{value: nftAssignFee * 9}(fragmentAddresses, fragmentIds, address(nft), n1);
+        // correct fee should pass
+        _prot.assignBatch{value: nftAssignFee * 8}(fragmentAddresses, fragmentIds, address(nft), n1);
+    }
 }
