@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.23;
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
@@ -7,7 +7,7 @@ import "forge-std/console.sol";
 import "../src/PatchworkUtils.sol";
 
 contract PatchworkUtilsTest is Test {
-        function testStringConversions() public {
+    function testStringConversions() public {
         bytes8 b8;
         // 9/8
         bytes memory ns = bytes("abcdefghi");
@@ -95,5 +95,10 @@ contract PatchworkUtilsTest is Test {
             b32 := mload(add(ns, 32))
         }
         assertEq("", PatchworkUtils.toString32(uint256(b32)));
+    }
+
+    function testByteConversions() public {
+        assertEq(abi.encodePacked(bytes1(uint8(0)), bytes1(uint8(0))), PatchworkUtils.convertUint16ToBytes(0));
+        assertEq(abi.encodePacked(bytes1(uint8(1)), bytes1(uint8(2))), PatchworkUtils.convertUint16ToBytes(258));
     }
 }

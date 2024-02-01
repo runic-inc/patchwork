@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.23;
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
-import "../src/sampleNFTs/TestPatchLiteRefNFT.sol";
+import "./nfts/TestPatchLiteRefNFT.sol";
 
 contract TestPatchLiteRefNFTTest is Test {
     TestPatchLiteRefNFT testNFT;
@@ -126,5 +126,10 @@ contract TestPatchLiteRefNFTTest is Test {
         testNFT.storeLevel(1, 255);
         assertEq(testNFT.loadXP(1), 65535);
         assertEq(testNFT.loadLevel(1), 255);
+    }
+
+    function testUnusedFuncs() public view {
+        testNFT.loadDynamicReferencePage(0, 0, 0);
+        testNFT.getDynamicReferenceCount(0);
     }
 }

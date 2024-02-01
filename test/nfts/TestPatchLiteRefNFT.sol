@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.23;
 
 /*
   Prototype - Generated Patchwork Meta contract for Totem NFT. 
@@ -9,11 +9,8 @@ pragma solidity ^0.8.13;
   Has metadata as defined in totem-metadata.json
 */
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "forge-std/console.sol";
-import "../PatchworkNFTInterface.sol";
-import "../PatchworkNFTBase.sol";
-
+import "../../src/PatchworkPatch.sol";
+import "../../src/PatchworkLiteRef.sol";
 
 struct TestPatchLiteRefNFTMetadata {
     uint64[8] artifactIDs;
@@ -30,7 +27,7 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
 
     uint256 _nextTokenId;
 
-    constructor(address manager_) PatchworkNFT("testscope", "TestPatchLiteRef", "TPLR", msg.sender, manager_) PatchworkLiteRef() {
+    constructor(address manager_) Patchwork721("testscope", "TestPatchLiteRef", "TPLR", manager_, msg.sender) PatchworkLiteRef() {
     }
 
     // ERC-165
@@ -44,11 +41,6 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
     }
 
     function imageURI(uint256 _tokenId) pure external override returns (string memory) {}
-
-    function setManager(address manager_) external {
-        require(_checkWriteAuth());
-        _manager = manager_;
-    }
 
     /*
     Hard coded prototype schema is:
@@ -64,13 +56,13 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
     function schema() pure external override returns (MetadataSchema memory) {
         MetadataSchemaEntry[] memory entries = new MetadataSchemaEntry[](8);
         entries[0] = MetadataSchemaEntry(0, 0, FieldType.UINT64, 8, FieldVisibility.PUBLIC, 0, 0, "artifactIDs");
-        entries[1] = MetadataSchemaEntry(1, 1, FieldType.UINT16, 0, FieldVisibility.PUBLIC, 2, 0, "xp");
-        entries[2] = MetadataSchemaEntry(2, 2, FieldType.UINT8, 0, FieldVisibility.PUBLIC, 2, 16, "level");
-        entries[3] = MetadataSchemaEntry(3, 0, FieldType.UINT16, 0, FieldVisibility.PUBLIC, 2, 24, "xpLost");
-        entries[4] = MetadataSchemaEntry(4, 0, FieldType.UINT16, 0, FieldVisibility.PUBLIC, 2, 40, "stakedMade");
-        entries[5] = MetadataSchemaEntry(5, 0, FieldType.UINT16, 0, FieldVisibility.PUBLIC, 2, 56, "stakedCorrect");
-        entries[6] = MetadataSchemaEntry(6, 0, FieldType.UINT8, 0, FieldVisibility.PUBLIC, 2, 72, "evolution");
-        entries[7] = MetadataSchemaEntry(7, 0, FieldType.CHAR16, 0, FieldVisibility.PUBLIC, 2, 80, "nickname");
+        entries[1] = MetadataSchemaEntry(1, 1, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 2, 0, "xp");
+        entries[2] = MetadataSchemaEntry(2, 2, FieldType.UINT8, 1, FieldVisibility.PUBLIC, 2, 16, "level");
+        entries[3] = MetadataSchemaEntry(3, 0, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 2, 24, "xpLost");
+        entries[4] = MetadataSchemaEntry(4, 0, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 2, 40, "stakedMade");
+        entries[5] = MetadataSchemaEntry(5, 0, FieldType.UINT16, 1, FieldVisibility.PUBLIC, 2, 56, "stakedCorrect");
+        entries[6] = MetadataSchemaEntry(6, 0, FieldType.UINT8, 1, FieldVisibility.PUBLIC, 2, 72, "evolution");
+        entries[7] = MetadataSchemaEntry(7, 0, FieldType.CHAR16, 1, FieldVisibility.PUBLIC, 2, 80, "nickname");
         return MetadataSchema(1, entries);
     }
 
@@ -142,82 +134,109 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
         return uint16(uint256(_metadataStorage[_tokenId][2]) >> 16);
     }
 
-    function addReference(uint256 ourTokenId, uint64 referenceAddress) public override {
+    function addReference(uint256 ourTokenId, uint64 liteRef) public override {
         require(_checkTokenWriteAuth(ourTokenId), "not authorized");
         uint256[] storage mdStorage = _metadataStorage[ourTokenId];
         uint256 slot = mdStorage[0];
         uint256 slot2 = mdStorage[1];
         if (uint64(slot) == 0) {
-            mdStorage[0] = slot | referenceAddress;
+            mdStorage[0] = slot | liteRef;
         } else if (uint64(slot >> 64) == 0) {
-            mdStorage[0] = slot | uint256(referenceAddress) << 64;
+            mdStorage[0] = slot | uint256(liteRef) << 64;
         } else if (uint64(slot >> 128) == 0) {
-            mdStorage[0] = slot | uint256(referenceAddress) << 128;
+            mdStorage[0] = slot | uint256(liteRef) << 128;
         } else if (uint64(slot >> 192) == 0) {
-            mdStorage[0] = slot | uint256(referenceAddress) << 192;
+            mdStorage[0] = slot | uint256(liteRef) << 192;
         } else if (uint64(slot2) == 0) {
-            mdStorage[0] = slot2 | referenceAddress;
+            mdStorage[0] = slot2 | liteRef;
         } else if (uint64(slot2 >> 64) == 0) {
-            mdStorage[0] = slot2 | uint256(referenceAddress) << 64;
+            mdStorage[0] = slot2 | uint256(liteRef) << 64;
         } else if (uint64(slot2 >> 128) == 0) {
-            mdStorage[0] = slot2 | uint256(referenceAddress) << 128;
+            mdStorage[0] = slot2 | uint256(liteRef) << 128;
         } else if (uint64(slot2 >> 192) == 0) {
-            mdStorage[0] = slot2 | uint256(referenceAddress) << 192;
+            mdStorage[0] = slot2 | uint256(liteRef) << 192;
         } else {
             revert("No reference slots available");
         }
     }
 
-    function batchAddReferences(uint256 ourTokenId, uint64[] calldata /*_referenceAddresses*/) public view override {
+    function addReferenceBatch(uint256 ourTokenId, uint64[] calldata /*_liteRefs*/) public view override {
         require(_checkTokenWriteAuth(ourTokenId), "not authorized");
         // TODO bulk insert for fewer stores
     }
 
-    function mintPatch(address originalNFTOwner, address originalNFTAddress, uint originalNFTTokenId) external returns (uint256 tokenId){
+    function mintPatch(address owner, PatchTarget memory target) external payable mustBeManager() returns (uint256 tokenId){
+        if (msg.value > 0) {
+            revert();
+        }
+        // require inherited ownership
+        if (IERC721(target.addr).ownerOf(target.tokenId) != owner) {
+            revert IPatchworkProtocol.NotAuthorized(owner);
+        }
         // Just for testing
         tokenId = _nextTokenId;
         _nextTokenId++;
-        _storePatch(tokenId, originalNFTAddress, originalNFTTokenId);
-        _safeMint(originalNFTOwner, tokenId);
+        _storePatch(tokenId, target);
+        _safeMint(owner, tokenId);
         _metadataStorage[tokenId] = new uint256[](3);
         return tokenId;
     }
 
-    function removeReference(uint256 ourTokenId, uint64 referenceAddress) public override {
+    function removeReference(uint256 ourTokenId, uint64 liteRef) public override {
         require(_checkTokenWriteAuth(ourTokenId), "not authorized");
         uint256[] storage mdStorage = _metadataStorage[ourTokenId];
         uint256 slot = mdStorage[0];
         uint256 slot2 = mdStorage[1];
-        if (uint64(slot) == referenceAddress) {
+        if (uint64(slot) == liteRef) {
             mdStorage[0] = slot & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000000000000000;
-        } else if (uint64(slot >> 64) == referenceAddress) {
+        } else if (uint64(slot >> 64) == liteRef) {
             mdStorage[0] = slot & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000000000000000FFFFFFFFFFFFFFFF;
-        } else if (uint64(slot >> 128) == referenceAddress) {
+        } else if (uint64(slot >> 128) == liteRef) {
             mdStorage[0] = slot & 0xFFFFFFFFFFFFFFFF0000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-        } else if (uint64(slot >> 192) == referenceAddress) {
+        } else if (uint64(slot >> 192) == liteRef) {
             mdStorage[0] = slot & 0x0000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-        } else if (uint64(slot2) == referenceAddress) {
+        } else if (uint64(slot2) == liteRef) {
             mdStorage[0] = slot2 & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000000000000000;
-        } else if (uint64(slot2 >> 64) == referenceAddress) {
+        } else if (uint64(slot2 >> 64) == liteRef) {
             mdStorage[0] = slot2 & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000000000000000FFFFFFFFFFFFFFFF;
-        } else if (uint64(slot2 >> 128) == referenceAddress) {
+        } else if (uint64(slot2 >> 128) == liteRef) {
             mdStorage[0] = slot2 & 0xFFFFFFFFFFFFFFFF0000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-        } else if (uint64(slot2 >> 192) == referenceAddress) {
+        } else if (uint64(slot2 >> 192) == liteRef) {
             mdStorage[0] = slot2 & 0x0000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
         } else {
             revert("not assigned");
         }
     }
 
-    function loadReferenceAddressAndTokenId(uint256 idx) public view returns (address addr, uint256 tokenId) {
-        uint256[] storage slots = _metadataStorage[tokenId];
+    function addReference(uint256 tokenId, uint64 liteRef, uint256 targetMetadataId) public override {
+        if (targetMetadataId != 0) {
+            revert("Unsupported metadata ID");
+        }
+        addReference(tokenId, liteRef);
+    }
+
+
+    function removeReference(uint256 tokenId, uint64 liteRef, uint256 /*targetMetadataId*/) public override {
+        // Work with any given metadataId just for coverage testing
+        removeReference(tokenId, liteRef);
+    }
+
+    function addReferenceBatch(uint256 tokenId, uint64[] calldata liteRefs, uint256 targetMetadataId) public view override {
+        if (targetMetadataId != 0) {
+            revert("Unsupported metadata ID");
+        }
+        addReferenceBatch(tokenId, liteRefs);
+    }
+    
+    function loadReferenceAddressAndTokenId(uint256 ourTokenId, uint256 idx) public view returns (address addr, uint256 tokenId) {
+        uint256[] storage slots = _metadataStorage[ourTokenId];
         uint slotNumber = idx / 4;
         uint shift = (idx % 4) * 64; 
         uint64 attributeId = uint64(slots[slotNumber] >> shift);
         return getReferenceAddressAndTokenId(attributeId);
     }
 
-    function loadAllReferences(uint256 tokenId) public view returns (address[] memory addresses, uint256[] memory tokenIds) {
+    function loadAllStaticReferences(uint256 tokenId) public view override returns (address[] memory addresses, uint256[] memory tokenIds) {
         uint256[] storage slots = _metadataStorage[tokenId];
         addresses = new address[](8);
         tokenIds = new uint256[](8);
@@ -232,7 +251,12 @@ contract TestPatchLiteRefNFT is PatchworkPatch, PatchworkLiteRef {
         return (addresses, tokenIds);
     }
     
-    function _checkWriteAuth() internal override(PatchworkNFT, PatchworkLiteRef) view returns (bool allow) {
-        return PatchworkNFT._checkWriteAuth();
+    function _checkWriteAuth() internal override(Patchwork721, PatchworkLiteRef) view returns (bool allow) {
+        return Patchwork721._checkWriteAuth();
+    }
+
+    function burn(uint256 tokenId) public {
+        // test only
+        _burnPatch(tokenId);
     }
 }
