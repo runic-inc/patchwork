@@ -10,7 +10,7 @@ library PatchworkUtils {
     @param raw the raw data
     @return out the string
     */
-    function toString8(uint64 raw) public pure returns (string memory out) {
+    function toString8(uint64 raw) internal pure returns (string memory out) {
         bytes memory byteArray = abi.encodePacked(bytes8(raw));
         // optimized shortcut out for full string value and no checks required later
         if (byteArray[7] != 0) {
@@ -24,7 +24,7 @@ library PatchworkUtils {
     @param raw the raw data
     @return out the string
     */
-    function toString16(uint128 raw) public pure returns (string memory out) {
+    function toString16(uint128 raw) internal pure returns (string memory out) {
         bytes memory byteArray = abi.encodePacked(bytes16(raw));
         // optimized shortcut out for full string value and no checks required later
         if (byteArray[15] != 0) {
@@ -38,7 +38,7 @@ library PatchworkUtils {
     @param raw the raw data
     @return out the string
     */
-    function toString32(uint256 raw) public pure returns (string memory out) {
+    function toString32(uint256 raw) internal pure returns (string memory out) {
         bytes memory byteArray = abi.encodePacked(bytes32(raw));
         // optimized shortcut out for full string value and no checks required later
         if (byteArray[31] != 0) {
@@ -52,7 +52,7 @@ library PatchworkUtils {
     @param byteArray the raw string
     @return out the trimmed string
     */
-    function trimUp(bytes memory byteArray) public pure returns (string memory out) {
+    function trimUp(bytes memory byteArray) internal pure returns (string memory out) {
         // uses about 40 more gas per call to be DRY, consider inlining to save gas if contract isn't too big
         uint nullPos = 0;
         while (true) {
@@ -73,7 +73,7 @@ library PatchworkUtils {
     @param input the uint16
     @return bytes the array
     */
-    function convertUint16ToBytes(uint16 input) public pure returns (bytes memory) {
+    function convertUint16ToBytes(uint16 input) internal pure returns (bytes memory) {
         // Extract the higher and lower bytes
         bytes1 high = bytes1(uint8(input >> 8));
         bytes1 low = bytes1(uint8(input & 0xFF));
