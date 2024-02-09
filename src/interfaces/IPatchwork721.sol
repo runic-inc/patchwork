@@ -29,11 +29,13 @@ interface IPatchworkMetadata {
         UINT64,   ///< A 64-bit unsigned integer.
         UINT128,  ///< A 128-bit unsigned integer.
         UINT256,  ///< A 256-bit unsigned integer.
-        CHAR8,    ///< An 8-character string.
-        CHAR16,   ///< A 16-character string.
-        CHAR32,   ///< A 32-character string.
-        CHAR64,   ///< A 64-character string.
-        LITEREF  ///< A Literef reference to a patchwork fragment
+        CHAR8,    ///< An 8-character string (64 bits).
+        CHAR16,   ///< A 16-character string (128 bits).
+        CHAR32,   ///< A 32-character string (256 bits).
+        CHAR64,   ///< A 64-character string (512 bits).
+        LITEREF,  ///< A 64-bit Literef reference to a patchwork fragment.
+        ADDRESS,  ///< A 160-bit address.
+        STRING    ///< A dynamically-sized string.
     }
 
     /**
