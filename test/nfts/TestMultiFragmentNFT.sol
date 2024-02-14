@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.23;
 
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "../../src/PatchworkFragmentMulti.sol";
 import "../../src/PatchworkLiteRef.sol";
 import "../../src/interfaces/IPatchworkMintable.sol";
@@ -49,8 +50,8 @@ contract TestMultiFragmentNFT is PatchworkFragmentMulti, IPatchworkMintable {
         return "https://mything/my-fragment-metadata.json";
     }
 
-    function imageURI(uint256 _tokenId) pure external returns (string memory) {
-        return string(abi.encodePacked("https://mything/fragment-", _tokenId));
+    function imageURI(uint256 tokenId) pure external returns (string memory) {
+        return string.concat("https://mything/my/", Strings.toString(tokenId), ".png");
     }
     
     /*

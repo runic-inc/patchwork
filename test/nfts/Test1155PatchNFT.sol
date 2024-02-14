@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.23;
 
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "../../src/Patchwork1155Patch.sol";
 
 contract Test1155PatchNFT is Patchwork1155Patch {
@@ -18,8 +19,8 @@ contract Test1155PatchNFT is Patchwork1155Patch {
         return "https://mything/my-nft-metadata.json";
     }
 
-    function imageURI(uint256 _tokenId) pure external returns (string memory) {
-        return string(abi.encodePacked("https://mything/nft-", _tokenId));
+    function imageURI(uint256 tokenId) pure external returns (string memory) {
+        return string.concat("https://mything/my/", Strings.toString(tokenId), ".png");
     }
 
     function schema() pure external returns (MetadataSchema memory) {
