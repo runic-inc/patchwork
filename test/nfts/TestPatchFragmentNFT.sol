@@ -9,6 +9,7 @@ pragma solidity ^0.8.23;
   Has metadata as defined in totem-metadata.json
 */
 
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "../../src/PatchworkPatch.sol";
 import "../../src/PatchworkFragmentSingle.sol";
 
@@ -39,7 +40,9 @@ contract TestPatchFragmentNFT is PatchworkReversiblePatch, PatchworkFragmentSing
         return "https://mything/my-metadata.json";
     }
 
-    function imageURI(uint256 _tokenId) pure external override returns (string memory) {}
+    function imageURI(uint256 tokenId) pure external returns (string memory) {
+        return string.concat("https://mything/my/", Strings.toString(tokenId), ".png");
+    }
 
     function setLocked(uint256 tokenId, bool locked_) public view virtual override(PatchworkPatch, PatchworkFragmentSingle) {
          return PatchworkPatch.setLocked(tokenId, locked_);

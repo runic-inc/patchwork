@@ -9,10 +9,10 @@ pragma solidity ^0.8.23;
   Has metadata as defined in totem-metadata.json
 */
 
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "../../src/Patchwork721.sol";
 import "../../src/PatchworkLiteRef.sol";
 import "../../src/interfaces/IPatchworkMintable.sol";
-import "forge-std/console.sol";
 
 struct TestDynamicArrayLiteRefNFTMetadata {
     uint16 xp;
@@ -48,7 +48,9 @@ contract TestDynamicArrayLiteRefNFT is Patchwork721, PatchworkLiteRef, IPatchwor
         return "https://mything/my-metadata.json";
     }
 
-    function imageURI(uint256 _tokenId) pure external override returns (string memory) {}
+    function imageURI(uint256 tokenId) pure external returns (string memory) {
+        return string.concat("https://mything/my/", Strings.toString(tokenId), ".png");
+    }
 
     function mint(address to, bytes calldata /* data */) public payable returns (uint256 tokenId) {
         if (msg.value > 0) {
@@ -220,11 +222,6 @@ contract TestDynamicArrayLiteRefNFT is Patchwork721, PatchworkLiteRef, IPatchwor
             revert("not found");
         }
 
-        console.log("removing");
-        console.logBytes8(bytes8(liteRef));
-        for (uint256 i = 0; i < store.slots.length; i++) {
-            console.logBytes32(bytes32(store.slots[i]));
-        }
         uint256 count = getDynamicReferenceCount(ourTokenId);
         if (count == 1) {
             if (store.slots[0] == liteRef) {

@@ -9,6 +9,7 @@ pragma solidity ^0.8.23;
   Has metadata as defined in totem-metadata.json
 */
 
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "../../src/PatchworkFragmentSingle.sol";
 import "../../src/PatchworkLiteRef.sol";
 import "../../src/interfaces/IPatchworkMintable.sol";
@@ -70,8 +71,8 @@ contract TestFragmentLiteRefNFT is PatchworkFragmentSingle, PatchworkLiteRef, IP
         return "https://mything/my-fragment-metadata.json";
     }
 
-    function imageURI(uint256 _tokenId) pure external returns (string memory) {
-        return string(abi.encodePacked("https://mything/fragment-", _tokenId));
+    function imageURI(uint256 tokenId) pure external returns (string memory) {
+        return string.concat("https://mything/my/", Strings.toString(tokenId), ".png");
     }
     
     /*
