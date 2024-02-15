@@ -151,8 +151,8 @@ contract TestDynamicArrayLiteRefNFT is Patchwork721, PatchworkLiteRef, IPatchwor
     }
 
     // Load Only level
-    function loadLevel(uint256 _tokenId) public view returns (uint16) {
-        return uint16(uint256(_metadataStorage[_tokenId][2]) >> 16);
+    function loadLevel(uint256 tokenId) public view returns (uint16) {
+        return uint16(uint256(_metadataStorage[tokenId][2]) >> 16);
     }
 
     function addReference(uint256 ourTokenId, uint64 liteRef) public override {
@@ -186,7 +186,7 @@ contract TestDynamicArrayLiteRefNFT is Patchwork721, PatchworkLiteRef, IPatchwor
         }
     }
 
-    function addReferenceBatch(uint256 ourTokenId, uint64[] calldata _liteRefs) public override {
+    function addReferenceBatch(uint256 ourTokenId, uint64[] calldata liteRefs) public override {
         require(_checkTokenWriteAuth(ourTokenId), "not authorized");
         // do in batches of 4 with 1 remainder pass
         DynamicLiteRefs storage store = _dynamicLiterefStorage[ourTokenId];
@@ -194,22 +194,22 @@ contract TestDynamicArrayLiteRefNFT is Patchwork721, PatchworkLiteRef, IPatchwor
         if (slotsLen > 0) {
             revert("already loaded");
         }
-        uint256 fullBatchCount = _liteRefs.length / 4;
-        uint256 remainder = _liteRefs.length % 4;
+        uint256 fullBatchCount = liteRefs.length / 4;
+        uint256 remainder = liteRefs.length % 4;
         for (uint256 batch = 0; batch < fullBatchCount; batch++) {
             uint256 refIdx = batch * 4;
-            uint256 slot = uint256(_liteRefs[refIdx]) | (uint256(_liteRefs[refIdx+1]) << 64) | (uint256(_liteRefs[refIdx+2]) << 128) | (uint256(_liteRefs[refIdx+3]) << 192);
+            uint256 slot = uint256(liteRefs[refIdx]) | (uint256(liteRefs[refIdx+1]) << 64) | (uint256(liteRefs[refIdx+2]) << 128) | (uint256(liteRefs[refIdx+3]) << 192);
             store.slots.push(slot);
-            store.idx[_liteRefs[refIdx]] = batch;
-            store.idx[_liteRefs[refIdx + 1]] = batch;
-            store.idx[_liteRefs[refIdx + 2]] = batch;
-            store.idx[_liteRefs[refIdx + 3]] = batch;
+            store.idx[liteRefs[refIdx]] = batch;
+            store.idx[liteRefs[refIdx + 1]] = batch;
+            store.idx[liteRefs[refIdx + 2]] = batch;
+            store.idx[liteRefs[refIdx + 3]] = batch;
         }
         uint256 rSlot;
         for (uint256 i = 0; i < remainder; i++) {
             uint256 idx = (fullBatchCount * 4) + i;
-            rSlot = rSlot | (uint256(_liteRefs[idx]) << (i * 64));
-            store.idx[_liteRefs[idx]] = fullBatchCount;
+            rSlot = rSlot | (uint256(liteRefs[idx]) << (i * 64));
+            store.idx[liteRefs[idx]] = fullBatchCount;
         }
         store.slots.push(rSlot);
     }
