@@ -81,4 +81,27 @@ library PatchworkUtils {
         // Return the two bytes as a dynamic bytes array
         return abi.encodePacked(high, low);
     }
+
+    /**
+    @notice Converts a string to a uint256
+    @param str the string to convert
+    @return val the uint256 value
+    */
+    function strToUint256(string memory str) internal pure returns (uint256 val) {
+        uint256 strLength;
+        bytes memory str_ = bytes(str);
+        // dynamic string or bytes memory layout has 1+ words: (length, valueBytes...)
+        assembly {
+            strLength := mload(str_)
+        }
+        if (strLength == 0) {
+            val = 0;
+        } else {
+            bytes32 strBytes32;
+            assembly {
+                strBytes32 := mload(add(str_, 32))
+            }
+            val = uint256(strBytes32);
+        }
+    }
 }
