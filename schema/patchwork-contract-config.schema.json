@@ -88,8 +88,8 @@
                             "char32",
                             "char64",
                             "literef",
-			                "address",
-			                "string"
+                            "address",
+                            "string"
                         ]
                     },
                     "arrayLength": {
