@@ -1,7 +1,7 @@
 {
-    "$id": "https://runic.inc/patchwork-metadata.schema.json",
+    "$id": "https://github.com/runic-inc/patchwork/schema/patchwork-metadata.schema.json",
     "$schema": "https://json-schema.org/draft/2019-09/schema",
-    "title": "NFT Metadata",
+    "title": "Patchwork Metadata",
     "type": "object",
     "required": [
         "name",
@@ -29,8 +29,11 @@
             "items" : {
                 "type": "object",
                 "required": [
+                    "id",
                     "key",
-                    "type"
+                    "type",
+                    "slot",
+                    "offset"
                 ],
                 "properties": {
                     "id": {
@@ -69,12 +72,15 @@
                             "char8",
                             "char16",
                             "char32",
-                            "char64"
+                            "char64",
+                            "literef",
+                            "address",
+                            "string"
                         ]
                     },
                     "arrayLength": {
                         "type": "number",
-                        "description": "Array length"
+                        "description": "Array length (0=dynamic, 1=no array, 2+=static array)"
                     },
                     "visibility": {
                         "type": "string",
@@ -83,6 +89,14 @@
                             "public",
                             "private"
                         ]
+                    },
+                    "slot": {
+                        "type": "number",
+                        "description": "The metadata storage slot this field occupies"
+                    },
+                    "offset": {
+                        "type": "number",
+                        "description": "The offset in the metadata storage slot"
                     }
                 }
             }
