@@ -1,3 +1,6 @@
+[fmt] # See https://book.getfoundry.sh/reference/config/formatter
+line_length = 150
+
 [profile.default]
 libs = ['lib']
 src = 'src'
