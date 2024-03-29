@@ -172,15 +172,12 @@ contract TestDynamicArrayLiteRefNFT is Patchwork721, PatchworkLiteRef, IPatchwor
             } else {
                 store.idx[liteRef] = slotsLen-1;
                 // Reverse search for the next empty subslot
-                if (slot >= (1 << 128)) {
-                    // pos 4
-                    store.slots[slotsLen-1] = slot | uint256(liteRef) << 192;
-                } else if (slot >= (1 << 64)) {
-                    // pos 3
-                    store.slots[slotsLen-1] = slot | uint256(liteRef) << 128;
-                } else {
-                    // pos 2
-                    store.slots[slotsLen-1] = slot | uint256(liteRef) << 64;
+                for (uint256 i = 3; i > 0; i--) {
+                    if (slot >= (1 << ((i-1) * 64))) {
+                        // pos 4 through 2
+                        store.slots[slotsLen-1] = slot | uint256(liteRef) << (i*64);
+                        break;
+                    }
                 }
             }
         }
