@@ -172,15 +172,12 @@ contract TestDynamicArrayLiteRefNFT is Patchwork721, PatchworkLiteRef, IPatchwor
             } else {
                 store.idx[liteRef] = slotsLen-1;
                 // Reverse search for the next empty subslot
-                if (slot >= (1 << 128)) {
-                    // pos 4
-                    store.slots[slotsLen-1] = slot | uint256(liteRef) << 192;
-                } else if (slot >= (1 << 64)) {
-                    // pos 3
-                    store.slots[slotsLen-1] = slot | uint256(liteRef) << 128;
-                } else {
-                    // pos 2
-                    store.slots[slotsLen-1] = slot | uint256(liteRef) << 64;
+                for (uint256 i = 3; i > 0; i--) {
+                    if (slot >= (1 << ((i-1) * 64))) {
+                        // pos 4 through 2
+                        store.slots[slotsLen-1] = slot | uint256(liteRef) << (i*64);
+                        break;
+                    }
                 }
             }
         }
@@ -200,10 +197,9 @@ contract TestDynamicArrayLiteRefNFT is Patchwork721, PatchworkLiteRef, IPatchwor
             uint256 refIdx = batch * 4;
             uint256 slot = uint256(liteRefs[refIdx]) | (uint256(liteRefs[refIdx+1]) << 64) | (uint256(liteRefs[refIdx+2]) << 128) | (uint256(liteRefs[refIdx+3]) << 192);
             store.slots.push(slot);
-            store.idx[liteRefs[refIdx]] = batch;
-            store.idx[liteRefs[refIdx + 1]] = batch;
-            store.idx[liteRefs[refIdx + 2]] = batch;
-            store.idx[liteRefs[refIdx + 3]] = batch;
+            for (uint256 i = 0; i < 4; i++) {
+                store.idx[liteRefs[refIdx + i]] = batch;
+            }
         }
         uint256 rSlot;
         for (uint256 i = 0; i < remainder; i++) {
@@ -235,23 +231,23 @@ contract TestDynamicArrayLiteRefNFT is Patchwork721, PatchworkLiteRef, IPatchwor
             uint256 lastIdx = slotsLen-1;
             uint256 slot = store.slots[lastIdx];
             uint64 lastRef;
-            if (slot >= (1 << 192)) {
-                // pos 4
-                lastRef = uint64(slot >> 192);
-                store.slots[lastIdx] = slot & 0x0000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-            } else if (slot >= (1 << 128)) {
-                // pos 3
-                lastRef = uint64(slot >> 128);
-                store.slots[lastIdx] = slot & 0x00000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-            } else if (slot >= (1 << 64)) {
-                // pos 2
-                lastRef = uint64(slot >> 64);
-                store.slots[lastIdx] = slot & 0x000000000000000000000000000000000000000000000000FFFFFFFFFFFFFFFF;
-            } else {
+
+            for (uint256 i = 3; i > 0; i--) {
+                uint256 shift = i * 64;
+                if (slot >= (1 << shift)) {
+                    // pos 4 through 2
+                    lastRef = uint64(slot >> shift);
+                    uint256 mask = ~uint256(0) >> (256 - shift);
+                    store.slots[lastIdx] = slot & mask;
+                    break;
+                }
+            }
+            if (lastRef == 0) {
                 // pos 1
                 lastRef = uint64(slot);
                 store.slots.pop();
             }
+
             if (lastRef == liteRef) {
                 // it was the last ref. No need to replace anything. It's already cleared so just clear the index
                 delete store.idx[liteRef];
@@ -259,19 +255,16 @@ contract TestDynamicArrayLiteRefNFT is Patchwork721, PatchworkLiteRef, IPatchwor
                 // Find the ref and replace it with lastRef then update indexes
                 uint256 refSlotIdx = store.idx[liteRef];
                 slot = store.slots[refSlotIdx];
-                if (uint64(slot >> 192) == liteRef) {
-                    slot = slot & 0x0000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-                    slot = slot | (uint256(lastRef) << 192);
-                } else if (uint64(slot >> 128) == liteRef) {
-                    slot = slot & 0xFFFFFFFFFFFFFFFF0000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-                    slot = slot | (uint256(lastRef) << 128);
-                } else if (uint64(slot >> 64) == liteRef) {
-                    slot = slot & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000000000000000FFFFFFFFFFFFFFFF;
-                    slot = slot | (uint256(lastRef) << 64);
-                } else if (uint64(slot) == liteRef) {
-                    slot = slot & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000000000000000;
-                    slot = slot | uint256(lastRef);
-                } else {
+                uint256 oldSlot = slot;
+                for (uint256 i = 4; i > 0; i--) {
+                    uint256 shift = (i-1) * 64;
+                    if (uint64(slot >> shift) == liteRef) {
+                        uint256 mask = ~(uint256(0xFFFFFFFFFFFFFFFF) << shift);
+                        slot = (slot & mask) | (uint256(lastRef) << shift);
+                        break;
+                    }
+                }
+                if (oldSlot == slot) {
                     revert("storage integrity error");
                 }
                 store.slots[refSlotIdx] = slot;
@@ -318,22 +311,13 @@ contract TestDynamicArrayLiteRefNFT is Patchwork721, PatchworkLiteRef, IPatchwor
             return 0;
         } else {
             uint256 slot = store.slots[slotsLen-1];
-            // You could get rid of this conditional stuff if you had a log function
-            if (slot >= (1 << 192)) {
-                return slotsLen * 4;
-            } else {
-                // Reverse search for the next empty subslot
-                if (slot >= (1 << 128)) {
-                    // pos 4
-                    return (slotsLen-1) * 4 + 3;
-                } else if (slot >= (1 << 64)) {
-                    // pos 3
-                    return (slotsLen-1) * 4 + 2;
-                } else {
-                    // pos 2
-                    return (slotsLen-1) * 4 + 1;
+            for (uint256 i = 4; i > 1; i--) {
+                uint256 shift = (i-1) * 64;
+                if (slot >= (1 << shift)) {
+                    return (slotsLen-1) * 4 + i;
                 }
             }
+            return (slotsLen-1) * 4 + 1;
         }
     }
 
