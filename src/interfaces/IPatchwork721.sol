@@ -102,7 +102,7 @@ interface IPatchwork721 is IPatchworkScoped, IPatchworkMetadata, IERC5192, IERC7
     @param addr the address of the Patchwork721
     */
     event SchemaChange(address indexed addr);
-    
+
     /**
     @notice Returns the URI of the schema
     @return string the URI of the schema
