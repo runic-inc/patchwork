@@ -123,7 +123,9 @@ abstract contract PatchworkFragmentSingle is Patchwork721, IPatchworkSingleAssig
         if (msg.sender != ownerOf(tokenId)) {
             revert IPatchworkProtocol.NotAuthorized(msg.sender);
         }
-        require(_assignments[tokenId].tokenAddr == address(0), "cannot setLocked assigned fragment");
+        if (_assignments[tokenId].tokenAddr != address(0)) {
+            revert AssignedFragmentCannotSetLocked(tokenId);
+        }
         super.setLocked(tokenId, locked_);
     }
 }

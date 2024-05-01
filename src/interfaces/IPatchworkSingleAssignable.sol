@@ -10,6 +10,12 @@ import "./IPatchworkAssignable.sol";
 */
 interface IPatchworkSingleAssignable is IPatchworkAssignable {
     /**
+    @notice The token is assigned and cannot be set to locked
+    @param tokenId The identifier for a token
+    */
+    error AssignedFragmentCannotSetLocked(uint256 tokenId);
+
+    /**
     @notice Unassigns a token
     @param ourTokenId ID of our token
     */
