@@ -6,9 +6,9 @@ import "forge-std/console.sol";
 
 import "../src/PatchworkProtocol.sol";
 import "../src/PatchworkProtocolAssigner.sol";
-import "./nfts/TestDynamicArrayLiteRefNFT.sol";
+import "./nfts/TestDynamicRefLibraryNFT.sol";
 
-contract DynamicArrayLiteRefNFT is Test {
+contract DynamicRefLibraryNFTTest is Test {
 
     PatchworkProtocol _prot;
 
@@ -38,7 +38,7 @@ contract DynamicArrayLiteRefNFT is Test {
     }
 
     function testDynamics() public {
-        TestDynamicArrayLiteRefNFT nft = new TestDynamicArrayLiteRefNFT(address(_prot));
+        TestDynamicRefLibraryNFT nft = new TestDynamicRefLibraryNFT(address(_prot));
         nft.registerReferenceAddress(address(0x55));
         uint256 m = nft.mint(_userAddress, "");
         assertEq(0, nft.getDynamicReferenceCount(m));
@@ -72,7 +72,7 @@ contract DynamicArrayLiteRefNFT is Test {
     }
 
     function testBatchAdd() public {
-        TestDynamicArrayLiteRefNFT nft = new TestDynamicArrayLiteRefNFT(address(_prot));
+        TestDynamicRefLibraryNFT nft = new TestDynamicRefLibraryNFT(address(_prot));
         nft.registerReferenceAddress(address(0x55));
         uint256 m = nft.mint(_userAddress, "");
         assertEq(0, nft.getDynamicReferenceCount(m));
@@ -110,7 +110,7 @@ contract DynamicArrayLiteRefNFT is Test {
     }
 
     function testUnusedFuncs() public {
-        TestDynamicArrayLiteRefNFT nft = new TestDynamicArrayLiteRefNFT(address(_prot));
+        TestDynamicRefLibraryNFT nft = new TestDynamicRefLibraryNFT(address(_prot));
         nft.loadAllStaticReferences(0);
     }
 

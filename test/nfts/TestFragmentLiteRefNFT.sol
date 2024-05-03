@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.23;
 
-/*
-  Prototype - Generated Patchwork Meta contract for Totem NFT. 
-  
-  Is attached to any normal NFT and is scoped for a specific application. 
-
-  Has metadata as defined in totem-metadata.json
-*/
-
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "../../src/PatchworkFragmentSingle.sol";
 import "../../src/PatchworkLiteRef.sol";
