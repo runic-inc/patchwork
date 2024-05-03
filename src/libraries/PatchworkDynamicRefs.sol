@@ -7,11 +7,17 @@ pragma solidity ^0.8.23;
  */
 library PatchworkDynamicRefs {
 
+    /**
+    @notice A struct to hold dynamic references
+    */
     struct DynamicLiteRefs {
         uint256[] slots; // 4 per
         mapping(uint64 => uint256) idx;
     }
 
+    /**
+    @dev See {IPatchworkLiteRef-addReference}
+    */
     function addReference(uint64 liteRef, DynamicLiteRefs storage store) public {
         // to append: find last slot, if it's not full, add, otherwise start a new slot.
         uint256 slotsLen = store.slots.length;
@@ -38,6 +44,9 @@ library PatchworkDynamicRefs {
         }
     }
 
+    /**
+    @dev See {IPatchworkLiteRef-addReferenceBatch}
+    */
     function addReferenceBatch(uint64[] calldata liteRefs, DynamicLiteRefs storage store) public {
         uint256 slotsLen = store.slots.length;
         if (slotsLen > 0) {
@@ -62,6 +71,9 @@ library PatchworkDynamicRefs {
         store.slots.push(rSlot);
     }
 
+    /**
+    @dev See {IPatchworkLiteRef-removeReference}
+    */
     function removeReference(uint64 liteRef, DynamicLiteRefs storage store) public {
         uint256 slotsLen = store.slots.length;
         if (slotsLen == 0) {
@@ -124,6 +136,12 @@ library PatchworkDynamicRefs {
         }
     }
 
+    /**
+    @notice loads a dynamic ref from storage
+    @param idx The index of the ref to load
+    @param store The storage to load from
+    @return ref The ref at the given index
+    */
     function loadRef(uint256 idx, DynamicLiteRefs storage store) public view returns (uint64 ref) {
         uint256[] storage slots = store.slots;
         uint slotNumber = idx / 4; // integer division will get the correct slot number
@@ -131,6 +149,9 @@ library PatchworkDynamicRefs {
         ref = uint64(slots[slotNumber] >> shift);
     }
 
+    /**
+    @dev See {IPatchworkLiteRef-getDynamicReferenceCount}
+    */
     function getDynamicReferenceCount(DynamicLiteRefs storage store) public view returns (uint256 count) {
         uint256 slotsLen = store.slots.length;
         if (slotsLen == 0) {
@@ -147,6 +168,13 @@ library PatchworkDynamicRefs {
         }
     }
 
+    /**
+    @notice loads a page of dynamic refs from storage
+    @param offset The offset to start at
+    @param count The number of refs to load
+    @param store The storage to load from
+    @return refs The refs at the given offset
+    */
     function loadRefPage(uint256 offset, uint256 count, DynamicLiteRefs storage store) public view returns (uint64[] memory refs) {
         uint256 refCount = getDynamicReferenceCount(store);
         if (offset >= refCount) {
