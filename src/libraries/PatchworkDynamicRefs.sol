@@ -7,6 +7,10 @@ pragma solidity ^0.8.23;
  */
 library PatchworkDynamicRefs {
 
+    error AlreadyLoaded();
+    error NotFound();
+    error StorageIntegrityError();
+
     /**
     @notice A struct to hold dynamic references
     */
@@ -50,7 +54,7 @@ library PatchworkDynamicRefs {
     function addReferenceBatch(uint64[] calldata liteRefs, DynamicLiteRefs storage store) public {
         uint256 slotsLen = store.slots.length;
         if (slotsLen > 0) {
-            revert("already loaded");
+            revert AlreadyLoaded();
         }
         uint256 fullBatchCount = liteRefs.length / 4;
         uint256 remainder = liteRefs.length % 4;
@@ -77,7 +81,7 @@ library PatchworkDynamicRefs {
     function removeReference(uint64 liteRef, DynamicLiteRefs storage store) public {
         uint256 slotsLen = store.slots.length;
         if (slotsLen == 0) {
-            revert("not found");
+            revert NotFound();
         }
 
         uint256 count = getDynamicReferenceCount(store);
@@ -86,7 +90,7 @@ library PatchworkDynamicRefs {
                 store.slots.pop();
                 delete store.idx[liteRef];
             } else {
-                revert("not found");
+                revert NotFound();
             }
         } else {
             // remember and remove the last ref
@@ -127,7 +131,7 @@ library PatchworkDynamicRefs {
                     }
                 }
                 if (oldSlot == slot) {
-                    revert("storage integrity error");
+                    revert StorageIntegrityError();
                 }
                 store.slots[refSlotIdx] = slot;
                 store.idx[lastRef] = refSlotIdx;
