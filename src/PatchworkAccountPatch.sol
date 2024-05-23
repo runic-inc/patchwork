@@ -43,6 +43,15 @@ abstract contract PatchworkAccountPatch is Patchwork721, IPatchworkAccountPatch 
         super._burn(tokenId);
     }
     
+    /**
+    @notice Return the account patched by a tokenId 
+    @dev Not currently in IPatchworkPatch as this was added after Protocol v2 release
+    @param tokenId the ID of the token
+    @return account the account patched by the tokenId
+    */
+    function getTarget(uint256 tokenId) public view returns (address account) {
+        return _targetsById[tokenId];
+    }
 }
 
 /**

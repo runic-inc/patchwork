@@ -16,6 +16,14 @@ interface IPatchworkAccountPatch is IPatchworkScoped {
     @return tokenId ID of the newly minted token
     */
     function mintPatch(address owner, address target) external payable returns (uint256 tokenId);
+
+    // Add to Patchwork Protocol v2.1 interfaces
+    // @notice Return the account patched by a tokenId 
+    // @dev Not currently in IPatchworkPatch as this was added after Protocol v2 release
+    // @param tokenId the ID of the token
+    // @return account the account patched by the tokenId
+    //
+    // function getTarget(uint256 tokenId) public view returns (address account) {
 }
 
 /**
