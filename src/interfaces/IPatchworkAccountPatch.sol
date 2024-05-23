@@ -23,7 +23,7 @@ interface IPatchworkAccountPatch is IPatchworkScoped {
     // @param tokenId the ID of the token
     // @return account the account patched by the tokenId
     //
-    // function getTarget(uint256 tokenId) public view returns (address account) {
+    // function getTarget(uint256 tokenId) external view returns (address account);
 }
 
 /**

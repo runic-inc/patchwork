@@ -23,6 +23,14 @@ interface IPatchwork1155Patch is IPatchworkScoped {
     @return tokenId ID of the newly minted token
     */
     function mintPatch(address to, PatchTarget memory target) external payable returns (uint256 tokenId);
+
+    // Add to Patchwork Protocol v2.1 interfaces
+    // @notice Return the target patched by a tokenId 
+    // @dev Not currently in IPatchwork1155Patch as this was added after Protocol v2 release
+    // @param tokenId the ID of the token
+    // @return PatchTarget the target patched by the tokenId
+    //
+    // function getTarget(uint256 tokenId) external view returns (PatchTarget memory);
 }
 
 /**
