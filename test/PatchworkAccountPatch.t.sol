@@ -108,6 +108,9 @@ contract PatchworkAccountPatchTest is Test {
         TestAccountPatchNFT testAccountPatchNFT = new TestAccountPatchNFT(address(_prot), false);
         // User patching is on
         uint256 pId = _prot.patchAccount(_userAddress, _user2Address, address(testAccountPatchNFT));
+        // test regular lookup
+        assertEq(_user2Address, testAccountPatchNFT.getTarget(pId));
+        // test reverse lookup
         assertEq(pId, testAccountPatchNFT.getTokenIdByTarget(_user2Address));
     }
 }

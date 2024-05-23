@@ -137,6 +137,11 @@ contract Patchwork1155PatchTest is Test {
         TestBase1155 base1155 = new TestBase1155();
         uint256 b = base1155.mint(_userAddress, 1, 5);
         uint256 pId = _prot.patch1155(_userAddress, address(base1155), b, _userAddress, address(test1155PatchNFT));
+        // regular lookup
+        assertEq(address(base1155), test1155PatchNFT.getTarget(pId).addr);
+        assertEq(b, test1155PatchNFT.getTarget(pId).tokenId);
+        assertEq(_userAddress, test1155PatchNFT.getTarget(pId).account);
+        // reverse lookup
         assertEq(pId, test1155PatchNFT.getTokenIdByTarget(IPatchwork1155Patch.PatchTarget(address(base1155), b, _userAddress)));
     }
 }
