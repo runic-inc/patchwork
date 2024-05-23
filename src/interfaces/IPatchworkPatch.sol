@@ -35,6 +35,13 @@ interface IPatchworkPatch is IPatchworkScoped {
     @return address Address of the owner
     */
     function ownerOfPatch(uint256 tokenId) external view returns (address);
+
+    // Add to Patchwork Protocol v2.1 interfaces
+    //@notice Return the target patched by a tokenId 
+    //@param tokenId the ID of the token
+    //@return PatchTarget the target patched by the tokenId
+    //
+    //function getTarget(uint256 tokenId) external view returns (PatchTarget memory);
 }
 
 /**
