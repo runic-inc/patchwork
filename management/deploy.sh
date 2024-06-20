@@ -30,6 +30,10 @@ case $NETWORK in
     PATCHWORK_OWNER=$SEPOLIA_PATCHWORK_OWNER
     RPC_URL=$SEPOLIA_RPC_URL
     ;;
+  "base-sepolia")
+    PATCHWORK_OWNER=$BASE_SEPOLIA_PATCHWORK_OWNER
+    RPC_URL=$BASE_SEPOLIA_RPC_URL
+    ;;
   *)
     echo "Network not supported"
     exit 1
