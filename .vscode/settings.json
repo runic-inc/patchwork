@@ -1,0 +1,7 @@
+{
+  "solidity.formatter": "forge",
+  "editor.wordWrapColumn": 150,
+  "editor.wordWrap": "wordWrapColumn",
+  "editor.formatOnPaste": true,
+  "editor.formatOnSave": true
+}
