@@ -1,0 +1,19 @@
+{
+    "name": "@patchworkdev/contracts",
+    "version": "2.0.3-beta.0",
+    "description": "Patchwork Protocol contracts",
+    "files": [
+        "src/",
+        "artifacts/",
+        "schema/"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/runic-inc/patchwork.git"
+    },
+    "scripts": {
+        "prepublishOnly": "bash scripts/prepublish.sh"
+    },
+    "author": "Runic Inc.",
+    "license": "MIT"
+}
