@@ -36,7 +36,7 @@ contract TestPatchFragmentNFT is PatchworkReversiblePatch, PatchworkFragmentSing
         return string.concat("https://mything/my/", Strings.toString(tokenId), ".png");
     }
 
-    function setLocked(uint256 tokenId, bool locked_) public view virtual override(PatchworkPatch, PatchworkFragmentSingle) {
+    function setLocked(uint256 tokenId, bool locked_) public virtual override(PatchworkPatch, PatchworkFragmentSingle) {
          return PatchworkPatch.setLocked(tokenId, locked_);
     }
 
