@@ -68,7 +68,7 @@ abstract contract PatchworkPatch is Patchwork721, IPatchworkPatch {
     @dev always false because a patch cannot be locked as the ownership is inferred
     @dev See {IPatchwork721-locked}
     */
-    function locked(uint256 /* tokenId */) public pure virtual override returns (bool) {
+    function locked(uint256 /* tokenId */) public view virtual override returns (bool) {
         return false;
     }
 
@@ -76,7 +76,7 @@ abstract contract PatchworkPatch is Patchwork721, IPatchworkPatch {
     @dev always reverts because a patch cannot be locked as the ownership is inferred
     @dev See {IPatchwork721-setLocked}
     */ 
-    function setLocked(uint256 /* tokenId */, bool /* locked_ */) public view virtual override {
+    function setLocked(uint256 /* tokenId */, bool /* locked_ */) public virtual override {
         revert IPatchworkProtocol.CannotLockSoulboundPatch(address(this));
     }
 
