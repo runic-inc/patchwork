@@ -1,6 +1,6 @@
 {
     "name": "@patchworkdev/contracts",
-    "version": "2.0.4",
+    "version": "2.0.5",
     "description": "Patchwork Protocol contracts",
     "files": [
         "src/",
