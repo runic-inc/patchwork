@@ -33,7 +33,7 @@ interface IPatchworkMetadata {
         CHAR16,   ///< A 16-character string (128 bits).
         CHAR32,   ///< A 32-character string (256 bits).
         CHAR64,   ///< A 64-character string (512 bits).
-        BYTES8,   ///< An 8-byte byte array (64 bites).
+        BYTES8,   ///< An 8-byte byte array (64 bits).
         BYTES16,  ///< A 16-byte byte array (128 bits).
         BYTES32,  ///< A 32-byte byte array (256 bits).
         LITEREF,  ///< A 64-bit Literef reference to a patchwork fragment.
