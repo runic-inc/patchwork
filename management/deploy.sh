@@ -5,7 +5,7 @@
 # Usage instructions
 if [ $# -lt 1 ]; then
   echo "Usage: $0 <network> [--broadcast]"
-  echo "Supported networks: base, sepolia"
+  echo "Supported networks: base, sepolia, base-sepolia"
   exit 1
 fi
 
@@ -21,6 +21,7 @@ NETWORK=$1
 PATCHWORK_OWNER=""
 RPC_URL=""
 
+
 case $NETWORK in
   "base")
     PATCHWORK_OWNER=$BASE_PATCHWORK_OWNER
@@ -29,6 +30,10 @@ case $NETWORK in
   "sepolia")
     PATCHWORK_OWNER=$SEPOLIA_PATCHWORK_OWNER
     RPC_URL=$SEPOLIA_RPC_URL
+    ;;
+  "base-sepolia")
+    PATCHWORK_OWNER=$BASE_SEPOLIA_PATCHWORK_OWNER
+    RPC_URL=$BASE_SEPOLIA_RPC_URL
     ;;
   *)
     echo "Network not supported"
